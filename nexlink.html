@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Технический перерыв — NexLink</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            background: linear-gradient(145deg, #0b1120 0%, #19233c 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: #f0f3fa;
+        }
+
+        /* Анимированный фон */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        .bg-animation .gear {
+            position: absolute;
+            opacity: 0.08;
+            animation: rotateSlow 40s linear infinite;
+            font-size: 120px;
+            user-select: none;
+            pointer-events: none;
+        }
+
+        .bg-animation .gear:nth-child(1) { top: 10%; left: -5%; font-size: 180px; animation-duration: 60s; }
+        .bg-animation .gear:nth-child(2) { bottom: -10%; right: -5%; font-size: 260px; animation-direction: reverse; animation-duration: 80s; }
+        .bg-animation .gear:nth-child(3) { top: 40%; right: 15%; font-size: 100px; animation-duration: 45s; opacity: 0.05; }
+        .bg-animation .gear:nth-child(4) { bottom: 20%; left: 10%; font-size: 140px; animation-duration: 70s; }
+
+        @keyframes rotateSlow {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Основная карточка */
+        .maintenance-card {
+            position: relative;
+            z-index: 2;
+            max-width: 520px;
+            width: 100%;
+            background: rgba(18, 25, 45, 0.85);
+            backdrop-filter: blur(16px);
+            border-radius: 56px;
+            padding: 40px 32px 48px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.08);
+            text-align: center;
+            transition: transform 0.3s ease;
+            border: 1px solid rgba(123, 47, 190, 0.3);
+        }
+
+        .maintenance-card:hover {
+            transform: scale(1.01);
+        }
+
+        /* Иконка-шестерёнка */
+        .icon-wrapper {
+            margin-bottom: 24px;
+        }
+
+        .tool-icon {
+            font-size: 80px;
+            display: inline-block;
+            animation: wrenchShake 2.5s infinite ease-in-out;
+            filter: drop-shadow(0 8px 16px rgba(0,0,0,0.3));
+        }
+
+        @keyframes wrenchShake {
+            0%, 100% { transform: rotate(0deg); }
+            15% { transform: rotate(15deg); }
+            30% { transform: rotate(-10deg); }
+            45% { transform: rotate(5deg); }
+            60% { transform: rotate(0deg); }
+        }
+
+        /* Заголовок */
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #F9F3D9, #D9B48B);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 12px;
+            letter-spacing: -0.3px;
+        }
+
+        .badge {
+            display: inline-block;
+            background: rgba(255, 215, 120, 0.2);
+            backdrop-filter: blur(4px);
+            padding: 6px 14px;
+            border-radius: 100px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: #FFD966;
+            border: 1px solid rgba(255, 217, 102, 0.3);
+            margin-bottom: 24px;
+        }
+
+        .message {
+            font-size: 1.05rem;
+            line-height: 1.5;
+            margin-bottom: 28px;
+            color: #CDD9F4;
+        }
+
+        .info-text {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 28px;
+            padding: 16px 20px;
+            margin: 16px 0 20px;
+            font-size: 0.9rem;
+            color: #B9C7E9;
+            border-left: 3px solid #7B2FBE;
+            text-align: left;
+        }
+
+        .info-text span {
+            display: block;
+            margin-top: 8px;
+            font-size: 0.8rem;
+            color: #A0AED6;
+        }
+
+        /* Прогресс-бар (декоративный, без цифр) */
+        .progress-section {
+            margin: 20px 0 16px;
+        }
+        .progress-bar-bg {
+            background: rgba(255,255,255,0.15);
+            border-radius: 60px;
+            height: 8px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            width: 68%;
+            height: 100%;
+            background: linear-gradient(90deg, #7B2FBE, #E67E22);
+            border-radius: 60px;
+            animation: pulseWidth 2s infinite alternate;
+        }
+        @keyframes pulseWidth {
+            0% { width: 65%; opacity: 0.9; }
+            100% { width: 72%; opacity: 1; }
+        }
+
+        /* Кнопки */
+        .action-buttons {
+            display: flex;
+            gap: 14px;
+            justify-content: center;
+            margin-top: 28px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 28px;
+            border-radius: 44px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(4px);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .btn-primary {
+            background: linear-gradient(145deg, #7B2FBE, #9849E0);
+            border: none;
+            box-shadow: 0 8px 18px rgba(123, 47, 190, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            background: linear-gradient(145deg, #8E44D0, #A85CEF);
+            box-shadow: 0 12px 22px rgba(123, 47, 190, 0.5);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.18);
+            transform: translateY(-2px);
+        }
+
+        .btn:active {
+            transform: translateY(1px);
+        }
+
+        .support-link {
+            margin-top: 32px;
+            font-size: 0.85rem;
+            color: #7E8CB0;
+        }
+
+        .support-link a {
+            color: #E0B0FF;
+            text-decoration: none;
+            border-bottom: 1px dashed #7B2FBE;
+        }
+
+        footer {
+            margin-top: 28px;
+            font-size: 0.7rem;
+            opacity: 0.6;
+        }
+
+        @media (max-width: 550px) {
+            .maintenance-card { padding: 30px 22px 40px; }
+            h1 { font-size: 1.8rem; }
+            .tool-icon { font-size: 60px; }
+            .message { font-size: 0.95rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="bg-animation">
+    <div class="gear">⚙️</div>
+    <div class="gear">🔧</div>
+    <div class="gear">⚙️</div>
+    <div class="gear">🔩</div>
+</div>
+
+<div class="maintenance-card">
+    <div class="icon-wrapper">
+        <span class="tool-icon">🛠️</span>
+    </div>
+    <h1>Технический перерыв</h1>
+    <div class="badge">⏳ Плановые работы</div>
+    <div class="message">
+        В данный момент NexLink временно недоступен.<br>
+        Мы обновляем инфраструктуру, чтобы сделать сервис ещё быстрее и надёжнее.
+    </div>
+
+    <div class="info-text">
+        🔧 Что происходит?<br>
+        • Модернизация серверов<br>
+        • Улучшение безопасности<br>
+        • Оптимизация звонков и сообщений<br>
+        <span>⚡ Следите за новостями в официальном канале.</span>
+    </div>
+
+    <div class="progress-section">
+        <div class="progress-bar-bg">
+            <div class="progress-fill"></div>
+        </div>
+        <div style="font-size: 0.7rem; margin-top: 8px; color: #B9C7E9;">🔧 Ведутся восстановительные работы</div>
+    </div>
+
+    <div class="action-buttons">
+        <button class="btn btn-primary" id="refreshBtn">🔄 Проверить доступность</button>
+        <button class="btn btn-secondary" id="supportBtn">📬 Сообщить о проблеме</button>
+    </div>
+
+    <div class="support-link">
+        Если перерыв затягивается — напишите нам: <a href="#" id="mailSupport">support@nexlink.com</a>
+    </div>
+    <footer>
+        NexLink © 2026 — Мы скоро вернёмся ☀️
+    </footer>
+</div>
+
+<script>
+    (function() {
+        // Кнопка обновления страницы (проверка, не закончился ли перерыв)
+        const refreshBtn = document.getElementById('refreshBtn');
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', () => {
+                window.location.reload();
+            });
+        }
+
+        // Кнопка "Сообщить о проблеме" — имитация обращения в поддержку
+        const supportBtn = document.getElementById('supportBtn');
+        if (supportBtn) {
+            supportBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                alert('🛠️ Информация отправлена администраторам. Мы свяжемся с вами, как только сервис восстановится.\n\nВы также можете написать на support@nexlink.com');
+            });
+        }
+
+        // Ссылка на почту
+        const mailLink = document.getElementById('mailSupport');
+        if (mailLink) {
+            mailLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                window.location.href = 'mailto:support@nexlink.com?subject=Вопрос%20по%20техперерыву';
+            });
+        }
+
+        // Дополнительная автоматическая проверка каждые 30 секунд (опционально)
+        // Просто для демонстрации, без таймера — можно закомментировать.
+        // Но оставим лёгкое автообновление через 60 секунд, чтобы пользователь не думал, что страница зависла.
+        setTimeout(() => {
+            // Можно показать уведомление, что можно попробовать обновить страницу вручную
+            const msgDiv = document.querySelector('.message');
+            if (msgDiv && !msgDiv.innerHTML.includes('вручную')) {
+                const hint = document.createElement('div');
+                hint.style.marginTop = '12px';
+                hint.style.fontSize = '0.8rem';
+                hint.style.opacity = '0.7';
+                hint.innerHTML = '💡 Совет: нажмите «Проверить доступность» через минуту.';
+                msgDiv.appendChild(hint);
+            }
+        }, 30000);
+    })();
+</script>
+</body>
+</html>
