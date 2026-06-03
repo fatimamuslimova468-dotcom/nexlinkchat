@@ -1,172 +1,182 @@
-<!-- Purple theme badges -->
+<!-- 
+  ✨ NexLink README.md
+  Дизайн вдохновлён эстетикой https://nexlink.zapto.org
+  Тёмная тема + фиолетово-синий градиент + эффект стекла (glassmorphism)
+-->
+
 <p align="center">
-  <img src="https://img.shields.io/badge/version-1.0.0-8A2BE2?style=for-the-badge&logo=starship&logoColor=white" alt="Version">
-  <img src="https://img.shields.io/badge/license-MIT-9370DB?style=for-the-badge&logo=opensourceinitiative&logoColor=white" alt="License">
-  <img src="https://img.shields.io/badge/JavaScript-ES2020-9B59B6?style=for-the-badge&logo=javascript&logoColor=white" alt="JavaScript">
-  <img src="https://img.shields.io/badge/WebRTC-ready-BA55D3?style=for-the-badge&logo=webrtc&logoColor=white" alt="WebRTC">
+  <img src="https://readme-typing-svg.demolab.com?font=Space+Grotesk&weight=600&size=32&duration=3000&pause=500&color=AA6DC9&center=true&vCenter=true&width=500&lines=NexLink;Современный+мессенджер;Безопасно.+Свободно.+Мгновенно." alt="NexLink Typing Animation">
 </p>
 
-<!-- Animated gradient title -->
-<h1 align="center">
-  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=30&duration=3000&pause=500&color=AA6DC9&center=true&vCenter=true&width=500&lines=🔷+NexLink" alt="NexLink">
-  <br>современный мессенджер с шифрованием, группами и видеозвонками
-</h1>
+<p align="center">
+  <img src="https://img.shields.io/badge/Версия-1.0.0-8A2BE2?style=for-the-badge&logo=starship&logoColor=white">
+  <img src="https://img.shields.io/badge/Лицензия-MIT-9370DB?style=for-the-badge&logo=opensourceinitiative&logoColor=white">
+  <img src="https://img.shields.io/badge/JavaScript-ES2020-9B59B6?style=for-the-badge&logo=javascript&logoColor=white">
+  <img src="https://img.shields.io/badge/WebRTC-Готов-BA55D3?style=for-the-badge&logo=webrtc&logoColor=white">
+</p>
 
 <p align="center">
   <b>NexLink</b> — это полнофункциональный веб-мессенджер, объединяющий удобный интерфейс, мощные возможности для общения и высокий уровень безопасности.<br>
   Проект написан на чистом <b>JavaScript (Vanilla)</b> и использует облачные сервисы для хранения данных, аутентификации и реального времени.
 </p>
 
----
+<br>
 
+<!-- Главная сетка возможностей с левой градиентной границей -->
 ## ✨ Основные возможности
 
-<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
-  <div style="border-left: 4px solid #AA6DC9; padding-left: 12px; margin: 8px 0;">
+<div align="center">
+  <table style="width: 100%; border-collapse: separate; border-spacing: 12px; background: transparent;">
+    <tr>
+      <td style="background: rgba(30, 26, 47, 0.7); backdrop-filter: blur(8px); border-radius: 20px; padding: 18px; border: 1px solid rgba(170, 109, 201, 0.2); box-shadow: 0 8px 20px rgba(0,0,0,0.3);">
+        <h3 align="center">💬 Общение</h3>
+        • Личные чаты (один-на-один)<br>
+        • Групповые чаты и каналы<br>
+        • «Избранное» – личное облачное хранилище заметок<br>
+        • Отправка текстовых сообщений, эмодзи, стикеров, голосовых сообщений
+      </td>
+      <td style="background: rgba(30, 26, 47, 0.7); backdrop-filter: blur(8px); border-radius: 20px; padding: 18px; border: 1px solid rgba(170, 109, 201, 0.2); box-shadow: 0 8px 20px rgba(0,0,0,0.3);">
+        <h3 align="center">🤖 Боты</h3>
+        • Создание собственных ботов с выбором типа личности (эхо, шутник)<br>
+        • Автоматические ответы в чатах
+      </td>
+    </tr>
+    <tr>
+      <td style="background: rgba(30, 26, 47, 0.7); backdrop-filter: blur(8px); border-radius: 20px; padding: 18px; border: 1px solid rgba(170, 109, 201, 0.2); box-shadow: 0 8px 20px rgba(0,0,0,0.3);">
+        <h3 align="center">🔒 Безопасность и приватность</h3>
+        • Сквозное шифрование (E2EE) для приватных чатов<br>
+        • Шифрование групповых чатов – общий ключ для всех участников<br>
+        • Секретные чаты с парольной защитой<br>
+        • Двухфакторная аутентификация (2FA) по TOTP + резервные коды<br>
+        • Блокировка пользователей и управление чёрным списком<br>
+        • Настройки приватности: кто может писать, кто видит email
+      </td>
+      <td style="background: rgba(30, 26, 47, 0.7); backdrop-filter: blur(8px); border-radius: 20px; padding: 18px; border: 1px solid rgba(170, 109, 201, 0.2); box-shadow: 0 8px 20px rgba(0,0,0,0.3);">
+        <h3 align="center">📞 Звонки (WebRTC)</h3>
+        • Аудио и видеозвонки между пользователями<br>
+        • Переключение камеры, отключение микрофона/видео<br>
+        • Индикатор уровня звука<br>
+        • Автоматическое логирование звонков в чате
+      </td>
+    </tr>
+    <tr>
+      <td style="background: rgba(30, 26, 47, 0.7); backdrop-filter: blur(8px); border-radius: 20px; padding: 18px; border: 1px solid rgba(170, 109, 201, 0.2); box-shadow: 0 8px 20px rgba(0,0,0,0.3);">
+        <h3 align="center">👥 Управление контактами</h3>
+        • Добавление/удаление контактов<br>
+        • Просмотр профиля пользователя<br>
+        • Быстрый переход в чат или звонок из профиля
+      </td>
+      <td style="background: rgba(30, 26, 47, 0.7); backdrop-filter: blur(8px); border-radius: 20px; padding: 18px; border: 1px solid rgba(170, 109, 201, 0.2); box-shadow: 0 8px 20px rgba(0,0,0,0.3);">
+        <h3 align="center">📦 Организация чатов</h3>
+        • Архивация чатов – скрыть ненужные диалоги, не удаляя их<br>
+        • Поиск по чатам<br>
+        • Контекстное меню (правый клик / долгое нажатие) для управления
+      </td>
+    </tr>
+    <tr>
+      <td style="background: rgba(30, 26, 47, 0.7); backdrop-filter: blur(8px); border-radius: 20px; padding: 18px; border: 1px solid rgba(170, 109, 201, 0.2); box-shadow: 0 8px 20px rgba(0,0,0,0.3);">
+        <h3 align="center">🎨 Интерфейс</h3>
+        • Адаптивный дизайн (мобильные, планшеты, ПК)<br>
+        • Несколько тем оформления (светлая, тёмная, синяя, фиолетовая)<br>
+        • Уменьшение анимации для пользователей с вестибулярными расстройствами<br>
+        • Splash-экран с анимацией
+      </td>
+      <td style="background: rgba(30, 26, 47, 0.7); backdrop-filter: blur(8px); border-radius: 20px; padding: 18px; border: 1px solid rgba(170, 109, 201, 0.2); box-shadow: 0 8px 20px rgba(0,0,0,0.3);">
+        <h3 align="center">🛠️ Прочее</h3>
+        • Редактирование и удаление сообщений<br>
+        • Реакции на сообщения (❤️, 😂, 😮, 😢, 👍, 👎)<br>
+        • Ответы на сообщения и пересылка<br>
+        • Голосовые сообщения (запись с микрофона)<br>
+        • Верификация пользователей (звёздочки для известных, медиа)<br>
+        • Жалобы на пользователей<br>
+        • Техподдержка
+      </td>
+    </tr>
+  </table>
+</div>
 
-### 💬 Общение
-- Личные чаты (один-на-один)
-- Групповые чаты и каналы
-- «Избранное» – личное облачное хранилище заметок
-- Отправка текстовых сообщений, эмодзи, стикеров, голосовых сообщений
+<br>
 
+<!-- Технологический стек в стиле "тёмная материя" -->
+## 🧱 Технологический стек
+
+<div align="center">
+  <table style="width: 100%; background: rgba(20, 18, 35, 0.8); backdrop-filter: blur(12px); border-radius: 28px; border: 1px solid rgba(170, 109, 201, 0.3); overflow: hidden;">
+    <tr style="background: linear-gradient(135deg, #6c3483, #1a0b2e);">
+      <th style="padding: 14px; font-size: 1.1em; text-align: left;">Компонент</th>
+      <th style="padding: 14px; font-size: 1.1em; text-align: left;">Технология</th>
+    </tr>
+    <tr>
+      <td style="padding: 12px; border-bottom: 1px solid rgba(170, 109, 201, 0.2);">Frontend</td>
+      <td style="padding: 12px; border-bottom: 1px solid rgba(170, 109, 201, 0.2);">HTML5, CSS3, JavaScript (Vanilla, ES2020)</td>
+    </tr>
+    <tr>
+      <td style="padding: 12px; border-bottom: 1px solid rgba(170, 109, 201, 0.2);">База данных</td>
+      <td style="padding: 12px; border-bottom: 1px solid rgba(170, 109, 201, 0.2);">Облачная NoSQL БД реального времени</td>
+    </tr>
+    <tr>
+      <td style="padding: 12px; border-bottom: 1px solid rgba(170, 109, 201, 0.2);">Аутентификация</td>
+      <td style="padding: 12px; border-bottom: 1px solid rgba(170, 109, 201, 0.2);">Email/пароль, Google Sign-In, верификация email, 2FA (TOTP)</td>
+    </tr>
+    <tr>
+      <td style="padding: 12px; border-bottom: 1px solid rgba(170, 109, 201, 0.2);">Звонки</td>
+      <td style="padding: 12px; border-bottom: 1px solid rgba(170, 109, 201, 0.2);">WebRTC (RTCPeerConnection, getUserMedia) + сигнализация через БД</td>
+    </tr>
+    <tr>
+      <td style="padding: 12px; border-bottom: 1px solid rgba(170, 109, 201, 0.2);">Криптография</td>
+      <td style="padding: 12px; border-bottom: 1px solid rgba(170, 109, 201, 0.2);">Web Crypto API (ECDH, AES-GCM, PBKDF2, SHA-256)</td>
+    </tr>
+    <tr>
+      <td style="padding: 12px; border-bottom: 1px solid rgba(170, 109, 201, 0.2);">Хранение файлов</td>
+      <td style="padding: 12px; border-bottom: 1px solid rgba(170, 109, 201, 0.2);">localStorage (стикеры, настройки, архив, кастомные имена контактов)</td>
+    </tr>
+    <tr>
+      <td style="padding: 12px;">QR-коды</td>
+      <td style="padding: 12px;">Генерация через внешний API</td>
+    </tr>
+  </table>
+</div>
+
+<br>
+
+<!-- Блок "Быстрый старт" с неоновым акцентом -->
+## 🚀 Быстрый старт
+
+<div style="background: rgba(30, 26, 47, 0.7); backdrop-filter: blur(8px); border-radius: 24px; padding: 20px; border-left: 8px solid #AA6DC9; box-shadow: 0 4px 15px rgba(0,0,0,0.2); margin: 20px 0;">
+  <p><b>⚡ NexLink работает "из коробки" — никаких сложных сборок!</b></p>
+  <ol>
+    <li>Скачайте или клонируйте репозиторий</li>
+    <li>Откройте файл <code>index.html</code> в браузере</li>
+    <li>Используйте любой современный браузер (Chrome, Firefox, Edge, Safari)</li>
+    <li><b>Важно:</b> Для корректной работы WebRTC и микрофона/камеры откройте страницу по <b>HTTPS</b> (или используйте <code>localhost</code>)</li>
+  </ol>
+  <p><b>Настройка бэкенда:</b> Проект использует внешний облачный сервис. При необходимости замените конфигурационные данные в начале скрипта на свои.</p>
+</div>
+
+<!-- Ключевая особенность: Адаптивность -->
+## 📱 Адаптивность
+
+<div style="display: flex; gap: 16px; flex-wrap: wrap; justify-content: center;">
+  <div style="background: rgba(30, 26, 47, 0.7); backdrop-filter: blur(8px); border-radius: 20px; padding: 15px 25px; min-width: 160px; text-align: center; border: 1px solid rgba(170, 109, 201, 0.3);">
+    <b>📱 Мобильные</b><br>до 640px
   </div>
-  <div style="border-left: 4px solid #AA6DC9; padding-left: 12px; margin: 8px 0;">
-
-### 🤖 Боты
-- Создание собственных ботов с выбором типа личности (эхо, шутник)
-- Автоматические ответы в чатах
-
+  <div style="background: rgba(30, 26, 47, 0.7); backdrop-filter: blur(8px); border-radius: 20px; padding: 15px 25px; min-width: 160px; text-align: center; border: 1px solid rgba(170, 109, 201, 0.3);">
+    <b>📟 Планшеты</b><br>641–1000px
   </div>
-  <div style="border-left: 4px solid #AA6DC9; padding-left: 12px; margin: 8px 0;">
-
-### 🔒 Безопасность и приватность
-- Сквозное шифрование (E2EE) для приватных чатов
-- Шифрование групповых чатов – общий ключ для всех участников
-- Секретные чаты с парольной защитой
-- Двухфакторная аутентификация (2FA) по TOTP + резервные коды
-- Блокировка пользователей и управление чёрным списком
-- Настройки приватности: кто может писать, кто видит email
-
-  </div>
-  <div style="border-left: 4px solid #AA6DC9; padding-left: 12px; margin: 8px 0;">
-
-### 📞 Звонки (WebRTC)
-- Аудио и видеозвонки между пользователями
-- Переключение камеры, отключение микрофона/видео
-- Индикатор уровня звука
-- Автоматическое логирование звонков в чате
-
-  </div>
-  <div style="border-left: 4px solid #AA6DC9; padding-left: 12px; margin: 8px 0;">
-
-### 👥 Управление контактами
-- Добавление/удаление контактов
-- Просмотр профиля пользователя
-- Быстрый переход в чат или звонок из профиля
-
-  </div>
-  <div style="border-left: 4px solid #AA6DC9; padding-left: 12px; margin: 8px 0;">
-
-### 📦 Организация чатов
-- Архивация чатов – скрыть ненужные диалоги, не удаляя их
-- Поиск по чатам
-- Контекстное меню (правый клик / долгое нажатие) для управления
-
-  </div>
-  <div style="border-left: 4px solid #AA6DC9; padding-left: 12px; margin: 8px 0;">
-
-### 🎨 Интерфейс
-- Адаптивный дизайн (мобильные, планшеты, ПК)
-- Несколько тем оформления (светлая, тёмная, синяя, фиолетовая)
-- Уменьшение анимации для пользователей с вестибулярными расстройствами
-- Splash-экран с анимацией
-
-  </div>
-  <div style="border-left: 4px solid #AA6DC9; padding-left: 12px; margin: 8px 0;">
-
-### 🛠️ Прочее
-- Редактирование и удаление сообщений
-- Реакции на сообщения (❤️, 😂, 😮, 😢, 👍, 👎)
-- Ответы на сообщения и пересылка
-- Голосовые сообщения (запись с микрофона)
-- Верификация пользователей (звёздочки для известных, медиа)
-- Жалобы на пользователей
-- Техподдержка
-
+  <div style="background: rgba(30, 26, 47, 0.7); backdrop-filter: blur(8px); border-radius: 20px; padding: 15px 25px; min-width: 160px; text-align: center; border: 1px solid rgba(170, 109, 201, 0.3);">
+    <b>🖥️ ПК</b><br>>1000px
   </div>
 </div>
 
----
+<br>
 
-## 🧱 Технологический стек
-
-<table style="width: 100%; border-collapse: collapse; background: #1e1a2f; border-radius: 16px; overflow: hidden;">
-  <tr style="background: #6c3483; color: white;">
-    <th style="padding: 10px;">Компонент</th>
-    <th style="padding: 10px;">Технология</th>
-  </tr>
-  <tr style="background: #2c1e3a;">
-    <td style="padding: 8px; border-bottom: 1px solid #4a2c6d;">Frontend</td>
-    <td style="padding: 8px; border-bottom: 1px solid #4a2c6d;">HTML5, CSS3, JavaScript (Vanilla, ES2020)</td>
-  </tr>
-  <tr style="background: #2c1e3a;">
-    <td style="padding: 8px; border-bottom: 1px solid #4a2c6d;">База данных</td>
-    <td style="padding: 8px; border-bottom: 1px solid #4a2c6d;">Облачная NoSQL БД реального времени</td>
-  </tr>
-  <tr style="background: #2c1e3a;">
-    <td style="padding: 8px; border-bottom: 1px solid #4a2c6d;">Аутентификация</td>
-    <td style="padding: 8px; border-bottom: 1px solid #4a2c6d;">Email/пароль, Google Sign-In, верификация email, 2FA (TOTP)</td>
-  </tr>
-  <tr style="background: #2c1e3a;">
-    <td style="padding: 8px; border-bottom: 1px solid #4a2c6d;">Звонки</td>
-    <td style="padding: 8px; border-bottom: 1px solid #4a2c6d;">WebRTC (RTCPeerConnection, getUserMedia) + сигнализация через БД</td>
-  </tr>
-  <tr style="background: #2c1e3a;">
-    <td style="padding: 8px; border-bottom: 1px solid #4a2c6d;">Криптография</td>
-    <td style="padding: 8px; border-bottom: 1px solid #4a2c6d;">Web Crypto API (ECDH, AES-GCM, PBKDF2, SHA-256)</td>
-  </tr>
-  <tr style="background: #2c1e3a;">
-    <td style="padding: 8px; border-bottom: 1px solid #4a2c6d;">Хранение файлов</td>
-    <td style="padding: 8px; border-bottom: 1px solid #4a2c6d;">localStorage (стикеры, настройки, архив, кастомные имена контактов)</td>
-  </tr>
-  <tr style="background: #2c1e3a;">
-    <td style="padding: 8px;">QR-коды</td>
-    <td style="padding: 8px;">Генерация через внешний API</td>
-  </tr>
-</table>
-
----
-
-## 🚀 Запуск проекта
-
-Проект не требует сборки – это статическое веб-приложение.
-
-1. **Скачайте или клонируйте репозиторий**
-2. **Откройте файл `index.html` в браузере**
-3. Используйте любой современный браузер (Chrome, Firefox, Edge, Safari)
-4. Для корректной работы WebRTC и микрофона/камеры откройте страницу по **HTTPS** (или используйте `localhost`)
-
-### Настройка бэкенда
-Проект использует внешний облачный сервис (аутентификация, база данных).  
-При необходимости замените конфигурационные данные в начале скрипта на свои.
-
----
-
-## 📱 Адаптивность
-
-- **Мобильные устройства (до 640px)** – чат на весь экран, боковое меню выезжает свайпом или кнопкой
-- **Планшеты (641–1000px)** – двухпанельный режим, но с возможностью сворачивания списка чатов
-- **ПК (>1000px)** – классический двухпанельный интерфейс
-
----
-
+<!-- Сворачиваемый блок с правилами -->
 ## 📄 Правила пользования NexLink
 
-При использовании приложения каждый пользователь обязуется соблюдать следующие правила.
-
 <details>
-<summary style="font-size: 1.2em; background: #6c3483; display: inline-block; padding: 6px 12px; border-radius: 20px; color: white;">📜 Нажмите, чтобы развернуть полный текст правил (14 разделов)</summary>
+<summary style="background: linear-gradient(135deg, #6c3483, #1a0b2e); padding: 10px 18px; border-radius: 60px; display: inline-block; font-weight: bold; color: white; cursor: pointer;">📜 Нажмите, чтобы развернуть полный текст правил (14 разделов)</summary>
+
+<br>
 
 ### 1. Общие положения
 - Правила обязательны для всех пользователей NexLink.
@@ -264,18 +274,25 @@
 
 </details>
 
----
+<br>
 
-## 🙌 Благодарности
+<!-- Блок благодарностей и лицензии в формате двух колонок -->
+<table align="center" style="width: 100%; background: transparent;">
+  <tr>
+    <td align="center" style="padding: 20px; background: rgba(30, 26, 47, 0.7); backdrop-filter: blur(8px); border-radius: 28px; width: 50%;">
+      <h3>🙌 Благодарности</h3>
+      • Команде <b>WebRTC</b> за возможность добавления звонков<br>
+      • Сообществу <b>Open Source</b> за ценные библиотеки и инструменты
+    </td>
+    <td align="center" style="padding: 20px; background: rgba(30, 26, 47, 0.7); backdrop-filter: blur(8px); border-radius: 28px; width: 50%;">
+      <h3>📜 Лицензия</h3>
+      Проект распространяется под лицензией <b>MIT</b>.<br>
+      Вы можете свободно использовать код для обучения или собственных проектов.
+    </td>
+  </tr>
+</table>
 
-- Команде **WebRTC** за возможность добавления звонков
-- Сообществу **Open Source** за ценные библиотеки и инструменты
-
-## 📜 Лицензия
-
-Проект распространяется под лицензией **MIT**. Вы можете свободно использовать код для обучения или собственных проектов.
-
----
+<br>
 
 <p align="center">
   <b>NexLink</b> — это не просто чат, а полноценная экосистема для безопасного общения.<br>
