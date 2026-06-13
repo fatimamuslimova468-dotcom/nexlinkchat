@@ -4835,177 +4835,168 @@ if (!window._archive_chats_module) {
         hideLoadingSpinner();
     }
 })();
-// ====================== EasyBot интерпретатор ======================
+// ====================== EasyBot v2.0 (рабочий) ======================
 (function() {
-    if (window._easybot_loaded) return;
-    window._easybot_loaded = true;
+    if (window._easybot_fixed) return;
+    window._easybot_fixed = true;
 
-    // ---------- 1. Модифицируем модальное окно создания бота ----------
+    // ---------- 1. Расширенное модальное окно создания бота (добавляем поле script) ----------
     function enhanceBotModal() {
         const modal = document.getElementById('modal-create-bot');
         if (!modal) return;
         const content = modal.querySelector('.modal-content');
-        if (!content) return;
+        if (!content || document.getElementById('bot-script-textarea')) return;
 
-        // Добавляем поле для скрипта, если его ещё нет
-        if (!document.getElementById('bot-script-textarea')) {
-            const scriptGroup = document.createElement('div');
-            scriptGroup.className = 'input-group';
-            scriptGroup.style.marginTop = '16px';
-            scriptGroup.innerHTML = `
-                <label>📜 Скрипт на EasyBot</label>
-                <textarea id="bot-script-textarea" rows="12" style="width:100%; padding:12px; border-radius:24px; border:1px solid #e5e5ea; font-family: monospace; font-size:13px;" placeholder='bot MyBot "Мой бот" {
+        const scriptGroup = document.createElement('div');
+        scriptGroup.className = 'input-group';
+        scriptGroup.style.marginTop = '16px';
+        scriptGroup.innerHTML = `
+            <label>📜 Скрипт на EasyBot (регистр важен!)</label>
+            <textarea id="bot-script-textarea" rows="12" style="width:100%; padding:12px; border-radius:24px; border:1px solid #e5e5ea; font-family: monospace; font-size:13px;" placeholder='bot TestBot "Тестовый бот" {
     on message {
         if (message.text == "Привет") {
             reply("И тебе привет!");
-        } else if (message.text == "Как дела?") {
-            reply("Отлично, спасибо!");
+            action reply("UID_канала_или_пользователя");
+        } else if (message.text == "Помоги") {
+            reply("Чем могу помочь?");
         } else {
-            reply("Не понял 😕");
+            reply("Не понял команду: " + message.text);
         }
     }
 }'></textarea>
-                <div style="font-size:12px; color:#6c6c74; margin-top:6px;">
-                    📘 Синтаксис: <code>bot Имя "Отображаемое имя" { on message { if (message.text == "...") { reply("..."); } } }</code><br>
-                    🔹 Действия: <code>reply("текст")</code>, <code>forward_message(chat_id, message_id)</code><br>
-                    🔹 Кнопка перехода: <code>action reply("UID_канала_или_чата")</code>
-                </div>
-            `;
-            // Вставляем перед кнопкой "Создать"
-            const submitBtn = document.getElementById('create-bot-submit');
-            if (submitBtn) {
-                content.insertBefore(scriptGroup, submitBtn);
-            } else {
-                content.appendChild(scriptGroup);
-            }
-        }
+            <div style="font-size:12px; color:#6c6c74; margin-top:6px;">
+                📘 <strong>Синтаксис:</strong> <code>bot Имя "Отображаемое имя" { on message { if (message.text == "точное совпадение") { reply("ответ"); action reply("UID"); } } }</code><br>
+                🔹 Доступные действия: <code>reply("текст")</code>, <code>forward_message(chat_id, message_id)</code>, <code>action reply("UID")</code><br>
+                🔹 Кнопка перехода появится под сообщением бота.
+            </div>
+        `;
+        const submitBtn = document.getElementById('create-bot-submit');
+        if (submitBtn) content.insertBefore(scriptGroup, submitBtn);
+        else content.appendChild(scriptGroup);
     }
 
-    // ---------- 2. Парсер и интерпретатор EasyBot ----------
-    class EasyBotInterpreter {
-        constructor(scriptText) {
-            this.script = scriptText;
+    // ---------- 2. Парсер EasyBot (улучшенный) ----------
+    class EasyBotParser {
+        constructor(script) {
+            this.script = script;
+            this.rules = []; // [{ condition: { type, value }, actions: [] }]
             this.botName = '';
             this.displayName = '';
-            this.rules = []; // список { condition, actions }
         }
 
         parse() {
-            // Простейший парсер (регулярки + построчный разбор)
-            const lines = this.script.split('\n');
-            let state = 'outside';
-            let currentCondition = null;
+            // Удаляем многострочные комментарии (/* ... */) и однострочные //
+            let cleaned = this.script.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*/g, '');
+            // Нормализуем скобки и разбиваем на токены (очень упрощённо, но для данного синтаксиса достаточно)
+            const lines = cleaned.split('\n').map(l => l.trim()).filter(l => l);
+            let i = 0;
+            // Ищем строку bot Name "DisplayName"
+            while (i < lines.length) {
+                let line = lines[i];
+                const botMatch = line.match(/^bot\s+(\w+)\s+"([^"]+)"\s*\{?/);
+                if (botMatch) {
+                    this.botName = botMatch[1];
+                    this.displayName = botMatch[2];
+                    i++;
+                    break;
+                }
+                i++;
+            }
+            if (!this.botName) return false;
+
+            // Теперь ищем блок on message { ... }
+            let inMessageBlock = false;
+            let braceLevel = 0;
+            let currentIf = null;
             let currentActions = [];
-            let braceDepth = 0;
-
-            for (let i = 0; i < lines.length; i++) {
-                let line = lines[i].trim();
-                if (line === '') continue;
-
-                // Определяем имя бота: bot Имя "Отображаемое имя"
-                if (line.startsWith('bot ')) {
-                    const parts = line.match(/bot\s+(\w+)\s+"([^"]+)"/);
-                    if (parts) {
-                        this.botName = parts[1];
-                        this.displayName = parts[2];
-                    }
-                    state = 'inBot';
+            let iStart = 0;
+            for (let idx = 0; idx < lines.length; idx++) {
+                const line = lines[idx];
+                if (!inMessageBlock && line === 'on message {') {
+                    inMessageBlock = true;
+                    braceLevel = 1;
                     continue;
                 }
-
-                if (state === 'inBot' && line === '{') {
-                    braceDepth = 1;
-                    continue;
-                }
-
-                if (state === 'inBot' && line === 'on message {') {
-                    state = 'inMessage';
-                    braceDepth = 1;
-                    continue;
-                }
-
-                if (state === 'inMessage') {
-                    if (line === '{') {
-                        braceDepth++;
-                        continue;
-                    }
+                if (inMessageBlock) {
+                    if (line === '{') braceLevel++;
                     if (line === '}') {
-                        braceDepth--;
-                        if (braceDepth === 0) {
-                            state = 'inBot';
-                            if (currentCondition && currentActions.length) {
-                                this.rules.push({ condition: currentCondition, actions: [...currentActions] });
-                                currentCondition = null;
-                                currentActions = [];
+                        braceLevel--;
+                        if (braceLevel === 0) {
+                            // сохраняем последнее правило, если оно есть
+                            if (currentIf && currentActions.length) {
+                                this.rules.push({ condition: currentIf, actions: [...currentActions] });
                             }
+                            break;
                         }
                         continue;
                     }
-
-                    // Обработка условия if (...) { ... }
-                    const ifMatch = line.match(/if\s*\(\s*message\.text\s*==\s*"([^"]+)"\s*\)\s*\{/);
+                    // Обработка if
+                    const ifMatch = line.match(/^if\s*\(\s*message\.text\s*==\s*"([^"]+)"\s*\)\s*\{/);
                     if (ifMatch) {
-                        if (currentCondition) {
-                            // сохраняем предыдущее правило
-                            if (currentActions.length) {
-                                this.rules.push({ condition: currentCondition, actions: [...currentActions] });
-                                currentActions = [];
-                            }
+                        if (currentIf && currentActions.length) {
+                            this.rules.push({ condition: currentIf, actions: [...currentActions] });
+                            currentActions = [];
                         }
-                        currentCondition = { type: 'textEquals', value: ifMatch[1] };
+                        currentIf = { type: 'textEquals', value: ifMatch[1] };
                         continue;
                     }
-
                     // else if
-                    const elseIfMatch = line.match(/else if\s*\(\s*message\.text\s*==\s*"([^"]+)"\s*\)\s*\{/);
+                    const elseIfMatch = line.match(/^else\s+if\s*\(\s*message\.text\s*==\s*"([^"]+)"\s*\)\s*\{/);
                     if (elseIfMatch) {
-                        if (currentCondition && currentActions.length) {
-                            this.rules.push({ condition: currentCondition, actions: [...currentActions] });
+                        if (currentIf && currentActions.length) {
+                            this.rules.push({ condition: currentIf, actions: [...currentActions] });
                             currentActions = [];
                         }
-                        currentCondition = { type: 'textEquals', value: elseIfMatch[1] };
+                        currentIf = { type: 'textEquals', value: elseIfMatch[1] };
                         continue;
                     }
-
-                    // else { ... } – без условия, просто выполнить
+                    // else {
                     if (line === 'else {') {
-                        if (currentCondition && currentActions.length) {
-                            this.rules.push({ condition: currentCondition, actions: [...currentActions] });
+                        if (currentIf && currentActions.length) {
+                            this.rules.push({ condition: currentIf, actions: [...currentActions] });
                             currentActions = [];
                         }
-                        currentCondition = { type: 'else', value: null };
+                        currentIf = { type: 'else', value: null };
                         continue;
                     }
-
-                    // Действия внутри блока
-                    const replyMatch = line.match(/reply\("([^"]+)"\);/);
-                    if (replyMatch) {
-                        currentActions.push({ type: 'reply', text: replyMatch[1] });
-                        continue;
-                    }
-
-                    const forwardMatch = line.match(/forward_message\(([^,]+),\s*([^)]+)\);/);
-                    if (forwardMatch) {
-                        currentActions.push({ type: 'forward', chatId: forwardMatch[1].trim(), messageId: forwardMatch[2].trim() });
-                        continue;
-                    }
-
-                    const actionMatch = line.match(/action reply\("([^"]+)"\);/);
-                    if (actionMatch) {
-                        currentActions.push({ type: 'actionButton', targetUid: actionMatch[1] });
-                        continue;
+                    // Действия: reply, forward_message, action reply
+                    if (currentIf) {
+                        const replyMatch = line.match(/^reply\("([^"]*)"\);/);
+                        if (replyMatch) {
+                            currentActions.push({ type: 'reply', text: replyMatch[1] });
+                            continue;
+                        }
+                        const forwardMatch = line.match(/^forward_message\(([^,]+),\s*([^)]+)\);/);
+                        if (forwardMatch) {
+                            currentActions.push({ type: 'forward', chatId: forwardMatch[1].trim(), messageId: forwardMatch[2].trim() });
+                            continue;
+                        }
+                        const actionMatch = line.match(/^action\s+reply\("([^"]+)"\);/);
+                        if (actionMatch) {
+                            currentActions.push({ type: 'actionButton', targetUid: actionMatch[1] });
+                            continue;
+                        }
                     }
                 }
             }
+            console.log(`[EasyBot] Разобрано правил: ${this.rules.length} для бота ${this.botName}`);
             return this.rules.length > 0;
         }
+    }
 
-        async execute(messageText, botId, currentChatId, botData, originalMsgId) {
-            // Ищем подходящее правило
+    // ---------- 3. Исполнитель действий ----------
+    class EasyBotExecutor {
+        constructor(botId, rules) {
+            this.botId = botId;
+            this.rules = rules;
+        }
+
+        async processMessage(incomingText, chatId, originalMsgId) {
+            console.log(`[EasyBot] Получено сообщение: "${incomingText}" в чате ${chatId}`);
             let matchedRule = null;
             for (const rule of this.rules) {
                 if (rule.condition.type === 'textEquals') {
-                    if (messageText === rule.condition.value) {
+                    if (incomingText === rule.condition.value) {
                         matchedRule = rule;
                         break;
                     }
@@ -5014,119 +5005,119 @@ if (!window._archive_chats_module) {
                     break;
                 }
             }
-            if (!matchedRule) return null;
-
-            // Выполняем действия
-            const results = [];
+            if (!matchedRule) {
+                console.log('[EasyBot] Нет подходящего правила');
+                return;
+            }
+            console.log(`[EasyBot] Правило сработало, действий: ${matchedRule.actions.length}`);
             for (const action of matchedRule.actions) {
-                if (action.type === 'reply') {
-                    // Отправляем ответное сообщение в тот же чат
-                    await this.sendMessage(currentChatId, action.text, botId);
-                    results.push({ type: 'reply', text: action.text });
-                }
-                else if (action.type === 'forward') {
-                    // Пересылка сообщения (по chat_id и message_id)
-                    await this.forwardMessage(action.chatId, action.messageId, botId);
-                    results.push({ type: 'forward', chatId: action.chatId, msgId: action.messageId });
-                }
-                else if (action.type === 'actionButton') {
-                    // Добавляем inline-кнопку к последнему сообщению (originalMsgId)
-                    await this.addInlineButton(originalMsgId, action.targetUid, botId);
-                    results.push({ type: 'button', targetUid: action.targetUid });
+                await this.executeAction(action, chatId, originalMsgId);
+            }
+        }
+
+        async executeAction(action, chatId, originalMsgId) {
+            const db = window.db;
+            const col = window.collection;
+            const addDoc = window.addDoc;
+            const serverTimestamp = window.serverTimestamp;
+            const currentUser = window.currentUser;
+            if (!db) return;
+
+            if (action.type === 'reply') {
+                await addDoc(col(db, 'messages'), {
+                    chatId: chatId,
+                    text: action.text,
+                    timestamp: serverTimestamp(),
+                    senderUid: this.botId,
+                    isBot: true,
+                    botReplied: true
+                });
+                console.log(`[EasyBot] Ответ отправлен: ${action.text}`);
+            }
+            else if (action.type === 'forward') {
+                // Пересылка сообщения по ID
+                try {
+                    const msgRef = window.doc(db, 'messages', action.messageId);
+                    const snap = await window.getDoc(msgRef);
+                    if (snap.exists()) {
+                        const data = snap.data();
+                        await addDoc(col(db, 'messages'), {
+                            chatId: action.chatId,
+                            text: data.text,
+                            timestamp: serverTimestamp(),
+                            senderUid: this.botId,
+                            isBot: true,
+                            forwardedFrom: data.senderUid
+                        });
+                        console.log(`[EasyBot] Переслано сообщение ${action.messageId} в чат ${action.chatId}`);
+                    }
+                } catch(e) { console.warn('Forward error:', e); }
+            }
+            else if (action.type === 'actionButton') {
+                // Добавляем inline-кнопку к сообщению, на которое отвечает бот
+                if (originalMsgId) {
+                    const msgRef = window.doc(db, 'messages', originalMsgId);
+                    try {
+                        const snap = await window.getDoc(msgRef);
+                        if (snap.exists()) {
+                            let buttons = snap.data().buttons || [];
+                            buttons.push({
+                                type: 'chat_redirect',
+                                uid: action.targetUid,
+                                text: 'Перейти ➡️'
+                            });
+                            await window.updateDoc(msgRef, { buttons: buttons });
+                            console.log(`[EasyBot] Кнопка добавлена к сообщению ${originalMsgId}`);
+                        }
+                    } catch(e) { console.warn('Add button error:', e); }
                 }
             }
-            return results;
-        }
-
-        async sendMessage(chatId, text, botId) {
-            if (!window.db || !window.currentUser) return;
-            try {
-                await window.addDoc(window.collection(window.db, 'messages'), {
-                    chatId: chatId,
-                    text: text,
-                    timestamp: window.serverTimestamp(),
-                    senderUid: botId,
-                    isBot: true
-                });
-            } catch(e) { console.warn('Bot reply error:', e); }
-        }
-
-        async forwardMessage(chatId, messageId, botId) {
-            // Получаем исходное сообщение
-            try {
-                const msgRef = window.doc(window.db, 'messages', messageId);
-                const msgSnap = await window.getDoc(msgRef);
-                if (msgSnap.exists()) {
-                    const data = msgSnap.data();
-                    await window.addDoc(window.collection(window.db, 'messages'), {
-                        chatId: chatId,
-                        text: data.text,
-                        timestamp: window.serverTimestamp(),
-                        senderUid: botId,
-                        isBot: true,
-                        forwardedFrom: data.senderUid
-                    });
-                }
-            } catch(e) { console.warn('Forward error:', e); }
-        }
-
-        async addInlineButton(messageId, targetUid, botId) {
-            // Обновляем сообщение, добавляем кнопку (сохраняем в поле buttons)
-            if (!messageId) return;
-            const msgRef = window.doc(window.db, 'messages', messageId);
-            try {
-                const snap = await window.getDoc(msgRef);
-                if (snap.exists()) {
-                    let buttons = snap.data().buttons || [];
-                    buttons.push({ type: 'chat_redirect', uid: targetUid, text: 'Перейти ➡️' });
-                    await window.updateDoc(msgRef, { buttons: buttons });
-                }
-            } catch(e) { console.warn('Add button error:', e); }
         }
     }
 
-    // ---------- 3. Заменяем логику ответа бота ----------
-    // Сохраняем оригинальный обработчик, если он есть
-    const originalBotHandler = window.botUnsubscribe ? true : false;
-    // Перехватываем создание подписки на бота в loadMessagesRealtime
+    // ---------- 4. Интеграция с существующей системой сообщений ----------
+    // Перехватываем создание подписки для ботов
     const originalLoadMessages = window.loadMessagesRealtime;
     if (originalLoadMessages) {
         window.loadMessagesRealtime = async function() {
             const result = await originalLoadMessages();
-            // После установки слушателя, если активный чат - бот, подменяем логику
+            // Если активный чат - бот, настраиваем его обработку
             if (window.activeChatId && window.activeChatId.startsWith('bot_')) {
                 const botId = window.activeChatId.replace('bot_', '');
                 const botDoc = await window.getDoc(window.doc(window.db, 'bots', botId));
                 if (botDoc.exists()) {
                     const bot = botDoc.data();
-                    // Если есть скрипт, используем его вместо стандартной personality
                     if (bot.script && bot.script.trim() !== '') {
-                        // Отключаем старый botUnsubscribe если был
+                        // Отключаем старую подписку, если есть
                         if (window.botUnsubscribe) {
                             window.botUnsubscribe();
                             window.botUnsubscribe = null;
                         }
-                        // Создаём интерпретатор
-                        const interpreter = new EasyBotInterpreter(bot.script);
-                        if (interpreter.parse()) {
-                            // Подписываемся на новые сообщения в этом чате
-                            const latestQ = window.query(window.collection(window.db, 'messages'), 
-                                window.where('chatId', '==', window.activeChatId), 
-                                window.orderBy('timestamp', 'desc'), 
+                        // Парсим скрипт
+                        const parser = new EasyBotParser(bot.script);
+                        if (parser.parse()) {
+                            const executor = new EasyBotExecutor(botId, parser.rules);
+                            // Подписываемся на новые сообщения в чате бота
+                            const messagesRef = window.collection(window.db, 'messages');
+                            const q = window.query(messagesRef,
+                                window.where('chatId', '==', window.activeChatId),
+                                window.orderBy('timestamp', 'desc'),
                                 window.limit(1));
-                            window.botUnsubscribe = window.onSnapshot(latestQ, async (snap) => {
+                            window.botUnsubscribe = window.onSnapshot(q, async (snap) => {
                                 if (!snap.empty) {
                                     const lastMsg = snap.docs[0].data();
                                     const msgId = snap.docs[0].id;
+                                    // Игнорируем сообщения от самого бота и уже обработанные
                                     if (lastMsg.senderUid !== botId && !lastMsg.botReplied && !lastMsg.isBot && !lastMsg.isCallEvent) {
-                                        // Помечаем как обработанное, чтобы не бесконечный цикл
+                                        // Помечаем как обработанное, чтобы не зациклить
                                         await window.updateDoc(window.doc(window.db, 'messages', msgId), { botReplied: true });
-                                        await interpreter.execute(lastMsg.text, botId, window.activeChatId, bot, msgId);
+                                        await executor.processMessage(lastMsg.text, window.activeChatId, msgId);
                                     }
                                 }
                             });
+                            console.log(`[EasyBot] Бот ${bot.name} активирован со скриптом`);
                         } else {
-                            console.warn('EasyBot: не удалось разобрать скрипт');
+                            console.warn(`[EasyBot] Не удалось разобрать скрипт бота ${bot.name}`);
                         }
                     }
                 }
@@ -5135,19 +5126,21 @@ if (!window._archive_chats_module) {
         };
     }
 
-    // ---------- 4. При создании бота сохраняем скрипт ----------
+    // ---------- 5. Переопределяем создание бота с сохранением скрипта ----------
     const originalCreateSubmit = document.getElementById('create-bot-submit')?.onclick;
     if (originalCreateSubmit) {
-        document.getElementById('create-bot-submit').onclick = async (e) => {
-            // Сначала вызываем оригинальный обработчик (он создаёт бота в Firestore)
-            // Но нам нужно модифицировать создание: добавить поле script
-            const botName = document.getElementById('bot-name-input').value.trim();
-            if (!botName) return alert('Введите имя бота');
-            const botAvatar = window.botAvatar || '🤖';
-            const personality = document.getElementById('bot-personality').value;
-            const script = document.getElementById('bot-script-textarea')?.value || '';
-            
-            // Создаём бота вручную с полем script
+        // Удаляем старый обработчик, чтобы не дублировать
+        document.getElementById('create-bot-submit').onclick = null;
+    }
+    document.getElementById('create-bot-submit')?.addEventListener('click', async (e) => {
+        e.preventDefault();
+        const botName = document.getElementById('bot-name-input').value.trim();
+        if (!botName) return alert('Введите имя бота');
+        const botAvatar = window.botAvatar || '🤖';
+        const personality = document.getElementById('bot-personality').value;
+        const script = document.getElementById('bot-script-textarea')?.value || '';
+        
+        try {
             const botRef = await window.addDoc(window.collection(window.db, 'bots'), {
                 name: botName,
                 avatar: botAvatar,
@@ -5159,43 +5152,44 @@ if (!window._archive_chats_module) {
             document.getElementById('modal-create-bot').classList.remove('active');
             await window.buildChatItems();
             window.switchToChat(`bot_${botRef.id}`, botName, null);
-            // Предотвращаем вызов оригинального (чтобы не дублировать)
-            e.stopPropagation();
-        };
-    }
+        } catch(err) {
+            console.error(err);
+            alert('Ошибка создания бота');
+        }
+    });
 
-    // ---------- 5. Рендерим кнопки в сообщениях ----------
+    // ---------- 6. Рендерим inline-кнопки в сообщениях ----------
     const originalRenderMessages = window.renderMessages;
     if (originalRenderMessages) {
         window.renderMessages = function() {
             originalRenderMessages();
-            // После отрисовки добавляем обработчики кнопок
-            document.querySelectorAll('.message .inline-buttons').forEach(container => container.remove());
+            // Добавляем кнопки, если есть поле buttons
+            document.querySelectorAll('.message .easybot-buttons').forEach(el => el.remove());
             document.querySelectorAll('.message').forEach(msgDiv => {
                 const msgId = msgDiv.dataset.msgId;
                 if (!msgId) return;
                 const msg = window.messages.find(m => m.id === msgId);
                 if (msg && msg.buttons && msg.buttons.length) {
                     const btnContainer = document.createElement('div');
-                    btnContainer.className = 'inline-buttons';
+                    btnContainer.className = 'easybot-buttons';
                     btnContainer.style.cssText = 'display:flex; gap:8px; margin-top:8px; flex-wrap:wrap;';
                     for (const btn of msg.buttons) {
                         const button = document.createElement('button');
                         button.textContent = btn.text || 'Перейти';
-                        button.style.cssText = 'background:#7B2FBE; color:white; border:none; border-radius:40px; padding:6px 16px; font-size:13px; cursor:pointer;';
+                        button.style.cssText = 'background:#7B2FBE; color:white; border:none; border-radius:40px; padding:6px 16px; font-size:13px; cursor:pointer; transition:0.1s;';
+                        button.onmouseover = () => button.style.transform = 'scale(1.02)';
+                        button.onmouseout = () => button.style.transform = 'scale(1)';
                         if (btn.type === 'chat_redirect' && btn.uid) {
                             button.onclick = () => {
-                                const targetId = btn.uid;
-                                // Пытаемся найти чат: возможно это UID пользователя, комнаты или канала
-                                if (targetId.startsWith('room_') || targetId.startsWith('bot_') || targetId === 'self') {
-                                    window.switchToChat(targetId, targetId, null);
+                                const target = btn.uid;
+                                if (target.startsWith('room_') || target.startsWith('bot_') || target === 'self') {
+                                    window.switchToChat(target, target, null);
                                 } else {
-                                    // Ищем по usersCache
-                                    const user = window.usersCache.get(targetId);
+                                    const user = window.usersCache.get(target);
                                     if (user) {
-                                        window.switchToChat(targetId, window.getUserDisplayName(targetId), null);
+                                        window.switchToChat(target, window.getUserDisplayName(target), null);
                                     } else {
-                                        alert('Чат не найден');
+                                        alert('Чат или пользователь не найден');
                                     }
                                 }
                             };
@@ -5208,20 +5202,9 @@ if (!window._archive_chats_module) {
         };
     }
 
-    // ---------- 6. Инициализация ----------
+    // ---------- 7. Инициализация модального окна при загрузке ----------
     window.addEventListener('load', () => {
         enhanceBotModal();
-        // При открытии модалки подгружаем скрипт, если редактируем бота (опционально)
-        const createBotBtn = document.getElementById('create-bot-btn');
-        if (createBotBtn) {
-            const originalClick = createBotBtn.onclick;
-            createBotBtn.onclick = (e) => {
-                if (originalClick) originalClick(e);
-                // Очищаем поле скрипта при открытии
-                const textarea = document.getElementById('bot-script-textarea');
-                if (textarea) textarea.value = '';
-            };
-        }
     });
 })();
 </script>
