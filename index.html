@@ -354,9 +354,9 @@
         .modal-close:hover { background: #ffd6a8; }
         .toggle-switch { display: flex; justify-content: space-between; align-items: center; background: #FFF7E8; padding: 12px 20px; border-radius: 60px; margin: 16px 0; border: 1px solid #FFE0B5; }
         .toggle { width: 56px; height: 28px; background: #E0C9A6; border-radius: 40px; position: relative; cursor: pointer; transition: 0.3s; }
-        .toggle::after { content: "☀️"; position: absolute; width: 28px; height: 28px; background: white; border-radius: 50%; top: 0; left: 0; transition: 0.3s; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+        .toggle::after { content: "??"; position: absolute; width: 28px; height: 28px; background: white; border-radius: 50%; top: 0; left: 0; transition: 0.3s; display: flex; align-items: center; justify-content: center; font-size: 16px; }
         .toggle.active { background: #F4A261; }
-        .toggle.active::after { transform: translateX(28px); content: "🌙"; }
+        .toggle.active::after { transform: translateX(28px); content: "??"; }
         .avatar-selector { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 20px 0; }
         .avatar-option { font-size: 40px; padding: 12px; background: #FFF2E0; border-radius: 32px; text-align: center; cursor: pointer; border: 2px solid transparent; }
         .avatar-option.selected { border-color: #F4A261; background: #FFE5C2; }
@@ -621,14 +621,14 @@
             <div class="sun"></div>
             <div class="cloud cloud1"></div>
             <div class="cloud cloud2"></div>
-            <div class="palms"><span class="palm">🌴</span><span class="palm">🌴</span><span class="palm">🌴</span></div>
+            <div class="palms"><span class="palm">??</span><span class="palm">??</span><span class="palm">??</span></div>
             <div class="sand"></div>
             <div class="wave"></div>
             <div class="wave wave2"></div>
         </div>
         <div class="splash-content">
             <div class="splash-logo">NexLink</div>
-            <div class="splash-subtitle">☀️ Общайся, обменивайся ☀️</div>
+            <div class="splash-subtitle">?? Общайся, обменивайся ??</div>
             <div class="splash-loader"></div>
         </div>
     </div>
@@ -637,18 +637,18 @@
     <div id="auth-screen" class="screen">
         <div class="auth-container">
             <div class="auth-brand">
-                <div class="auth-brand-icon">✨</div>
+                <div class="auth-brand-icon">?</div>
                 <h1>NexLink</h1>
                 <p>Общайся с друзьями</p>
             </div>
             <div id="verify-email-screen" class="hidden" style="text-align:center;">
-                <div style="font-size:48px; margin-bottom:16px;">📧</div>
+                <div style="font-size:48px; margin-bottom:16px;">??</div>
                 <h3 style="margin-bottom:8px;">Подтвердите ваш Email</h3>
                 <p style="color:#6c6c74; margin-bottom:20px;">Мы отправили письмо на <strong id="verify-email-address"></strong>. Перейдите по ссылке в письме.</p>
                 <div class="error-message" id="verify-error"></div>
-                <button class="btn" id="resend-verify-btn" style="margin-bottom:12px;">📨 Отправить повторно</button>
-                <button class="btn" id="check-verify-btn" style="background:#28a745; margin-bottom:12px;">✅ Проверить статус</button>
-                <button class="btn btn-secondary" id="verify-logout-btn">🚪 Выйти</button>
+                <button class="btn" id="resend-verify-btn" style="margin-bottom:12px;">?? Отправить повторно</button>
+                <button class="btn" id="check-verify-btn" style="background:#28a745; margin-bottom:12px;">? Проверить статус</button>
+                <button class="btn btn-secondary" id="verify-logout-btn">?? Выйти</button>
             </div>
             <div id="auth-forms">
                 <div class="auth-tabs">
@@ -656,25 +656,25 @@
                     <div class="auth-tab" data-tab="register">Регистрация</div>
                 </div>
                 <form id="login-form" class="auth-form">
-                    <div class="input-group"><label>📧 Email</label><input type="email" id="login-email" placeholder="example@mail.ru"></div>
-                    <div class="input-group"><label>🔒 Пароль</label><input type="password" id="login-password" placeholder="••••••••"></div>
+                    <div class="input-group"><label>?? Email</label><input type="email" id="login-email" placeholder="example@mail.ru"></div>
+                    <div class="input-group"><label>?? Пароль</label><input type="password" id="login-password" placeholder="••••••••"></div>
                     <div class="error-message" id="login-error"></div>
                     <button type="submit" class="btn">Войти</button>
                 </form>
                 <form id="register-form" class="auth-form hidden">
-                    <div class="input-group"><label>📧 Email</label><input type="email" id="reg-email" placeholder="hello@nexlink.com"></div>
-                    <div class="input-group"><label>👤 Юзернейм (@username)</label><input type="text" id="reg-username" placeholder="@alex_nex"></div>
-                    <div class="input-group"><label>🔐 Пароль</label><input type="password" id="reg-password" placeholder="мин. 6 символов"></div>
-                    <div class="input-group"><label>📛 Имя</label><input type="text" id="reg-firstname" placeholder="Алексей"></div>
-                    <div class="input-group"><label>👪 Фамилия</label><input type="text" id="reg-lastname" placeholder="Иванов"></div>
+                    <div class="input-group"><label>?? Email</label><input type="email" id="reg-email" placeholder="hello@nexlink.com"></div>
+                    <div class="input-group"><label>?? Юзернейм (@username)</label><input type="text" id="reg-username" placeholder="@alex_nex"></div>
+                    <div class="input-group"><label>?? Пароль</label><input type="password" id="reg-password" placeholder="мин. 6 символов"></div>
+                    <div class="input-group"><label>?? Имя</label><input type="text" id="reg-firstname" placeholder="Алексей"></div>
+                    <div class="input-group"><label>?? Фамилия</label><input type="text" id="reg-lastname" placeholder="Иванов"></div>
                     <div class="input-group">
-                        <label>🖼️ Аватар</label>
+                        <label>??? Аватар</label>
                         <div class="avatar-selector" id="reg-avatar-selector" style="grid-template-columns: repeat(6, 1fr); gap: 8px; margin-top: 8px;"></div>
                     </div>
                     <div class="error-message" id="reg-error"></div>
                     <button type="submit" class="btn">Создать аккаунт</button>
                 </form>
-                <button id="google-signin-btn" class="btn btn-secondary" style="margin-top:12px; background:#fff; color:#444; border:1px solid #ddd;">🟢 Войти через Google</button>
+                <button id="google-signin-btn" class="btn btn-secondary" style="margin-top:12px; background:#fff; color:#444; border:1px solid #ddd;">?? Войти через Google</button>
             </div>
         </div>
     </div>
@@ -687,64 +687,64 @@
                 <div class="chats-layout">
                     <div class="chat-list-panel" id="chat-list-panel">
                         <div class="list-header">
-                            <button class="icon-btn" id="menu-toggle-chats">☰</button>
+                            <button class="icon-btn" id="menu-toggle-chats">?</button>
                             <div class="list-title">Чаты</div>
                         </div>
                         <div class="chat-search-container">
                             <div class="chat-search-wrapper">
                                 <input type="text" id="chat-search-input" placeholder="Поиск...">
-                                <button id="clear-chat-search">✖</button>
+                                <button id="clear-chat-search">?</button>
                             </div>
                         </div>
                         <div class="chat-items" id="chat-items-container"></div>
-                        <button class="btn" id="create-bot-btn" style="margin:10px;">🤖 Создать бота</button>
+                        <button class="btn" id="create-bot-btn" style="margin:10px;">?? Создать бота</button>
                     </div>
                     <div class="chat-area-panel">
                         <!-- Входящий звонок баннер -->
                         <div id="incoming-call-banner">
-                            <div class="incoming-avatar" id="incoming-call-avatar">😊</div>
+                            <div class="incoming-avatar" id="incoming-call-avatar">??</div>
                             <div class="incoming-info">
                                 <div class="incoming-name" id="incoming-call-name">Пользователь</div>
-                                <div class="incoming-type" id="incoming-call-type">📞 Входящий звонок</div>
+                                <div class="incoming-type" id="incoming-call-type">?? Входящий звонок</div>
                             </div>
                             <div class="incoming-pulse"></div>
                             <div class="incoming-actions">
-                                <button class="call-accept-btn" id="accept-call-btn" title="Принять">📞</button>
-                                <button class="call-reject-btn" id="reject-call-btn" title="Отклонить">📵</button>
+                                <button class="call-accept-btn" id="accept-call-btn" title="Принять">??</button>
+                                <button class="call-reject-btn" id="reject-call-btn" title="Отклонить">??</button>
                             </div>
                         </div>
                         <header class="chat-header">
-                            <button class="icon-btn mobile-back-btn" id="mobile-show-list-btn">←</button>
+                            <button class="icon-btn mobile-back-btn" id="mobile-show-list-btn"><</button>
                             <div class="chat-title" id="chat-title">Избранное</div>
-                            <span id="call-in-progress-badge">● Звонок</span>
+                            <span id="call-in-progress-badge">? Звонок</span>
                             <div id="typing-indicator" class="typing-indicator" style="display:none;"></div>
-                            <button class="call-btn" id="start-audio-call-btn" title="Аудиозвонок" style="display:none;">📞</button>
-                            <button class="call-btn" id="start-video-call-btn" title="Видеозвонок" style="display:none;">📹</button>
-                            <button class="icon-btn" id="room-info-btn" style="display:none;">ℹ️</button>
+                            <button class="call-btn" id="start-audio-call-btn" title="Аудиозвонок" style="display:none;">??</button>
+                            <button class="call-btn" id="start-video-call-btn" title="Видеозвонок" style="display:none;">??</button>
+                            <button class="icon-btn" id="room-info-btn" style="display:none;">??</button>
                         </header>
                         <div class="chat-messages" id="chat-messages"></div>
                         <div class="message-input-container" id="message-input-container">
                             <div class="input-wrapper">
                                 <input type="text" class="message-input" id="message-input" placeholder="Напишите сообщение…">
-                                <button class="voice-btn" id="voice-record-btn">🎙️</button>
-                                <button class="emoji-btn" id="emoji-toggle">😊</button>
-                                <button class="sticker-btn" id="sticker-toggle">🎨</button>
+                                <button class="voice-btn" id="voice-record-btn">???</button>
+                                <button class="emoji-btn" id="emoji-toggle">??</button>
+                                <button class="sticker-btn" id="sticker-toggle">??</button>
                             </div>
-                            <button class="send-btn" id="send-btn">→</button>
+                            <button class="send-btn" id="send-btn">></button>
                             <div class="emoji-picker" id="emoji-picker">
-                                <span class="emoji-item">😊</span><span class="emoji-item">😂</span>
-                                <span class="emoji-item">❤️</span><span class="emoji-item">👍</span>
-                                <span class="emoji-item">😎</span><span class="emoji-item">🎉</span>
-                                <span class="emoji-item">🔥</span><span class="emoji-item">✨</span>
-                                <span class="emoji-item">🙏</span><span class="emoji-item">😢</span>
-                                <span class="emoji-item">👀</span><span class="emoji-item">💪</span>
+                                <span class="emoji-item">??</span><span class="emoji-item">??</span>
+                                <span class="emoji-item">??</span><span class="emoji-item">??</span>
+                                <span class="emoji-item">??</span><span class="emoji-item">??</span>
+                                <span class="emoji-item">??</span><span class="emoji-item">?</span>
+                                <span class="emoji-item">??</span><span class="emoji-item">??</span>
+                                <span class="emoji-item">??</span><span class="emoji-item">??</span>
                             </div>
                             <div class="sticker-panel" id="sticker-panel">
-                                <h4>🌟 Встроенные стикеры</h4>
+                                <h4>?? Встроенные стикеры</h4>
                                 <div class="sticker-grid" id="default-stickers"></div>
-                                <h4>📸 Мои стикеры</h4>
+                                <h4>?? Мои стикеры</h4>
                                 <div class="sticker-grid" id="custom-stickers"></div>
-                                <button class="upload-sticker-btn" id="upload-sticker-btn">➕ Загрузить свой стикер</button>
+                                <button class="upload-sticker-btn" id="upload-sticker-btn">? Загрузить свой стикер</button>
                                 <input type="file" id="sticker-file-input" accept="image/*" style="display:none;">
                             </div>
                         </div>
@@ -756,10 +756,10 @@
             <div id="contacts-pane" class="tab-pane">
                 <div class="list-header"><div class="list-title">Мои контакты</div></div>
                 <div class="search-users-container">
-                    <div class="search-users-header">🔍 Найти пользователей</div>
+                    <div class="search-users-header">?? Найти пользователей</div>
                     <div class="chat-search-wrapper">
                         <input type="text" id="search-users-input" placeholder="Имя или @username...">
-                        <button id="clear-users-search">✖</button>
+                        <button id="clear-users-search">?</button>
                     </div>
                     <div id="search-results" class="search-results" style="display:none;"></div>
                 </div>
@@ -770,22 +770,22 @@
             <div id="settings-pane" class="tab-pane">
                 <div class="settings-container">
                     <div class="settings-item" id="reduce-animations-setting">
-                        <span class="settings-icon">🐢</span>
+                        <span class="settings-icon">??</span>
                         <span class="settings-text">Уменьшить анимации</span>
                         <span class="settings-value" id="reduce-animations-status">Выкл</span>
-                        <span class="settings-arrow">→</span>
+                        <span class="settings-arrow">></span>
                     </div>
                     <div class="settings-item" data-action="profile">
-                        <span class="settings-icon">👤</span><span class="settings-text">Мой профиль</span><span class="settings-arrow">→</span>
+                        <span class="settings-icon">??</span><span class="settings-text">Мой профиль</span><span class="settings-arrow">></span>
                     </div>
                     <div class="settings-item" data-action="about">
-                        <span class="settings-icon">ℹ️</span><span class="settings-text">О приложении</span><span class="settings-arrow">→</span>
+                        <span class="settings-icon">??</span><span class="settings-text">О приложении</span><span class="settings-arrow">></span>
                     </div>
                     <div class="settings-item" id="logout-settings">
-                        <span class="settings-icon">🚪</span><span class="settings-text">Выйти</span><span class="settings-arrow">→</span>
+                        <span class="settings-icon">??</span><span class="settings-text">Выйти</span><span class="settings-arrow">></span>
                     </div>
                     <div class="settings-item" id="add-account-settings">
-                        <span class="settings-icon">➕</span><span class="settings-text">Добавить аккаунт</span><span class="settings-arrow">→</span>
+                        <span class="settings-icon">?</span><span class="settings-text">Добавить аккаунт</span><span class="settings-arrow">></span>
                     </div>
                 </div>
             </div>
@@ -793,9 +793,9 @@
  
         <!-- Tab Bar -->
         <div class="tab-bar">
-            <button class="tab-item active" data-tab="chats"><span class="tab-icon">💬</span><span>Чаты</span></button>
-            <button class="tab-item" data-tab="contacts"><span class="tab-icon">👥</span><span>Контакты</span></button>
-            <button class="tab-item" data-tab="settings"><span class="tab-icon">⚙️</span><span>Настройки</span></button>
+            <button class="tab-item active" data-tab="chats"><span class="tab-icon">??</span><span>Чаты</span></button>
+            <button class="tab-item" data-tab="contacts"><span class="tab-icon">??</span><span>Контакты</span></button>
+            <button class="tab-item" data-tab="settings"><span class="tab-icon">??</span><span>Настройки</span></button>
         </div>
     </div>
 
@@ -807,7 +807,7 @@
             <video id="local-video" autoplay playsinline muted></video>
 
             <div id="call-avatar-placeholder">
-                <div id="call-avatar-circle">😊</div>
+                <div id="call-avatar-circle">??</div>
                 <div id="call-peer-name-big">Пользователь</div>
                 <div id="call-status-text">Соединение...</div>
             </div>
@@ -825,15 +825,15 @@
 
             <div id="call-header">
                 <div id="call-header-name">Звонок</div>
-                <div id="call-type-badge">📞 Аудио</div>
+                <div id="call-type-badge">?? Аудио</div>
             </div>
 
             <div id="call-controls">
-                <button class="ctrl-btn ctrl-btn-mute" id="ctrl-mute" title="Микрофон">🎙️</button>
-                <button class="ctrl-btn ctrl-btn-video" id="ctrl-video" title="Камера">📹</button>
-                <button class="ctrl-btn ctrl-btn-end" id="ctrl-end" title="Завершить">📵</button>
-                <button class="ctrl-btn ctrl-btn-speaker" id="ctrl-speaker" title="Громкость">🔊</button>
-                <button class="ctrl-btn ctrl-btn-flip" id="ctrl-flip" title="Перевернуть камеру">🔄</button>
+                <button class="ctrl-btn ctrl-btn-mute" id="ctrl-mute" title="Микрофон">???</button>
+                <button class="ctrl-btn ctrl-btn-video" id="ctrl-video" title="Камера">??</button>
+                <button class="ctrl-btn ctrl-btn-end" id="ctrl-end" title="Завершить">??</button>
+                <button class="ctrl-btn ctrl-btn-speaker" id="ctrl-speaker" title="Громкость">??</button>
+                <button class="ctrl-btn ctrl-btn-flip" id="ctrl-flip" title="Перевернуть камеру">??</button>
             </div>
         </div>
     </div>
@@ -841,13 +841,13 @@
     <!-- Modals -->
     <div class="modal-overlay" id="modal-profile">
         <div class="modal-card">
-            <div class="modal-header"><h3>👤 Профиль</h3><button class="modal-close">✕</button></div>
+            <div class="modal-header"><h3>?? Профиль</h3><button class="modal-close">?</button></div>
             <div class="modal-content">
                 <div style="display:flex; gap:24px; align-items:center; margin-bottom:24px;">
-                    <div class="profile-avatar-preview" id="profile-avatar-preview">😊</div>
+                    <div class="profile-avatar-preview" id="profile-avatar-preview">??</div>
                     <div>
                         <div style="font-weight:700; font-size:18px;" id="profile-username-display">@username</div>
-                        <button id="avatar-upload-btn" class="btn" style="padding:8px 16px; margin-top:8px;">📷 Изменить фото</button>
+                        <button id="avatar-upload-btn" class="btn" style="padding:8px 16px; margin-top:8px;">?? Изменить фото</button>
                         <input type="file" id="avatar-upload-input" accept="image/*" style="display:none;">
                     </div>
                 </div>
@@ -862,16 +862,16 @@
  
     <div class="modal-overlay" id="modal-user-view">
         <div class="modal-card">
-            <div class="modal-header"><h3 id="user-view-title">👤 Пользователь</h3><button class="modal-close" id="user-view-close-btn">✕</button></div>
+            <div class="modal-header"><h3 id="user-view-title">?? Пользователь</h3><button class="modal-close" id="user-view-close-btn">?</button></div>
             <div class="modal-content" style="text-align:center;">
-                <div class="profile-avatar-preview" id="user-view-avatar" style="margin:0 auto 16px;">😊</div>
+                <div class="profile-avatar-preview" id="user-view-avatar" style="margin:0 auto 16px;">??</div>
                 <div style="font-size:22px; font-weight:700;" id="user-view-name"></div>
                 <div style="font-size:16px; color:#666; margin-top:8px;" id="user-view-username"></div>
                 <div style="margin-top:16px; background:#FFF2E0; border-radius:28px; padding:12px;" id="user-view-email"></div>
                 <div id="user-view-actions" style="display:flex; gap:12px; justify-content:center; margin-top:20px; flex-wrap:wrap;">
-                    <button class="btn" id="user-view-message-btn" style="flex:1; min-width:100px;">💬 Написать</button>
-                    <button class="btn btn-success" id="user-view-audio-call-btn" style="flex:1; min-width:100px; background:#2ecc71;">📞 Позвонить</button>
-                    <button class="btn" id="user-view-video-call-btn" style="flex:1; min-width:100px; background:#3498db;">📹 Видео</button>
+                    <button class="btn" id="user-view-message-btn" style="flex:1; min-width:100px;">?? Написать</button>
+                    <button class="btn btn-success" id="user-view-audio-call-btn" style="flex:1; min-width:100px; background:#2ecc71;">?? Позвонить</button>
+                    <button class="btn" id="user-view-video-call-btn" style="flex:1; min-width:100px; background:#3498db;">?? Видео</button>
                 </div>
             </div>
         </div>
@@ -879,7 +879,7 @@
  
     <div class="modal-overlay" id="modal-create-group">
         <div class="modal-card">
-            <div class="modal-header"><h3>👥 Новая группа</h3><button class="modal-close">✕</button></div>
+            <div class="modal-header"><h3>?? Новая группа</h3><button class="modal-close">?</button></div>
             <div class="modal-content">
                 <div class="input-group"><label>Название</label><input type="text" id="group-name-input" placeholder="Название группы"></div>
                 <div class="input-group"><label>Юзернейм</label><input type="text" id="group-username-input" placeholder="@groupname"></div>
@@ -887,7 +887,7 @@
                 <div style="margin-top:16px;">
                     <label>Аватар группы</label>
                     <div class="avatar-selector" id="group-avatar-selector"></div>
-                    <button id="group-avatar-upload-btn" class="btn" style="padding:8px 16px;">📷 Загрузить</button>
+                    <button id="group-avatar-upload-btn" class="btn" style="padding:8px 16px;">?? Загрузить</button>
                     <input type="file" id="group-avatar-upload-input" accept="image/*" style="display:none;">
                 </div>
                 <button class="btn" id="create-group-submit">Создать группу</button>
@@ -897,14 +897,14 @@
  
     <div class="modal-overlay" id="modal-create-channel">
         <div class="modal-card">
-            <div class="modal-header"><h3>📢 Новый канал</h3><button class="modal-close">✕</button></div>
+            <div class="modal-header"><h3>?? Новый канал</h3><button class="modal-close">?</button></div>
             <div class="modal-content">
                 <div class="input-group"><label>Название</label><input type="text" id="channel-name-input" placeholder="Название канала"></div>
                 <div class="input-group"><label>Юзернейм</label><input type="text" id="channel-username-input" placeholder="@channelname"></div>
                 <div style="margin-top:16px;">
                     <label>Аватар канала</label>
                     <div class="avatar-selector" id="channel-avatar-selector"></div>
-                    <button id="channel-avatar-upload-btn" class="btn" style="padding:8px 16px;">📷 Загрузить</button>
+                    <button id="channel-avatar-upload-btn" class="btn" style="padding:8px 16px;">?? Загрузить</button>
                     <input type="file" id="channel-avatar-upload-input" accept="image/*" style="display:none;">
                 </div>
                 <button class="btn" id="create-channel-submit">Создать канал</button>
@@ -914,7 +914,7 @@
  
     <div class="modal-overlay" id="modal-create-bot">
         <div class="modal-card">
-            <div class="modal-header"><h3>🤖 Создать бота</h3><button class="modal-close">✕</button></div>
+            <div class="modal-header"><h3>?? Создать бота</h3><button class="modal-close">?</button></div>
             <div class="modal-content">
                 <div class="input-group"><label>Имя бота</label><input type="text" id="bot-name-input" placeholder="Например, Бот Василий"></div>
                 <div class="input-group">
@@ -935,37 +935,37 @@
  
     <div class="modal-overlay" id="modal-room-info">
         <div class="modal-card">
-            <div class="modal-header"><h3 id="room-info-title">📋 Информация</h3><button class="modal-close">✕</button></div>
+            <div class="modal-header"><h3 id="room-info-title">?? Информация</h3><button class="modal-close">?</button></div>
             <div class="modal-content">
                 <div id="room-members-list" style="max-height:200px; overflow-y:auto; margin-bottom:16px;"></div>
                 <div class="input-group" style="margin-top:12px;">
-                    <label>➕ Пригласить (UID)</label>
+                    <label>? Пригласить (UID)</label>
                     <div style="display:flex; gap:8px;">
                         <input type="text" id="invite-user-input" placeholder="UID" style="flex:1;">
                         <button class="btn" id="invite-user-btn" style="padding:12px 16px;">Добавить</button>
                     </div>
                 </div>
-                <button class="btn" id="leave-room-btn" style="background:#e74c3c; margin-top:12px;">🚪 Покинуть</button>
+                <button class="btn" id="leave-room-btn" style="background:#e74c3c; margin-top:12px;">?? Покинуть</button>
             </div>
         </div>
     </div>
  
     <div class="modal-overlay" id="modal-about">
         <div class="modal-card">
-            <div class="modal-header"><h3>ℹ️ О приложении</h3><button class="modal-close">✕</button></div>
+            <div class="modal-header"><h3>?? О приложении</h3><button class="modal-close">?</button></div>
             <div class="modal-content">
                 <p><strong>NexLink</strong> — чат с группами, каналами и ботами.</p>
-                <p style="margin-top:12px;">Версия 9.1.0<br>🌞 Летнее настроение<br>🤖 Боты<br>🔒 E2EE шифрование<br>📞 WebRTC звонки (исправлен звук)</p>
+                <p style="margin-top:12px;">Версия 9.1.0<br>?? Летнее настроение<br>?? Боты<br>?? E2EE шифрование<br>?? WebRTC звонки (исправлен звук)</p>
             </div>
         </div>
     </div>
  
     <div class="modal-overlay" id="modal-privacy">
         <div class="modal-card">
-            <div class="modal-header"><h3>🔒 Конфиденциальность</h3><button class="modal-close">✕</button></div>
+            <div class="modal-header"><h3>?? Конфиденциальность</h3><button class="modal-close">?</button></div>
             <div class="modal-content">
                 <div class="privacy-section">
-                    <h4>🏖️ Кто может мне писать</h4>
+                    <h4>??? Кто может мне писать</h4>
                     <div class="radio-group" id="privacy-write-group">
                         <div class="radio-option" data-value="all"><div class="radio-circle"></div>Все</div>
                         <div class="radio-option" data-value="contacts"><div class="radio-circle"></div>Мои контакты</div>
@@ -973,7 +973,7 @@
                     </div>
                 </div>
                 <div class="privacy-section">
-                    <h4>🌊 Кто видит почту</h4>
+                    <h4>?? Кто видит почту</h4>
                     <div class="radio-group" id="privacy-email-group">
                         <div class="radio-option" data-value="all"><div class="radio-circle"></div>Все</div>
                         <div class="radio-option" data-value="contacts"><div class="radio-circle"></div>Контакты</div>
@@ -1149,7 +1149,7 @@ function getUserDisplayName(uid) {
 window.getUserDisplayName = getUserDisplayName;
  
 function renderAvatarHtml(avatar) {
-    if (!avatar) return '😊';
+    if (!avatar) return '??';
     if (avatar.startsWith('data:image/') || avatar.startsWith('http'))
         return `<img src="${escapeHtml(avatar)}" alt="avatar" style="width:100%;height:100%;object-fit:cover;">`;
     return escapeHtml(avatar);
@@ -1235,12 +1235,12 @@ async function startRecording() {
             };
             reader.readAsDataURL(audioBlob);
             stream.getTracks().forEach(t => t.stop());
-            voiceRecordBtn.textContent = '🎙️';
+            voiceRecordBtn.textContent = '???';
             isRecording = false;
         };
         mediaRecorder.start();
         isRecording = true;
-        voiceRecordBtn.textContent = '⏺️';
+        voiceRecordBtn.textContent = '??';
         setTimeout(() => { if (mediaRecorder && mediaRecorder.state === 'recording') stopRecording(); }, 30000);
     } catch (err) { alert('Микрофон недоступен: ' + err.message); }
 }
@@ -1284,12 +1284,12 @@ async function buildChatItems() {
     await refreshUsersCache();
     await refreshRoomsCache();
     const archivedIds = getArchivedChats();
-    let items = [{ id: 'self', name: 'Избранное', avatar: '📁', lastMsg: 'Нет сообщений', type: 'self' }];
+    let items = [{ id: 'self', name: 'Избранное', avatar: '??', lastMsg: 'Нет сообщений', type: 'self' }];
     roomsCache.forEach(room => {
         if (room.members && room.members.includes(currentUser.uid)) {
             items.push({
                 id: `room_${room.id}`, name: room.name,
-                avatar: room.avatar || (room.type === 'channel' ? '📢' : '👥'),
+                avatar: room.avatar || (room.type === 'channel' ? '??' : '??'),
                 lastMsg: 'Нет сообщений', type: room.type, roomData: room
             });
         }
@@ -1297,7 +1297,7 @@ async function buildChatItems() {
     const botsSnap = await getDocs(query(collection(db, 'bots'), where('ownerUid', '==', currentUser.uid)));
     botsSnap.forEach(docSnap => {
         const bot = docSnap.data();
-        items.push({ id: `bot_${docSnap.id}`, name: bot.name, avatar: bot.avatar || '🤖', lastMsg: 'Нет сообщений', type: 'bot', botData: bot });
+        items.push({ id: `bot_${docSnap.id}`, name: bot.name, avatar: bot.avatar || '??', lastMsg: 'Нет сообщений', type: 'bot', botData: bot });
     });
     const chatIds = await getAllChatIdsForUser();
     const participantsSet = new Set();
@@ -1321,9 +1321,9 @@ async function buildChatItems() {
         const snap = await getDocs(query(collection(db, 'messages'), where('chatId', '==', chatId), orderBy('timestamp', 'desc'), limit(1)));
         if (!snap.empty) {
             let txt = snap.docs[0].data().text;
-            if (txt?.startsWith('[sticker]')) txt = '📸 Стикер';
-            else if (txt?.startsWith('[voice]')) txt = '🎤 Голосовое сообщение';
-            else if (txt?.startsWith('[call:')) txt = '📞 Звонок';
+            if (txt?.startsWith('[sticker]')) txt = '?? Стикер';
+            else if (txt?.startsWith('[voice]')) txt = '?? Голосовое сообщение';
+            else if (txt?.startsWith('[call:')) txt = '?? Звонок';
             chat.lastMsg = txt || 'Нет сообщений';
         }
     }
@@ -1337,7 +1337,7 @@ function renderChatList(filterText = '') {
     const f = filterText.trim().toLowerCase();
     const filtered = chatItems.filter(c => c.name.toLowerCase().includes(f));
     if (f && filtered.length === 0) {
-        chatItemsContainer.innerHTML = '<div style="padding:20px;text-align:center;">⚠️ Ничего не найдено</div>';
+        chatItemsContainer.innerHTML = '<div style="padding:20px;text-align:center;">?? Ничего не найдено</div>';
         return;
     }
     chatItemsContainer.innerHTML = filtered.map(chat => {
@@ -1352,7 +1352,7 @@ function renderChatList(filterText = '') {
             typeBadge = '<span style="font-size:10px;background:#d4edda;color:#155724;padding:2px 6px;border-radius:10px;margin-left:6px;">бот</span>';
         }
         const isSecret = isSecretChatLocal(chat.id);
-        const secretMark = isSecret ? ' <span style="font-size:14px;">🔒</span>' : '';
+        const secretMark = isSecret ? ' <span style="font-size:14px;">??</span>' : '';
         return `<div class="chat-item ${chat.id === activeChatId ? 'active' : ''}" data-chat-id="${chat.id}">
             <div class="chat-avatar">${renderAvatarHtml(chat.avatar)}</div>
             <div class="chat-info" style="min-width:0;flex:1;">
@@ -1405,7 +1405,7 @@ async function loadMessagesRealtime() {
                         try { data.text = await decryptSecretMsg(data.text.substring(11), session.key); }
                         catch(e) { data.text = '[Зашифрованное сообщение]'; }
                     } else {
-                        data.text = '[🔒 Секретный чат — введите пароль]';
+                        data.text = '[?? Секретный чат — введите пароль]';
                     }
                 }
                 messages.push({ id: docSnap.id, ...data, _pending: isPending });
@@ -1451,7 +1451,7 @@ window.loadMessagesRealtime = loadMessagesRealtime;
 function generateBotReply(userMessage, bot) {
     if (bot.personality === 'echo') return `Ты сказал: "${userMessage}"`;
     if (bot.personality === 'funny') {
-        const jokes = ['А что так серьёзно? 😄', 'Бип-буп, я робот!', 'Ха-ха, смешно!', 'Я бы пошутил, но батарейка садится.'];
+        const jokes = ['А что так серьёзно? ??', 'Бип-буп, я робот!', 'Ха-ха, смешно!', 'Я бы пошутил, но батарейка садится.'];
         return jokes[Math.floor(Math.random() * jokes.length)];
     }
     return 'Я простой бот, пока не очень умный.';
@@ -1461,7 +1461,7 @@ function renderMessages() {
     if (!chatMessagesDiv) return;
     chatMessagesDiv.innerHTML = '';
     if (messages.length === 0) {
-        chatMessagesDiv.innerHTML = '<div style="text-align:center; color:#aaa; margin-top:40px;">💬 Нет сообщений</div>';
+        chatMessagesDiv.innerHTML = '<div style="text-align:center; color:#aaa; margin-top:40px;">?? Нет сообщений</div>';
         return;
     }
     const fragment = document.createDocumentFragment();
@@ -1474,9 +1474,9 @@ function renderMessages() {
         const time = msg.timestamp?.toDate ? msg.timestamp.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
         let content = '';
         if (msg.isCallEvent) {
-            const icon = msg.callType === 'video' ? '📹' : '📞';
+            const icon = msg.callType === 'video' ? '??' : '??';
             const duration = msg.callDuration ? ` · ${formatCallDuration(msg.callDuration)}` : '';
-            const statusIcon = msg.callStatus === 'missed' ? '📵' : (msg.callStatus === 'rejected' ? '🚫' : icon);
+            const statusIcon = msg.callStatus === 'missed' ? '??' : (msg.callStatus === 'rejected' ? '??' : icon);
             content = `<div class="msg-call-event">${statusIcon} <span>${escapeHtml(msg.text || 'Звонок')}${duration}</span></div>`;
         } else if (msg.isSticker && msg.text?.startsWith('[sticker]')) {
             content = `<img src="${msg.text.substring(9)}" class="message-sticker" alt="sticker" loading="lazy">`;
@@ -1487,7 +1487,7 @@ function renderMessages() {
         } else {
             content = `<div>${escapeHtml(msg.text || '')}</div>`;
         }
-        const fwdHtml = msg.forwardedFrom ? `<div style="font-size:11px; opacity:0.7; margin-bottom:4px;">📤 Переслано</div>` : '';
+        const fwdHtml = msg.forwardedFrom ? `<div style="font-size:11px; opacity:0.7; margin-bottom:4px;">?? Переслано</div>` : '';
         const replyHtml = msg.replyToText ? `<div style="font-size:12px; opacity:0.7; border-left:3px solid currentColor; padding-left:6px; margin-bottom:4px;">${escapeHtml(msg.replyToText.substring(0, 60))}</div>` : '';
         const senderHtml = (!isOut && msg.senderUid) ? `<div style="font-size:12px; font-weight:600; margin-bottom:4px;">${escapeHtml(getUserDisplayName(msg.senderUid))}</div>` : '';
         const editedMark = msg.edited ? ' <span style="font-size:10px; opacity:0.7;">(ред.)</span>' : '';
@@ -1495,10 +1495,10 @@ function renderMessages() {
             ${msg.reaction ? `<div style="margin-top:6px;">${msg.reaction}</div>` : ''}
             <div style="font-size:10px; margin-top:4px;">${time}${editedMark}</div>
             ${!msg.isCallEvent ? `<div class="message-actions">
-                <button class="react-msg">😊</button>
-                <button class="reply-msg">↩️</button>
-                <button class="fwd-msg">📤</button>
-                ${isOut && !msg.isDeleted ? '<button class="edit-msg">✎</button><button class="delete-msg">✖</button>' : ''}
+                <button class="react-msg">??</button>
+                <button class="reply-msg">??</button>
+                <button class="fwd-msg">??</button>
+                ${isOut && !msg.isDeleted ? '<button class="edit-msg">?</button><button class="delete-msg">?</button>' : ''}
             </div>` : ''}`;
         fragment.appendChild(div);
     }
@@ -1526,8 +1526,8 @@ async function sendMessage() {
     if (!text || !currentUser) return;
     if (!activeChatId) { alert('Чат не выбран.'); return; }
     const status = await checkUserRestrictions();
-    if (status.banned) { alert('⛔ Аккаунт заблокирован.'); return; }
-    if (status.muted) { alert('🔇 Вы временно не можете отправлять сообщения.'); return; }
+    if (status.banned) { alert('? Аккаунт заблокирован.'); return; }
+    if (status.muted) { alert('?? Вы временно не можете отправлять сообщения.'); return; }
     const chatId = await getChatIdForActive();
     if (!chatId) return;
     let msgData = { chatId, timestamp: serverTimestamp(), senderUid: currentUser.uid, isSticker: false, isVoice: false };
@@ -1586,7 +1586,7 @@ function openReactionPicker(msgDiv, msgId) {
     if (existing) existing.remove();
     const picker = document.createElement('div');
     picker.className = 'reaction-picker';
-    picker.innerHTML = ['❤️', '😂', '😮', '😢', '👍', '👎'].map(e => `<span>${e}</span>`).join('');
+    picker.innerHTML = ['??', '??', '??', '??', '??', '??'].map(e => `<span>${e}</span>`).join('');
     picker.style.cssText = 'position:absolute; background:#fffef7; border-radius:40px; padding:8px 12px; box-shadow:0 12px 28px rgba(0,0,0,0.2); display:flex; gap:12px; z-index:200; bottom:100%; left:0; margin-bottom:8px;';
     msgDiv.style.position = 'relative';
     msgDiv.appendChild(picker);
@@ -1616,7 +1616,7 @@ function showReplyBar(msg) {
         bar.style.cssText = 'background:#f0eaf5; padding:8px 12px; display:flex; justify-content:space-between; align-items:center; border-left:4px solid #7B2FBE; font-size:13px;';
         messageInputContainer.insertBefore(bar, messageInputContainer.firstChild);
     }
-    bar.innerHTML = `<div><strong>Ответ:</strong> ${escapeHtml((msg.text || '').substring(0, 60))}</div><button id="cancel-reply" style="background:none; border:none; font-size:18px; cursor:pointer;">✖</button>`;
+    bar.innerHTML = `<div><strong>Ответ:</strong> ${escapeHtml((msg.text || '').substring(0, 60))}</div><button id="cancel-reply" style="background:none; border:none; font-size:18px; cursor:pointer;">?</button>`;
     document.getElementById('cancel-reply').onclick = () => { replyToMsg = null; bar.remove(); };
     replyToMsg = msg;
 }
@@ -1627,7 +1627,7 @@ async function showForwardPicker(msgData) {
         document.body.insertAdjacentHTML('beforeend', `
             <div class="modal-overlay" id="forward-modal">
                 <div class="modal-card" style="max-width:400px;">
-                    <div class="modal-header"><h3>📤 Переслать</h3><button class="modal-close" id="fwd-close">✕</button></div>
+                    <div class="modal-header"><h3>?? Переслать</h3><button class="modal-close" id="fwd-close">?</button></div>
                     <div class="modal-content">
                         <input type="text" id="fwd-search" placeholder="Поиск чата..." style="width:100%; padding:10px; border-radius:28px; margin-bottom:16px; outline:none; border:1.5px solid #e5e5ea;">
                         <div id="fwd-list" style="max-height:300px; overflow-y:auto;"></div>
@@ -1713,7 +1713,7 @@ function openUserProfile(uid) {
     const user = usersCache.get(uid);
     if (!user) return;
     const modal = document.getElementById('modal-user-view');
-    document.getElementById('user-view-title').textContent = `👤 ${getUserDisplayName(uid)}`;
+    document.getElementById('user-view-title').textContent = `?? ${getUserDisplayName(uid)}`;
     document.getElementById('user-view-avatar').innerHTML = renderAvatarHtml(user.avatar);
     document.getElementById('user-view-name').textContent = getUserDisplayName(uid);
     document.getElementById('user-view-username').textContent = user.username || '';
@@ -1759,7 +1759,7 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
     loginError.textContent = '';
     if (!isValidEmail(email)) { loginError.textContent = 'Некорректный email'; return; }
     try { await signInWithEmailAndPassword(auth, email, password); }
-    catch (err) { loginError.textContent = '❌ Неверный email или пароль'; }
+    catch (err) { loginError.textContent = '? Неверный email или пароль'; }
 });
  
 document.getElementById('register-form').addEventListener('submit', async (e) => {
@@ -1771,15 +1771,15 @@ document.getElementById('register-form').addEventListener('submit', async (e) =>
     const lastName  = document.getElementById('reg-lastname').value.trim();
     const regError  = document.getElementById('reg-error');
     regError.textContent = ''; regError.className = 'error-message';
-    if (!isValidEmail(email)) { regError.textContent = '❌ Некорректный email'; return; }
-    if (!username.startsWith('@') || username.length < 2) { regError.textContent = '❌ Юзернейм должен начинаться с @ (мин. 2 символа)'; return; }
-    if (password.length < 6) { regError.textContent = '❌ Пароль не менее 6 символов'; return; }
-    if (!firstName) { regError.textContent = '❌ Имя обязательно'; return; }
+    if (!isValidEmail(email)) { regError.textContent = '? Некорректный email'; return; }
+    if (!username.startsWith('@') || username.length < 2) { regError.textContent = '? Юзернейм должен начинаться с @ (мин. 2 символа)'; return; }
+    if (password.length < 6) { regError.textContent = '? Пароль не менее 6 символов'; return; }
+    if (!firstName) { regError.textContent = '? Имя обязательно'; return; }
     try {
         const q = query(collection(db, 'users'), where('username', '==', username));
-        if (!(await getDocs(q)).empty) { regError.textContent = '❌ Юзернейм уже занят'; return; }
+        if (!(await getDocs(q)).empty) { regError.textContent = '? Юзернейм уже занят'; return; }
         const selectedOpt = document.querySelector('#reg-avatar-selector .avatar-option.selected');
-        const avatar = selectedOpt ? selectedOpt.dataset.avatar : '😊';
+        const avatar = selectedOpt ? selectedOpt.dataset.avatar : '??';
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const uid = userCredential.user.uid;
         await setDoc(doc(db, 'users', uid), {
@@ -1789,17 +1789,17 @@ document.getElementById('register-form').addEventListener('submit', async (e) =>
         });
         await sendEmailVerification(userCredential.user);
         regError.classList.add('success-message');
-        regError.textContent = '✅ Аккаунт создан! Проверьте почту для подтверждения.';
+        regError.textContent = '? Аккаунт создан! Проверьте почту для подтверждения.';
         showVerifyEmailScreen(userCredential.user.email);
     } catch (error) {
-        regError.textContent = error.code === 'auth/email-already-in-use' ? '❌ Email уже зарегистрирован' : `❌ Ошибка: ${error.message}`;
+        regError.textContent = error.code === 'auth/email-already-in-use' ? '? Email уже зарегистрирован' : `? Ошибка: ${error.message}`;
     }
 });
  
 (function initRegAvatar() {
     const selector = document.getElementById('reg-avatar-selector');
     if (!selector) return;
-    const avatars = ['😊','😎','🐱','🐶','🦊','🐼','⭐','💡','🎸','📱','☕','🍕','❤️','🔥','🌟','👍'];
+    const avatars = ['??','??','??','??','??','??','?','??','??','??','?','??','??','??','??','??'];
     selector.innerHTML = avatars.map(a => `<div class="avatar-option" data-avatar="${a}" style="font-size:28px; padding:8px; text-align:center; cursor:pointer; border-radius:16px; background:#f5f5f7;">${a}</div>`).join('');
     selector.querySelector('.avatar-option').classList.add('selected');
     selector.querySelectorAll('.avatar-option').forEach(opt => opt.addEventListener('click', () => {
@@ -1819,8 +1819,8 @@ function hideVerifyEmailScreen() {
 }
 document.getElementById('resend-verify-btn').addEventListener('click', async () => {
     try {
-        if (auth.currentUser) { await sendEmailVerification(auth.currentUser); document.getElementById('verify-error').textContent = '✅ Письмо отправлено!'; document.getElementById('verify-error').className = 'error-message success-message'; }
-    } catch (err) { document.getElementById('verify-error').textContent = `❌ Ошибка: ${err.message}`; }
+        if (auth.currentUser) { await sendEmailVerification(auth.currentUser); document.getElementById('verify-error').textContent = '? Письмо отправлено!'; document.getElementById('verify-error').className = 'error-message success-message'; }
+    } catch (err) { document.getElementById('verify-error').textContent = `? Ошибка: ${err.message}`; }
 });
 document.getElementById('verify-logout-btn').addEventListener('click', async () => { await signOut(auth); hideVerifyEmailScreen(); });
 document.getElementById('check-verify-btn').addEventListener('click', async () => {
@@ -1828,13 +1828,13 @@ document.getElementById('check-verify-btn').addEventListener('click', async () =
     try {
         await auth.currentUser.reload();
         if (auth.currentUser.emailVerified) {
-            document.getElementById('verify-error').textContent = '✅ Подтверждено! Войдите снова.';
+            document.getElementById('verify-error').textContent = '? Подтверждено! Войдите снова.';
             document.getElementById('verify-error').className = 'error-message success-message';
         } else {
-            document.getElementById('verify-error').textContent = '❌ Email ещё не подтверждён.';
+            document.getElementById('verify-error').textContent = '? Email ещё не подтверждён.';
             document.getElementById('verify-error').className = 'error-message';
         }
-    } catch (err) { document.getElementById('verify-error').textContent = `❌ ${err.message}`; }
+    } catch (err) { document.getElementById('verify-error').textContent = `? ${err.message}`; }
 });
  
 document.getElementById('google-signin-btn').addEventListener('click', async () => {
@@ -1848,7 +1848,7 @@ document.getElementById('google-signin-btn').addEventListener('click', async () 
             await setDoc(doc(db, 'users', user.uid), {
                 email: user.email, username: `@user_${user.uid.substring(0, 6)}`,
                 firstName: names[0] || 'Пользователь', lastName: names.slice(1).join(' ') || '',
-                avatar: user.photoURL || '😊', name: user.displayName || 'Пользователь',
+                avatar: user.photoURL || '??', name: user.displayName || 'Пользователь',
                 privacyWrite: 'all', privacyEmailVisibility: 'all', hideEmail: false, uid: user.uid, contacts: []
             });
         }
@@ -1885,7 +1885,7 @@ onAuthStateChanged(auth, async (user) => {
         initCallSignaling();
         setTimeout(async () => {
             const status = await checkUserRestrictions();
-            if (status.banned) alert(`⛔ Аккаунт заблокирован. Причина: ${status.banReason}`);
+            if (status.banned) alert(`? Аккаунт заблокирован. Причина: ${status.banReason}`);
         }, 1000);
         updateLastSeen();
         startHeartbeat();
@@ -1930,7 +1930,7 @@ document.querySelectorAll('.tab-item').forEach(tab => tab.addEventListener('clic
 document.querySelectorAll('[data-action="profile"]').forEach(el => el.addEventListener('click', openMyProfileModal));
 document.querySelectorAll('[data-action="about"]').forEach(el => el.addEventListener('click', () => document.getElementById('modal-about').classList.add('active')));
  
-const avatarOptions = ['😊','😎','🐱','🐶','🦊','🐼','⭐','💡','🎸','📱','☕','🍕'];
+const avatarOptions = ['??','??','??','??','??','??','?','??','??','??','?','??'];
 function renderAvatarSelector(selected) {
     avatarSelector.innerHTML = avatarOptions.map(a => `<div class="avatar-option ${a===selected?'selected':''}" data-avatar="${a}">${a}</div>`).join('');
     avatarSelector.querySelectorAll('.avatar-option').forEach(o => o.addEventListener('click', () => {
@@ -1945,8 +1945,8 @@ function openMyProfileModal() {
     profileLastname.value  = userProfile?.lastName || '';
     profileUsernameDisplay.textContent = userProfile?.username || '@user';
     profileAvatarPreview.innerHTML = renderAvatarHtml(userProfile?.avatar);
-    renderAvatarSelector(userProfile?.avatar || '😊');
-    profileEmailDisplay.textContent = currentUser.email + (auth.currentUser?.emailVerified ? ' ✅' : ' ⚠️');
+    renderAvatarSelector(userProfile?.avatar || '??');
+    profileEmailDisplay.textContent = currentUser.email + (auth.currentUser?.emailVerified ? ' ?' : ' ??');
     let uidDiv = document.getElementById('profile-uid-field');
     if (!uidDiv) {
         uidDiv = document.createElement('div');
@@ -1954,7 +1954,7 @@ function openMyProfileModal() {
         uidDiv.style.cssText = 'background:#FFF2E0; padding:12px; border-radius:28px; margin-top:12px; font-size:13px; color:#5e5e66; word-break:break-all;';
         profileEmailDisplay.insertAdjacentElement('afterend', uidDiv);
     }
-    uidDiv.innerHTML = `<strong>🆔 Ваш ID:</strong><br>${currentUser.uid}`;
+    uidDiv.innerHTML = `<strong>?? Ваш ID:</strong><br>${currentUser.uid}`;
     document.getElementById('modal-profile').classList.add('active');
 }
 avatarUploadBtn.addEventListener('click', () => avatarUploadInput.click());
@@ -2003,9 +2003,9 @@ async function compressImage(file, maxW = 200, maxH = 200, quality = 0.8) {
     });
 }
  
-let groupAvatar = '👥', channelAvatar = '📢';
+let groupAvatar = '??', channelAvatar = '??';
 function setupAvatarSelector(selectorDiv, uploadBtn, uploadInput, setFn) {
-    const avatars = ['👥','📢','🌴','☀️','🎉','💬','⭐','🐱','🐶','🦊','😐','🤑'];
+    const avatars = ['??','??','??','??','??','??','?','??','??','??','??','??'];
     selectorDiv.innerHTML = avatars.map(a => `<div class="avatar-option" data-avatar="${a}">${a}</div>`).join('');
     selectorDiv.querySelectorAll('.avatar-option').forEach(opt => opt.addEventListener('click', () => {
         selectorDiv.querySelectorAll('.avatar-option').forEach(o => o.classList.remove('selected'));
@@ -2048,7 +2048,7 @@ document.getElementById('create-channel-submit').addEventListener('click', async
  
 roomInfoBtn.addEventListener('click', async () => {
     if (!activeRoomData) return;
-    document.getElementById('room-info-title').textContent = `📋 ${activeRoomData.name}`;
+    document.getElementById('room-info-title').textContent = `?? ${activeRoomData.name}`;
     const membersDiv = document.getElementById('room-members-list');
     membersDiv.innerHTML = `<div>Участников: ${activeRoomData.members.length}</div>` + activeRoomData.members.map(uid => `<div>${getUserDisplayName(uid)}</div>`).join('');
     document.getElementById('modal-room-info').classList.add('active');
@@ -2070,16 +2070,16 @@ document.getElementById('leave-room-btn').addEventListener('click', async () => 
     switchToChat('self', 'Избранное');
 });
  
-let botAvatar = '🤖';
+let botAvatar = '??';
 function setupBotAvatarSelector() {
-    const avatars = ['🤖','😺','🐶','👽','👾','🤠','🧑‍💻','🧚'];
+    const avatars = ['??','??','??','??','??','??','?????','??'];
     botAvatarSelectorDiv.innerHTML = avatars.map(a => `<div class="avatar-option" data-avatar="${a}">${a}</div>`).join('');
     botAvatarSelectorDiv.querySelectorAll('.avatar-option').forEach(opt => opt.addEventListener('click', () => {
         botAvatarSelectorDiv.querySelectorAll('.avatar-option').forEach(o => o.classList.remove('selected'));
         opt.classList.add('selected'); botAvatar = opt.dataset.avatar;
     }));
 }
-createBotBtn.addEventListener('click', () => { setupBotAvatarSelector(); document.getElementById('modal-create-bot').classList.add('active'); document.getElementById('bot-name-input').value = ''; botAvatar = '🤖'; });
+createBotBtn.addEventListener('click', () => { setupBotAvatarSelector(); document.getElementById('modal-create-bot').classList.add('active'); document.getElementById('bot-name-input').value = ''; botAvatar = '??'; });
 document.getElementById('create-bot-submit').addEventListener('click', async () => {
     const name = document.getElementById('bot-name-input').value.trim();
     if (!name) return alert('Введите имя бота');
@@ -2147,7 +2147,7 @@ async function renderContactsAndSearch() {
                     <div class="chat-avatar" style="width:48px;height:48px;">${renderAvatarHtml(u.avatar)}</div>
                     <div><div class="contact-name">${escapeHtml(getUserDisplayName(u.uid))}</div><div class="contact-username">${escapeHtml(u.username || '')}</div></div>
                 </div>
-                ${!isContact ? `<button class="add-contact-btn" data-uid="${u.uid}">➕ Добавить</button>` : '<button class="add-contact-btn" disabled style="opacity:0.5;">В контактах</button>'}
+                ${!isContact ? `<button class="add-contact-btn" data-uid="${u.uid}">? Добавить</button>` : '<button class="add-contact-btn" disabled style="opacity:0.5;">В контактах</button>'}
             </div>`;
         }).join('');
         searchResultsDiv.style.display = 'block';
@@ -2335,11 +2335,11 @@ function showChatContextMenu(chatId, chatName) {
         document.body.insertAdjacentHTML('beforeend', `
             <div class="modal-overlay" id="chat-context-modal">
                 <div class="modal-card" style="max-width:300px;">
-                    <div class="modal-header"><h3 id="ctx-chat-name">Чат</h3><button class="modal-close ctx-close">✕</button></div>
+                    <div class="modal-header"><h3 id="ctx-chat-name">Чат</h3><button class="modal-close ctx-close">?</button></div>
                     <div class="modal-content" style="display:flex; flex-direction:column; gap:8px;">
-                        <button class="btn" id="ctx-archive">📦 Архивировать</button>
-                        <button class="btn btn-danger" id="ctx-delete" style="background:#e74c3c;">🗑️ Удалить чат</button>
-                        <button class="btn btn-secondary" id="ctx-block">🔒 Заблокировать</button>
+                        <button class="btn" id="ctx-archive">?? Архивировать</button>
+                        <button class="btn btn-danger" id="ctx-delete" style="background:#e74c3c;">??? Удалить чат</button>
+                        <button class="btn btn-secondary" id="ctx-block">?? Заблокировать</button>
                     </div>
                 </div>
             </div>`);
@@ -2351,7 +2351,7 @@ function showChatContextMenu(chatId, chatName) {
     const archivedIds = getArchivedChats();
     const archiveBtn = document.getElementById('ctx-archive');
     const isArchived = archivedIds.includes(chatId);
-    archiveBtn.textContent = isArchived ? '📂 Разархивировать' : '📦 Архивировать';
+    archiveBtn.textContent = isArchived ? '?? Разархивировать' : '?? Архивировать';
     archiveBtn.onclick = async () => {
         let archived = getArchivedChats();
         if (isArchived) archived = archived.filter(id => id !== chatId);
@@ -2383,11 +2383,11 @@ function showChatContextMenu(chatId, chatName) {
         if (isBlocked) {
             blocked = blocked.filter(id => id !== chatId);
             await updateDoc(userRef, { blockedUsers: blocked });
-            alert('✅ Разблокирован');
+            alert('? Разблокирован');
         } else {
             blocked.push(chatId);
             await updateDoc(userRef, { blockedUsers: blocked });
-            alert('🔒 Заблокирован');
+            alert('?? Заблокирован');
         }
         if (userProfile) userProfile.blockedUsers = blocked;
         modal.classList.remove('active');
@@ -2435,11 +2435,11 @@ async function checkUserRestrictions() {
         const nowOnline = navigator.onLine;
         if (!nowOnline && isOnline) {
             div.style.transform = 'translateY(0)';
-            div.textContent = '⚠️ Нет соединения с интернетом';
+            div.textContent = '?? Нет соединения с интернетом';
             warningShown = true;
         } else if (nowOnline && !isOnline && warningShown) {
             div.style.background = '#2ecc71';
-            div.textContent = '✅ Соединение восстановлено!';
+            div.textContent = '? Соединение восстановлено!';
             div.style.transform = 'translateY(0)';
             setTimeout(() => { div.style.transform = 'translateY(-100%)'; div.style.background = '#e74c3c'; }, 2500);
             warningShown = false;
@@ -2488,7 +2488,7 @@ async function checkUserRestrictions() {
     if (sc && !document.getElementById('theme-settings-item')) {
         const item = document.createElement('div');
         item.className = 'settings-item'; item.id = 'theme-settings-item';
-        item.innerHTML = `<span class="settings-icon">🎨</span><span class="settings-text">Тема</span><span class="settings-value" id="theme-status-value">Светлая</span><span class="settings-arrow">→</span>`;
+        item.innerHTML = `<span class="settings-icon">??</span><span class="settings-text">Тема</span><span class="settings-value" id="theme-status-value">Светлая</span><span class="settings-arrow">></span>`;
         const reduceItem = document.getElementById('reduce-animations-setting');
         if (reduceItem) reduceItem.insertAdjacentElement('afterend', item);
         else sc.insertBefore(item, sc.firstChild);
@@ -2506,11 +2506,11 @@ async function checkUserRestrictions() {
     if (!listHeader || document.getElementById('create-group-btn')) return;
     const groupBtn = document.createElement('button');
     groupBtn.id = 'create-group-btn'; groupBtn.className = 'icon-btn';
-    groupBtn.innerHTML = '👥'; groupBtn.title = 'Новая группа';
+    groupBtn.innerHTML = '??'; groupBtn.title = 'Новая группа';
     groupBtn.onclick = () => document.getElementById('modal-create-group').classList.add('active');
     const channelBtn = document.createElement('button');
     channelBtn.id = 'create-channel-btn'; channelBtn.className = 'icon-btn';
-    channelBtn.innerHTML = '📢'; channelBtn.title = 'Новый канал';
+    channelBtn.innerHTML = '??'; channelBtn.title = 'Новый канал';
     channelBtn.onclick = () => document.getElementById('modal-create-channel').classList.add('active');
     listHeader.appendChild(groupBtn);
     listHeader.appendChild(channelBtn);
@@ -2524,17 +2524,17 @@ async function checkUserRestrictions() {
     document.title = 'NexLink';
 })();
 
-// ══════════════════════════════════════════════════════════════
+// ==============================================================
 //  WEBRTC — ЗВОНКИ (ПОЛНОСТЬЮ ПЕРЕПИСАН — ИСПРАВЛЕН ЗВУК)
 //
 //  ИСПРАВЛЕНИЯ:
 //  1. ICE candidates буферизируются до setRemoteDescription
 //  2. remoteVideo.muted = false явно при каждом назначении потока
-//  3. Правильная последовательность: offer → setRemote → answer → setRemote
+//  3. Правильная последовательность: offer > setRemote > answer > setRemote
 //  4. Слушатель ICE для callee запускается ПОСЛЕ setRemoteDescription
 //  5. Добавлен try-catch для addIceCandidate
 //  6. autoplay policy — явный вызов .play() с обработкой ошибки
-// ══════════════════════════════════════════════════════════════
+// ==============================================================
 
 const RTC_CONFIG = {
     iceServers: [
@@ -2634,7 +2634,7 @@ function showCallScreen(peerUid, callType, status = 'Соединение...') {
     callHeaderName.textContent = name;
     callStatusText.textContent = status;
     callAvatarCircle.innerHTML = renderAvatarHtml(peer?.avatar);
-    callTypeBadge.textContent = callType === 'video' ? '📹 Видео' : '📞 Аудио';
+    callTypeBadge.textContent = callType === 'video' ? '?? Видео' : '?? Аудио';
     callAvatarPlaceholder.style.display = 'flex';
     // ВАЖНО: явно сбрасываем muted перед каждым звонком
     remoteVideo.muted = false;
@@ -2657,7 +2657,7 @@ function showIncomingBanner(peerUid, callType) {
     const peer = usersCache.get(peerUid);
     incomingName.textContent = getUserDisplayName(peerUid);
     incomingAvatar.innerHTML = renderAvatarHtml(peer?.avatar);
-    incomingType.textContent = callType === 'video' ? '📹 Входящий видеозвонок' : '📞 Входящий звонок';
+    incomingType.textContent = callType === 'video' ? '?? Входящий видеозвонок' : '?? Входящий звонок';
     incomingBanner.classList.add('visible');
 }
 function hideIncomingBanner() {
@@ -2754,10 +2754,10 @@ function createPeerConnection(callId, role) {
         }
         // Показываем индикатор звука
         audioLevelIndicator.classList.remove('hidden');
-        callStatusText.textContent = 'Соединено ✓';
+        callStatusText.textContent = 'Соединено ?';
     };
 
-    // ICE кандидаты → Firestore
+    // ICE кандидаты > Firestore
     const iceSide = role === 'caller' ? 'callerCandidates' : 'calleeCandidates';
     peerConnection.onicecandidate = async (event) => {
         if (event.candidate) {
@@ -2769,7 +2769,7 @@ function createPeerConnection(callId, role) {
         const state = peerConnection.iceConnectionState;
         console.log('ICE state:', state);
         if (state === 'connected' || state === 'completed') {
-            callStatusText.textContent = 'Соединено ✓';
+            callStatusText.textContent = 'Соединено ?';
             if (!callStartTime) startCallTimer();
             // Дополнительно убеждаемся что audio не заглушен
             if (remoteVideo.srcObject) {
@@ -2789,7 +2789,7 @@ function createPeerConnection(callId, role) {
         const state = peerConnection.connectionState;
         console.log('Connection state:', state);
         if (state === 'connected') {
-            callStatusText.textContent = 'Соединено ✓';
+            callStatusText.textContent = 'Соединено ?';
             if (!callStartTime) startCallTimer();
         } else if (state === 'failed') {
             endCallCleanup();
@@ -2846,7 +2846,7 @@ async function startCall(peerUid, isVideo = false) {
         createdAt: serverTimestamp()
     });
 
-    showCallScreen(peerUid, currentCallType, '📞 Вызов...');
+    showCallScreen(peerUid, currentCallType, '?? Вызов...');
 
     // ИСПРАВЛЕНИЕ: Слушаем ICE от callee ДО получения answer — буферизуем
     unsubscribeCallICE = onSnapshot(collection(db, 'calls', callId, 'calleeCandidates'), (snap) => {
@@ -2863,13 +2863,13 @@ async function startCall(peerUid, isVideo = false) {
         const data = snap.data();
 
         if (data.status === 'rejected') {
-            callStatusText.textContent = '📵 Вызов отклонён';
+            callStatusText.textContent = '?? Вызов отклонён';
             await logCallEvent('rejected');
             setTimeout(endCallCleanup, 1500);
             return;
         }
         if (data.status === 'missed') {
-            callStatusText.textContent = '📵 Нет ответа';
+            callStatusText.textContent = '?? Нет ответа';
             setTimeout(endCallCleanup, 1500);
             return;
         }
@@ -2893,7 +2893,7 @@ async function startCall(peerUid, isVideo = false) {
 
     callRingTimeout = setTimeout(async () => {
         if (peerConnection && peerConnection.iceConnectionState !== 'connected' && peerConnection.iceConnectionState !== 'completed') {
-            callStatusText.textContent = '📵 Нет ответа';
+            callStatusText.textContent = '?? Нет ответа';
             await updateDoc(doc(db, 'calls', callId), { status: 'missed' }).catch(() => {});
             await logCallEvent('missed');
             setTimeout(endCallCleanup, 1500);
@@ -3007,9 +3007,9 @@ function endCallCleanup() {
     currentCallRole = null;
     currentCallPeer = null;
     isMuted = false; isVideoOff = false;
-    document.getElementById('ctrl-mute').textContent = '🎙️';
+    document.getElementById('ctrl-mute').textContent = '???';
     document.getElementById('ctrl-mute').classList.remove('active');
-    document.getElementById('ctrl-video').textContent = '📹';
+    document.getElementById('ctrl-video').textContent = '??';
     document.getElementById('ctrl-video').classList.remove('active');
 }
 
@@ -3019,7 +3019,7 @@ function showUnmuteButton() {
     const overlay = document.createElement('div');
     overlay.id = 'unmute-overlay';
     overlay.style.cssText = 'position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); z-index:600; background:rgba(0,0,0,0.7); color:white; padding:20px 30px; border-radius:24px; cursor:pointer; font-size:18px; text-align:center;';
-    overlay.innerHTML = '🔊 Нажмите для включения звука';
+    overlay.innerHTML = '?? Нажмите для включения звука';
     overlay.onclick = () => {
         remoteVideo.muted = false;
         remoteVideo.volume = 1.0;
@@ -3034,11 +3034,11 @@ async function logCallEvent(status, duration = 0) {
     if (!currentUser || !currentCallPeer) return;
     try {
         const chatId = await getChatId(currentCallPeer);
-        const icons = { ended: '📞', missed: '📵', rejected: '🚫' };
+        const icons = { ended: '??', missed: '??', rejected: '??' };
         const texts = { ended: 'Исходящий звонок', missed: 'Нет ответа', rejected: 'Отклонённый звонок' };
         await addDoc(collection(db, 'messages'), {
             chatId,
-            text: `${icons[status] || '📞'} ${texts[status] || 'Звонок'}`,
+            text: `${icons[status] || '??'} ${texts[status] || 'Звонок'}`,
             timestamp: serverTimestamp(),
             senderUid: currentUser.uid,
             isCallEvent: true,
@@ -3054,7 +3054,7 @@ function toggleMute() {
     if (!localStream) return;
     isMuted = !isMuted;
     localStream.getAudioTracks().forEach(t => t.enabled = !isMuted);
-    document.getElementById('ctrl-mute').textContent = isMuted ? '🔇' : '🎙️';
+    document.getElementById('ctrl-mute').textContent = isMuted ? '??' : '???';
     document.getElementById('ctrl-mute').classList.toggle('active', isMuted);
 }
 
@@ -3062,7 +3062,7 @@ function toggleVideo() {
     if (!localStream) return;
     isVideoOff = !isVideoOff;
     localStream.getVideoTracks().forEach(t => t.enabled = !isVideoOff);
-    document.getElementById('ctrl-video').textContent = isVideoOff ? '📵' : '📹';
+    document.getElementById('ctrl-video').textContent = isVideoOff ? '??' : '??';
     document.getElementById('ctrl-video').classList.toggle('active', isVideoOff);
     if (isVideoOff) {
         localVideo.style.display = 'none';
@@ -3078,7 +3078,7 @@ function toggleSpeaker() {
     remoteVideo.muted = !isSpeakerOn;
     remoteVideo.volume = isSpeakerOn ? 1.0 : 0;
     document.getElementById('ctrl-speaker').classList.toggle('active', isSpeakerOn);
-    document.getElementById('ctrl-speaker').textContent = isSpeakerOn ? '🔊' : '🔇';
+    document.getElementById('ctrl-speaker').textContent = isSpeakerOn ? '??' : '??';
 }
 
 let useFrontCamera = true;
@@ -3179,7 +3179,7 @@ const verifSettingsContainer = document.querySelector('#settings-pane .settings-
 const verifMenuItem = document.createElement('div');
 verifMenuItem.className = 'settings-item';
 verifMenuItem.id = 'verification-request-btn';
-verifMenuItem.innerHTML = `<span class="settings-icon">📝</span><span class="settings-text">Заявка на верификацию</span><span class="settings-arrow">→</span>`;
+verifMenuItem.innerHTML = `<span class="settings-icon">??</span><span class="settings-text">Заявка на верификацию</span><span class="settings-arrow">></span>`;
 const aboutItemVerif = document.querySelector('[data-action="about"]');
 if (aboutItemVerif) aboutItemVerif.insertAdjacentElement('beforebegin', verifMenuItem);
 else verifSettingsContainer.appendChild(verifMenuItem);
@@ -3191,14 +3191,14 @@ if (!verifModalElement) {
     verifModalElement.id = 'modal-verification';
     verifModalElement.innerHTML = `
         <div class="modal-card" style="max-width:500px;">
-            <div class="modal-header"><h3>📝 Заявка на верификацию</h3><button class="modal-close">✕</button></div>
+            <div class="modal-header"><h3>?? Заявка на верификацию</h3><button class="modal-close">?</button></div>
             <div class="modal-content">
                 <div style="margin-bottom:16px;">
                     <label style="font-weight:600;">Тип верификации:</label>
                     <div class="radio-group" id="verif-type-group">
-                        <div class="radio-option" data-type="famous">⭐ Известный</div>
-                        <div class="radio-option" data-type="very_famous">🏆 Очень известный</div>
-                        <div class="radio-option" data-type="media">📺 Медиа / Пресса</div>
+                        <div class="radio-option" data-type="famous">? Известный</div>
+                        <div class="radio-option" data-type="very_famous">?? Очень известный</div>
+                        <div class="radio-option" data-type="media">?? Медиа / Пресса</div>
                     </div>
                 </div>
                 <div class="input-group">
@@ -3206,7 +3206,7 @@ if (!verifModalElement) {
                     <textarea id="verif-reason" rows="4" style="padding:12px; border-radius:24px; border:1px solid #e5e5ea; width:100%; resize:vertical;" placeholder="Укажите вашу деятельность..."></textarea>
                 </div>
                 <div id="verif-status-message" class="error-message" style="margin:12px 0;"></div>
-                <button id="submit-verif-btn" class="btn">📨 Отправить заявку</button>
+                <button id="submit-verif-btn" class="btn">?? Отправить заявку</button>
             </div>
         </div>`;
     document.body.appendChild(verifModalElement);
@@ -3216,9 +3216,9 @@ if (!verifModalElement) {
 
 verifMenuItem.addEventListener('click', async () => {
     const verified = await fetchUserVerificationStatus(currentUser.uid);
-    if (verified) { const typeNames = { famous: '⭐ Известный', very_famous: '🏆 Очень известный', media: '📺 Медиа' }; alert(`✅ Уже верифицирован (${typeNames[verified] || verified})`); return; }
+    if (verified) { const typeNames = { famous: '? Известный', very_famous: '?? Очень известный', media: '?? Медиа' }; alert(`? Уже верифицирован (${typeNames[verified] || verified})`); return; }
     const existingReq = await getUserVerificationRequest(currentUser.uid);
-    if (existingReq && existingReq.status === 'pending') { alert('⏳ Заявка уже на рассмотрении.'); return; }
+    if (existingReq && existingReq.status === 'pending') { alert('? Заявка уже на рассмотрении.'); return; }
     document.getElementById('verif-reason').value = '';
     document.getElementById('verif-status-message').innerHTML = '';
     document.querySelectorAll('#verif-type-group .radio-option').forEach(opt => opt.classList.remove('selected'));
@@ -3236,23 +3236,23 @@ document.querySelectorAll('#verif-type-group .radio-option').forEach(opt => {
 
 document.getElementById('submit-verif-btn').addEventListener('click', async () => {
     const selectedType = document.querySelector('#verif-type-group .radio-option.selected');
-    if (!selectedType) { document.getElementById('verif-status-message').innerHTML = '❌ Выберите тип'; return; }
+    if (!selectedType) { document.getElementById('verif-status-message').innerHTML = '? Выберите тип'; return; }
     const reason = document.getElementById('verif-reason').value.trim();
-    if (!reason || reason.length < 20) { document.getElementById('verif-status-message').innerHTML = '❌ Обоснование мин. 20 символов'; return; }
+    if (!reason || reason.length < 20) { document.getElementById('verif-status-message').innerHTML = '? Обоснование мин. 20 символов'; return; }
     const btn = document.getElementById('submit-verif-btn');
-    btn.disabled = true; btn.textContent = '⏳ Отправка...';
+    btn.disabled = true; btn.textContent = '? Отправка...';
     try {
         await addDoc(collection(db, 'verification_requests'), {
             userId: currentUser.uid, userEmail: currentUser.email,
             userName: getUserDisplayName(currentUser.uid), type: selectedType.dataset.type,
             reason, status: 'pending', timestamp: serverTimestamp(), updatedAt: serverTimestamp()
         });
-        document.getElementById('verif-status-message').innerHTML = '✅ Заявка отправлена!';
+        document.getElementById('verif-status-message').innerHTML = '? Заявка отправлена!';
         document.getElementById('verif-status-message').className = 'error-message success-message';
         setTimeout(() => verifModalElement.classList.remove('active'), 2000);
     } catch (err) {
-        document.getElementById('verif-status-message').innerHTML = `❌ ${err.message}`;
-    } finally { btn.disabled = false; btn.textContent = '📨 Отправить заявку'; }
+        document.getElementById('verif-status-message').innerHTML = `? ${err.message}`;
+    } finally { btn.disabled = false; btn.textContent = '?? Отправить заявку'; }
 });
 </script>
 
@@ -3260,8 +3260,8 @@ document.getElementById('submit-verif-btn').addEventListener('click', async () =
 <div class="modal-overlay" id="modal-support">
     <div class="modal-card">
         <div class="modal-header">
-            <h3>🛠️ Техподдержка</h3>
-            <button class="modal-close">✕</button>
+            <h3>??? Техподдержка</h3>
+            <button class="modal-close">?</button>
         </div>
         <div class="modal-content">
             <p style="margin-bottom: 20px; color: #555;">Опишите вашу проблему или вопрос.</p>
@@ -3275,7 +3275,7 @@ document.getElementById('submit-verif-btn').addEventListener('click', async () =
             </div>
             <div class="error-message" id="support-error" style="display:none;"></div>
             <div class="error-message success-message" id="support-success" style="display:none;"></div>
-            <button class="btn" id="send-support-btn" style="margin-top: 16px; width: 100%;">📤 Отправить обращение</button>
+            <button class="btn" id="send-support-btn" style="margin-top: 16px; width: 100%;">?? Отправить обращение</button>
             <p style="text-align:center; margin-top: 18px; font-size: 13px; color: #777;">UID: <strong id="support-user-uid"></strong></p>
         </div>
     </div>
@@ -3304,7 +3304,7 @@ document.getElementById('send-support-btn').addEventListener('click', async () =
             subject: subject || 'Без темы', message, status: 'new',
             createdAt: serverTimestamp(), username: window.userProfile?.username
         });
-        successEl.textContent = '✅ Обращение отправлено!'; successEl.style.display = 'block';
+        successEl.textContent = '? Обращение отправлено!'; successEl.style.display = 'block';
         setTimeout(() => document.getElementById('modal-support').classList.remove('active'), 2000);
     } catch (e) { errorEl.textContent = 'Ошибка отправки'; errorEl.style.display = 'block'; }
 });
@@ -3312,14 +3312,14 @@ const settingsContainer = document.querySelector('.settings-container');
 if (settingsContainer) {
     const supportItem = document.createElement('div');
     supportItem.className = 'settings-item';
-    supportItem.innerHTML = `<span class="settings-icon">🛠️</span><span class="settings-text">Техподдержка</span><span class="settings-arrow">→</span>`;
+    supportItem.innerHTML = `<span class="settings-icon">???</span><span class="settings-text">Техподдержка</span><span class="settings-arrow">></span>`;
     supportItem.onclick = openSupportModal;
     settingsContainer.appendChild(supportItem);
 }
-// ═══════════════════════════════════════════════════════════════
+// ===============================================================
 //   ДВУХФАКТОРНАЯ АУТЕНТИФИКАЦИЯ (TOTP + резервные коды)
 //   Версия без переопределения onAuthStateChanged
-// ═══════════════════════════════════════════════════════════════
+// ===============================================================
 
 if (!window._2fa_initialized) {
     window._2fa_initialized = true;
@@ -3408,7 +3408,7 @@ if (!window._2fa_initialized) {
         modal.id = 'modal-2fa-setup';
         modal.innerHTML = `
             <div class="modal-card" style="max-width:500px;">
-                <div class="modal-header"><h3>🔐 Настройка двухфакторной аутентификации</h3><button class="modal-close" id="close2faSetup">✕</button></div>
+                <div class="modal-header"><h3>?? Настройка двухфакторной аутентификации</h3><button class="modal-close" id="close2faSetup">?</button></div>
                 <div class="modal-content">
                     <p>Отсканируйте QR-код в приложении-аутентификаторе (Google Authenticator).</p>
                     <div style="text-align:center; margin:16px 0;"><img src="${qrUrl}" style="width:200px;height:200px;border-radius:16px;"></div>
@@ -3454,7 +3454,7 @@ if (!window._2fa_initialized) {
                 twoFactorSecret: current2FASecret,
                 backupCodesHash: backupHashes
             }, { merge: true });
-            alert('✅ Двухфакторная аутентификация включена!');
+            alert('? Двухфакторная аутентификация включена!');
             modal.remove();
             location.reload();
         };
@@ -3480,7 +3480,7 @@ if (!window._2fa_initialized) {
             modal.className = 'modal-overlay';
             modal.innerHTML = `
                 <div class="modal-card" style="max-width:400px;">
-                    <div class="modal-header"><h3>🔐 Двухфакторная аутентификация</h3><button class="modal-close" id="close2faLogin">✕</button></div>
+                    <div class="modal-header"><h3>?? Двухфакторная аутентификация</h3><button class="modal-close" id="close2faLogin">?</button></div>
                     <div class="modal-content">
                         <p>Введите код из приложения-аутентификатора или резервный код.</p>
                         <div class="input-group"><label>Код</label><input type="text" id="2fa-login-code" placeholder="6 или 8 цифр" autocomplete="off"></div>
@@ -3569,7 +3569,7 @@ if (!window._2fa_initialized) {
         const item = document.createElement('div');
         item.id = '2fa-settings-item';
         item.className = 'settings-item';
-        item.innerHTML = `<span class="settings-icon">🔐</span><span class="settings-text">Двухфакторная аутентификация</span><span class="settings-arrow">→</span>`;
+        item.innerHTML = `<span class="settings-icon">??</span><span class="settings-text">Двухфакторная аутентификация</span><span class="settings-arrow">></span>`;
         item.onclick = async () => {
             if (!window.currentUser) return;
             const userSnap = await getDoc(doc(db, 'users', window.currentUser.uid));
@@ -3593,10 +3593,10 @@ if (!window._2fa_initialized) {
         }
     }, 500);
 }
-// ═══════════════════════════════════════════════════════════════
+// ===============================================================
 //   E2EE ДЛЯ ГРУППОВЫХ ЧАТОВ (на основе существующих ECDH ключей)
 //   Синхронизация общего ключа группы через Firestore
-// ═══════════════════════════════════════════════════════════════
+// ===============================================================
 
 if (!window._group_e2ee_initialized) {
     window._group_e2ee_initialized = true;
@@ -3789,7 +3789,7 @@ if (!window._group_e2ee_initialized) {
                             const key = await decryptGroupKeyForMember(activeRoomData.id, currentUser.uid);
                             groupKeyCache.set(activeRoomData.id, key);
                         } catch(e) {
-                            msg.text = '[🔒 Зашифрованное сообщение]';
+                            msg.text = '[?? Зашифрованное сообщение]';
                             continue;
                         }
                     }
@@ -3798,7 +3798,7 @@ if (!window._group_e2ee_initialized) {
                     try {
                         msg.text = await aesDecrypt(encryptedPart, key);
                     } catch(e) {
-                        msg.text = '[🔒 Ошибка расшифровки]';
+                        msg.text = '[?? Ошибка расшифровки]';
                     }
                 }
             }
@@ -3859,7 +3859,7 @@ if (!window._group_e2ee_initialized) {
         };
     }
 
-    console.log('✅ E2EE для групп активирован');
+    console.log('? E2EE для групп активирован');
 }
 // ========== ДОБАВЛЕНИЕ ПРАВИЛ ПОЛЬЗОВАНИЯ ==========
 (function addRules() {
@@ -3869,8 +3869,8 @@ if (!window._group_e2ee_initialized) {
             <div class="modal-overlay" id="rules-modal">
                 <div class="modal-card" style="max-width: 900px; max-height: 85vh; overflow-y: auto; padding: 0;">
                     <div class="modal-header" style="padding: 16px 24px; border-bottom: 1px solid #f0eaf5; margin-bottom: 0;">
-                        <h3>📜 Правила пользования NexLink</h3>
-                        <button class="modal-close" id="rules-close-btn">✕</button>
+                        <h3>?? Правила пользования NexLink</h3>
+                        <button class="modal-close" id="rules-close-btn">?</button>
                     </div>
                     <div class="modal-content" id="rules-content" style="padding: 20px 24px;"></div>
                 </div>
@@ -3950,7 +3950,7 @@ if (!window._group_e2ee_initialized) {
                     <li><strong>4.6.</strong> Запрещено размещать личные данные других людей без их согласия.</li>
                     <li><strong>4.7.</strong> Запрещен контент 18+ в общедоступных чатах и каналах.</li>
                 </ul>
-                <div class="highlight-box">⚠️ <strong>Важно:</strong> Администрация оставляет за собой право удалять любой контент, нарушающий данные правила, без предварительного уведомления.</div>
+                <div class="highlight-box">?? <strong>Важно:</strong> Администрация оставляет за собой право удалять любой контент, нарушающий данные правила, без предварительного уведомления.</div>
             </section>
             <!-- Секция 5 -->
             <section class="section" id="section5">
@@ -3996,7 +3996,7 @@ if (!window._group_e2ee_initialized) {
                     <li><strong>8.3.</strong> Запрещено публиковать чужие переписки без согласия.</li>
                     <li><strong>8.4.</strong> Пользователь несёт ответственность за сохранность своего аккаунта.</li>
                 </ul>
-                <div class="highlight-box info">💡 <strong>Совет:</strong> Используйте двухфакторную аутентификацию для дополнительной защиты вашего аккаунта.</div>
+                <div class="highlight-box info">?? <strong>Совет:</strong> Используйте двухфакторную аутентификацию для дополнительной защиты вашего аккаунта.</div>
             </section>
             <!-- Секция 9 -->
             <section class="section" id="section9">
@@ -4058,7 +4058,7 @@ if (!window._group_e2ee_initialized) {
                 <ul>
                     <li><strong>14.1.</strong> Пользуясь NexLink, вы подтверждаете, что ознакомились и согласны со всеми правилами.</li>
                 </ul>
-                <div class="closing"><strong>14.2.</strong> Приятного общения! <span style="font-size:1.5rem;">☀️</span></div>
+                <div class="closing"><strong>14.2.</strong> Приятного общения! <span style="font-size:1.5rem;">??</span></div>
             </section>
         </div>
     `;
@@ -4071,7 +4071,7 @@ if (!window._group_e2ee_initialized) {
         const rulesItem = document.createElement('div');
         rulesItem.id = 'rules-menu-item';
         rulesItem.className = 'settings-item';
-        rulesItem.innerHTML = `<span class="settings-icon">📜</span><span class="settings-text">Правила пользования</span><span class="settings-arrow">→</span>`;
+        rulesItem.innerHTML = `<span class="settings-icon">??</span><span class="settings-text">Правила пользования</span><span class="settings-arrow">></span>`;
         rulesItem.onclick = () => {
             document.getElementById('rules-modal').classList.add('active');
         };
@@ -4093,9 +4093,9 @@ if (!window._group_e2ee_initialized) {
     }
 })();
 // ========== КОНЕЦ БЛОКА ПРАВИЛ ==========
-// ═══════════════════════════════════════════════════════════════
+// ===============================================================
 //   УПРАВЛЕНИЕ КОНТАКТАМИ: УДАЛЕНИЕ + БЛОКИРОВКА (ЧЕРНЫЙ СПИСОК)
-// ═══════════════════════════════════════════════════════════════
+// ===============================================================
 
 if (!window._contact_management) {
     window._contact_management = true;
@@ -4182,11 +4182,11 @@ if (!window._contact_management) {
             modal.className = 'modal-overlay';
             modal.innerHTML = `
                 <div class="modal-card" style="max-width:300px;">
-                    <div class="modal-header"><h3 id="contact-actions-name">${escapeHtml(name)}</h3><button class="modal-close" id="close-contact-actions">✕</button></div>
+                    <div class="modal-header"><h3 id="contact-actions-name">${escapeHtml(name)}</h3><button class="modal-close" id="close-contact-actions">?</button></div>
                     <div class="modal-content" style="display:flex; flex-direction:column; gap:12px;">
-                        <button id="action-remove-contact" class="btn" style="background:#e74c3c;">🗑️ Удалить контакт</button>
-                        <button id="action-block-user" class="btn" style="background:#e67e22;">🚫 Заблокировать</button>
-                        <button id="action-report-user" class="btn btn-secondary">⚠️ Пожаловаться</button>
+                        <button id="action-remove-contact" class="btn" style="background:#e74c3c;">??? Удалить контакт</button>
+                        <button id="action-block-user" class="btn" style="background:#e67e22;">?? Заблокировать</button>
+                        <button id="action-report-user" class="btn btn-secondary">?? Пожаловаться</button>
                     </div>
                 </div>`;
             document.body.appendChild(modal);
@@ -4210,10 +4210,10 @@ if (!window._contact_management) {
             const isBlocked = userProfile?.blockedUsers?.includes(uid);
             if (isBlocked) {
                 await unblockUser(uid);
-                alert(`✅ ${name} разблокирован`);
+                alert(`? ${name} разблокирован`);
             } else {
                 await blockUser(uid);
-                alert(`🔒 ${name} заблокирован`);
+                alert(`?? ${name} заблокирован`);
                 // Опционально: удалить из контактов при блокировке
                 if (userProfile.contacts?.includes(uid)) {
                     await saveUser(currentUser.uid, { contacts: arrayRemove(uid) });
@@ -4247,7 +4247,7 @@ if (!window._contact_management) {
         const item = document.createElement('div');
         item.id = 'blocked-list-item';
         item.className = 'settings-item';
-        item.innerHTML = `<span class="settings-icon">🚫</span><span class="settings-text">Заблокированные</span><span class="settings-arrow">→</span>`;
+        item.innerHTML = `<span class="settings-icon">??</span><span class="settings-text">Заблокированные</span><span class="settings-arrow">></span>`;
         item.onclick = async () => showBlockedUsersModal();
         const logoutItem = document.getElementById('logout-settings');
         if (logoutItem) logoutItem.insertAdjacentElement('beforebegin', item);
@@ -4264,7 +4264,7 @@ if (!window._contact_management) {
             modal.className = 'modal-overlay';
             modal.innerHTML = `
                 <div class="modal-card" style="max-width:400px;">
-                    <div class="modal-header"><h3>🚫 Заблокированные пользователи</h3><button class="modal-close" id="close-blocked-modal">✕</button></div>
+                    <div class="modal-header"><h3>?? Заблокированные пользователи</h3><button class="modal-close" id="close-blocked-modal">?</button></div>
                     <div class="modal-content" id="blocked-list-content"></div>
                 </div>`;
             document.body.appendChild(modal);
@@ -4309,9 +4309,9 @@ if (!window._contact_management) {
         addBlockedListMenuItem();
     }, 1000);
 }
-// ═══════════════════════════════════════════════════════════════
+// ===============================================================
 //   АРХИВ ЧАТОВ (с возможностью просмотра и восстановления)
-// ═══════════════════════════════════════════════════════════════
+// ===============================================================
 
 if (!window._archive_chats_module) {
     window._archive_chats_module = true;
@@ -4378,7 +4378,7 @@ if (!window._archive_chats_module) {
                     const roomId = id.replace('room_', '');
                     const room = roomsCache.get(roomId);
                     if (room) {
-                        chat = { id, name: room.name, avatar: room.avatar || '👥', type: room.type };
+                        chat = { id, name: room.name, avatar: room.avatar || '??', type: room.type };
                     }
                 } 
                 // Бот
@@ -4388,17 +4388,17 @@ if (!window._archive_chats_module) {
                         const botSnap = await getDoc(doc(db, 'bots', botId));
                         if (botSnap.exists()) {
                             const bot = botSnap.data();
-                            chat = { id, name: bot.name, avatar: bot.avatar || '🤖', type: 'bot' };
+                            chat = { id, name: bot.name, avatar: bot.avatar || '??', type: 'bot' };
                         }
                     } catch(e) {}
                 } 
                 // Избранное
                 else if (id === 'self') {
-                    chat = { id: 'self', name: 'Избранное', avatar: '📁', type: 'self' };
+                    chat = { id: 'self', name: 'Избранное', avatar: '??', type: 'self' };
                 }
             }
             if (chat) archived.push(chat);
-            else archived.push({ id, name: 'Неизвестный чат', avatar: '❓' });
+            else archived.push({ id, name: 'Неизвестный чат', avatar: '?' });
         }
         return archived;
     };
@@ -4412,7 +4412,7 @@ if (!window._archive_chats_module) {
             modal.className = 'modal-overlay';
             modal.innerHTML = `
                 <div class="modal-card" style="max-width:500px;">
-                    <div class="modal-header"><h3>📦 Архив чатов</h3><button class="modal-close" id="close-archive-modal">✕</button></div>
+                    <div class="modal-header"><h3>?? Архив чатов</h3><button class="modal-close" id="close-archive-modal">?</button></div>
                     <div class="modal-content" id="archive-list-content" style="max-height:400px; overflow-y:auto;">
                         <div style="text-align:center; padding:20px;">Загрузка...</div>
                     </div>
@@ -4427,7 +4427,7 @@ if (!window._archive_chats_module) {
         
         const archivedChats = await getArchivedChatsWithData();
         if (archivedChats.length === 0) {
-            contentDiv.innerHTML = '<div style="text-align:center; padding:20px;">📭 Нет архивированных чатов</div>';
+            contentDiv.innerHTML = '<div style="text-align:center; padding:20px;">?? Нет архивированных чатов</div>';
             return;
         }
         contentDiv.innerHTML = archivedChats.map(chat => `
@@ -4437,7 +4437,7 @@ if (!window._archive_chats_module) {
                     <div class="chat-name">${escapeHtml(chat.name)}</div>
                     <div class="chat-last-message">В архиве</div>
                 </div>
-                <button class="unarchive-btn" data-chat-id="${chat.id}" style="background:#3498db; border:none; color:white; padding:6px 12px; border-radius:20px; cursor:pointer;">📂 Восстановить</button>
+                <button class="unarchive-btn" data-chat-id="${chat.id}" style="background:#3498db; border:none; color:white; padding:6px 12px; border-radius:20px; cursor:pointer;">?? Восстановить</button>
             </div>
         `).join('');
         
@@ -4471,7 +4471,7 @@ if (!window._archive_chats_module) {
         const item = document.createElement('div');
         item.id = 'archive-menu-item';
         item.className = 'settings-item';
-        item.innerHTML = `<span class="settings-icon">📦</span><span class="settings-text">Архив чатов</span><span class="settings-arrow">→</span>`;
+        item.innerHTML = `<span class="settings-icon">??</span><span class="settings-text">Архив чатов</span><span class="settings-arrow">></span>`;
         item.onclick = () => showArchiveModal();
         const blockedItem = document.getElementById('blocked-list-item');
         if (blockedItem) blockedItem.insertAdjacentElement('afterend', item);
@@ -4491,9 +4491,9 @@ if (!window._archive_chats_module) {
                 modal.className = 'modal-overlay';
                 modal.innerHTML = `
                     <div class="modal-card" style="max-width:300px;">
-                        <div class="modal-header"><h3 id="archive-chat-name">Чат</h3><button class="modal-close" id="close-archive-ctx">✕</button></div>
+                        <div class="modal-header"><h3 id="archive-chat-name">Чат</h3><button class="modal-close" id="close-archive-ctx">?</button></div>
                         <div class="modal-content">
-                            <button id="archive-chat-ctx-btn" class="btn">📦 Архивировать</button>
+                            <button id="archive-chat-ctx-btn" class="btn">?? Архивировать</button>
                         </div>
                     </div>`;
                 document.body.appendChild(modal);
@@ -4560,7 +4560,7 @@ if (!window._archive_chats_module) {
         const fileBtn = document.createElement('button');
         fileBtn.id = 'file-upload-btn';
         fileBtn.className = 'emoji-btn';   // стиль как у остальных кнопок
-        fileBtn.innerHTML = '📎';
+        fileBtn.innerHTML = '??';
         fileBtn.title = 'Прикрепить фото или видео';
         
         // Создаём скрытый input
@@ -4573,7 +4573,7 @@ if (!window._archive_chats_module) {
         // Создаём индикатор загрузки (спиннер)
         const loader = document.createElement('span');
         loader.id = 'file-upload-loader';
-        loader.textContent = '⏳';
+        loader.textContent = '?';
         loader.style.display = 'none';
         loader.style.marginLeft = '8px';
         loader.style.fontSize = '20px';
@@ -4835,358 +4835,233 @@ if (!window._archive_chats_module) {
         hideLoadingSpinner();
     }
 })();
-// ====================== EasyBot — полная замена стандартной логики ботов ======================
+// ====================== Простая сетка ответов для ботов ======================
 (function() {
-    if (window._easybot_final) return;
-    window._easybot_final = true;
+    if (window._simpleBotIntentsLoaded) return;
+    window._simpleBotIntentsLoaded = true;
 
-    // ---------- 1. Удаляем старую функцию generateBotReply ----------
+    // 1. Полностью отключаем старую логику generateBotReply
+    const originalGenerate = window.generateBotReply;
     window.generateBotReply = function(userMessage, bot) {
-        // Если есть скрипт, он не должен сюда попадать — но на всякий случай возвращаем заглушку
-        if (bot && bot.script && bot.script.trim() !== '') {
-            return "[EasyBot] Скрипт активирован, но что-то пошло не так.";
+        // Если у бота есть intents, используем их
+        if (bot && bot.intents && Array.isArray(bot.intents)) {
+            for (let intent of bot.intents) {
+                if (intent.trigger && userMessage.toLowerCase().includes(intent.trigger.toLowerCase())) {
+                    return intent.reply;
+                }
+            }
+            return bot.defaultReply || "Я вас не понял. Напишите 'помощь'.";
         }
-        // Старый behaviour (echo или funny)
-        if (bot.personality === 'echo') return `Ты сказал: "${userMessage}"`;
-        if (bot.personality === 'funny') {
-            const jokes = ['А что так серьёзно? 😄', 'Бип-буп, я робот!', 'Ха-ха, смешно!', 'Я бы пошутил, но батарейка садится.'];
-            return jokes[Math.floor(Math.random() * jokes.length)];
-        }
-        return 'Я простой бот, пока не очень умный.';
+        // Старое поведение (echo/funny) – только если нет intents
+        if (bot?.personality === 'echo') return `Ты сказал: "${userMessage}"`;
+        if (bot?.personality === 'funny') return "Ха-ха, шучу! 😄";
+        return "Я простой бот. Настройте мои ответы!";
     };
 
-    // ---------- 2. Парсер и исполнитель EasyBot (упрощённый, но надёжный) ----------
-    class EasyBotProcessor {
-        constructor(botId, script) {
-            this.botId = botId;
-            this.script = script;
-            this.rules = []; // { conditionText, actions, isElse }
-            this.parse();
-        }
+    // 2. Добавляем в модальное окно создания бота редактор intents
+    function enhanceBotModal() {
+        const modal = document.getElementById('modal-create-bot');
+        if (!modal) return;
+        const content = modal.querySelector('.modal-content');
+        if (!content || document.getElementById('intents-editor')) return;
 
-        parse() {
-            const lines = this.script.split(/\r?\n/);
-            let currentCondition = null;
-            let currentActions = [];
-            let inMessageBlock = false;
-            let braceDepth = 0;
-            let pendingElse = false;
+        const editorDiv = document.createElement('div');
+        editorDiv.id = 'intents-editor';
+        editorDiv.innerHTML = `
+            <div style="margin: 16px 0 12px 0;">
+                <label style="font-weight:600;">🎯 Сетка ответов (intents)</label>
+                <div style="font-size:13px; color:#666; margin-bottom:8px;">Каждая строка: фраза пользователя | ответ бота | (опционально) UID для кнопки</div>
+                <textarea id="intents-textarea" rows="6" style="width:100%; padding:12px; border-radius:24px; font-family:monospace; font-size:13px;" placeholder="привет | Привет! Как дела?
+как дела | Отлично! А у тебя?
+помощь | Вот что я умею:
+чем могу помочь | Выберите вариант: 1 - чат, 2 - канал
+команда | Сообщение с кнопкой | UID_канала_или_пользователя"></textarea>
+                <div class="hint" style="font-size:12px; margin-top:6px; background:#f5f5f7; padding:8px; border-radius:16px;">
+                    💡 Пример:<br>
+                    <code>привет | И тебе привет!</code><br>
+                    <code>чем помочь | Вот варианты помощи | support_chat_uid</code><br>
+                    <strong>Если указать UID, под ответом появится кнопка "Перейти".</strong>
+                </div>
+            </div>
+        `;
+        const submitBtn = document.getElementById('create-bot-submit');
+        if (submitBtn) content.insertBefore(editorDiv, submitBtn);
+        else content.appendChild(editorDiv);
 
-            for (let line of lines) {
-                line = line.trim();
-                if (line === '') continue;
-                // Начало блока on message
-                if (line === 'on message {') {
-                    inMessageBlock = true;
-                    braceDepth = 1;
-                    continue;
-                }
-                if (!inMessageBlock) continue;
-                // Управление скобками
-                if (line === '{') { braceDepth++; continue; }
-                if (line === '}') {
-                    braceDepth--;
-                    if (braceDepth === 0) {
-                        // Завершаем текущее правило, если есть
-                        if (currentCondition !== undefined && currentActions.length) {
-                            this.rules.push({
-                                conditionText: currentCondition,
-                                actions: [...currentActions],
-                                isElse: currentCondition === null
-                            });
-                            currentActions = [];
-                            currentCondition = undefined;
-                        }
-                        inMessageBlock = false;
-                    }
-                    continue;
-                }
-                // Пропускаем строки вне тела правил
-                if (braceDepth !== 1) continue;
-
-                // Обработка if
-                let ifMatch = line.match(/^if\s*\(\s*message\.text\s*==\s*"([^"]*)"\s*\)\s*\{?/);
-                if (ifMatch) {
-                    if (currentCondition !== undefined && currentActions.length) {
-                        this.rules.push({
-                            conditionText: currentCondition,
-                            actions: [...currentActions],
-                            isElse: false
-                        });
-                        currentActions = [];
-                    }
-                    currentCondition = ifMatch[1];
-                    pendingElse = false;
-                    continue;
-                }
-                // else if
-                let elseIfMatch = line.match(/^else\s+if\s*\(\s*message\.text\s*==\s*"([^"]*)"\s*\)\s*\{?/);
-                if (elseIfMatch) {
-                    if (currentCondition !== undefined && currentActions.length) {
-                        this.rules.push({
-                            conditionText: currentCondition,
-                            actions: [...currentActions],
-                            isElse: false
-                        });
-                        currentActions = [];
-                    }
-                    currentCondition = elseIfMatch[1];
-                    pendingElse = false;
-                    continue;
-                }
-                // else
-                if (line === 'else {' || line === 'else') {
-                    if (currentCondition !== undefined && currentActions.length) {
-                        this.rules.push({
-                            conditionText: currentCondition,
-                            actions: [...currentActions],
-                            isElse: false
-                        });
-                        currentActions = [];
-                    }
-                    currentCondition = null; // означает else
-                    pendingElse = true;
-                    continue;
-                }
-                // Действия внутри правила
-                if (currentCondition !== undefined || pendingElse) {
-                    let act = null;
-                    let replyMatch = line.match(/^reply\("([^"]*)"\);/);
-                    if (replyMatch) act = { type: 'reply', text: replyMatch[1] };
-                    let forwardMatch = line.match(/^forward_message\(([^,]+),\s*([^)]+)\);/);
-                    if (forwardMatch) act = { type: 'forward', chatId: forwardMatch[1].trim(), messageId: forwardMatch[2].trim() };
-                    let actionMatch = line.match(/^action\s+reply\("([^"]+)"\);/);
-                    if (actionMatch) act = { type: 'actionButton', targetUid: actionMatch[1] };
-                    if (act) currentActions.push(act);
-                }
-            }
-            // Последнее правило, если осталось
-            if (currentCondition !== undefined && currentActions.length) {
-                this.rules.push({
-                    conditionText: currentCondition,
-                    actions: [...currentActions],
-                    isElse: currentCondition === null
-                });
-            }
-            console.log(`[EasyBot] Бот ${this.botId} — разобрано ${this.rules.length} правил`);
-        }
-
-        async processMessage(userText, chatId, originalMsgId) {
-            console.log(`[EasyBot] Обработка сообщения: "${userText}" в чате ${chatId}`);
-            let matchedRule = null;
-            for (let rule of this.rules) {
-                if (rule.isElse) {
-                    matchedRule = rule;
-                    break;
-                } else if (rule.conditionText === userText) {
-                    matchedRule = rule;
-                    break;
-                }
-            }
-            if (!matchedRule) {
-                console.log(`[EasyBot] Нет подходящего правила для "${userText}"`);
-                return;
-            }
-            console.log(`[EasyBot] Правило сработало, действий: ${matchedRule.actions.length}`);
-            for (let action of matchedRule.actions) {
-                await this.executeAction(action, chatId, originalMsgId);
-            }
-        }
-
-        async executeAction(action, chatId, originalMsgId) {
-            const db = window.db;
-            const col = window.collection;
-            const addDoc = window.addDoc;
-            const serverTimestamp = window.serverTimestamp;
-            if (!db) return;
-            if (action.type === 'reply') {
-                await addDoc(col(db, 'messages'), {
-                    chatId: chatId,
-                    text: action.text,
-                    timestamp: serverTimestamp(),
-                    senderUid: this.botId,
-                    isBot: true,
-                    botReplied: true
-                });
-                console.log(`[EasyBot] Отправлен ответ: ${action.text}`);
-            }
-            else if (action.type === 'forward') {
-                try {
-                    const msgRef = window.doc(db, 'messages', action.messageId);
-                    const snap = await window.getDoc(msgRef);
-                    if (snap.exists()) {
-                        await addDoc(col(db, 'messages'), {
-                            chatId: action.chatId,
-                            text: snap.data().text,
-                            timestamp: serverTimestamp(),
-                            senderUid: this.botId,
-                            isBot: true,
-                            forwardedFrom: snap.data().senderUid
-                        });
-                    }
-                } catch(e) { console.warn(e); }
-            }
-            else if (action.type === 'actionButton') {
-                if (originalMsgId) {
-                    const msgRef = window.doc(db, 'messages', originalMsgId);
-                    const snap = await window.getDoc(msgRef);
-                    if (snap.exists()) {
-                        let buttons = snap.data().buttons || [];
-                        buttons.push({ type: 'chat_redirect', uid: action.targetUid, text: 'Перейти ➡️' });
-                        await window.updateDoc(msgRef, { buttons });
-                        console.log(`[EasyBot] Кнопка добавлена к сообщению ${originalMsgId}`);
-                    }
-                }
-            }
+        // Предзаполним для примера
+        const textarea = document.getElementById('intents-textarea');
+        if (textarea && !textarea.value) {
+            textarea.value = `привет | И тебе привет!
+как дела | Отлично, спасибо!
+чем могу помочь | Вот чем я могу помочь:
+помощь | Напишите "привет" или "как дела"`;
         }
     }
 
-    // ---------- 3. Перехватываем подписку на сообщения для ботов ----------
-    const originalLoadMessages = window.loadMessagesRealtime;
-    if (originalLoadMessages) {
-        window.loadMessagesRealtime = async function() {
-            const result = await originalLoadMessages();
-            // Если активный чат — бот, применяем EasyBot
-            if (window.activeChatId && window.activeChatId.startsWith('bot_')) {
-                const botId = window.activeChatId.replace('bot_', '');
-                const botDoc = await window.getDoc(window.doc(window.db, 'bots', botId));
-                if (botDoc.exists() && botDoc.data().script && botDoc.data().script.trim() !== '') {
-                    // Отключаем старый обработчик (если есть)
-                    if (window.botUnsubscribe) {
-                        window.botUnsubscribe();
-                        window.botUnsubscribe = null;
+    // 3. При создании бота сохраняем intents
+    const originalCreateSubmit = document.getElementById('create-bot-submit')?.onclick;
+    if (originalCreateSubmit) document.getElementById('create-bot-submit').onclick = null;
+
+    document.getElementById('create-bot-submit')?.addEventListener('click', async (e) => {
+        e.preventDefault();
+        const botName = document.getElementById('bot-name-input').value.trim();
+        if (!botName) return alert('Введите имя бота');
+        const botAvatar = window.botAvatar || '🤖';
+        const personality = document.getElementById('bot-personality').value;
+        const intentsText = document.getElementById('intents-textarea')?.value || '';
+        
+        // Парсим intents: каждая строка "фраза | ответ | (опционально UID)"
+        const intents = [];
+        const lines = intentsText.split(/\r?\n/);
+        for (let line of lines) {
+            line = line.trim();
+            if (!line) continue;
+            const parts = line.split('|').map(p => p.trim());
+            if (parts.length >= 2) {
+                const trigger = parts[0];
+                const reply = parts[1];
+                const uid = parts[2] || null;
+                intents.push({ trigger, reply, uid });
+            }
+        }
+        
+        try {
+            // Исправлено: botRef определён
+            const botRef = await window.addDoc(window.collection(window.db, 'bots'), {
+                name: botName,
+                avatar: botAvatar,
+                ownerUid: window.currentUser.uid,
+                personality: personality,
+                intents: intents,
+                defaultReply: "Извините, я не понял. Напишите 'помощь'.",
+                createdAt: window.serverTimestamp()
+            });
+            document.getElementById('modal-create-bot').classList.remove('active');
+            await window.buildChatItems();
+            window.switchToChat(`bot_${botRef.id}`, botName, null);
+        } catch(err) {
+            console.error(err);
+            alert('Ошибка создания бота');
+        }
+    });
+
+    // 4. Редактирование intents у существующего бота (кнопка в чате)
+    function addEditIntentsButton() {
+        const header = document.querySelector('.chat-header');
+        if (!header || document.getElementById('edit-intents-btn')) return;
+        if (!window.activeChatId?.startsWith('bot_')) return;
+        const btn = document.createElement('button');
+        btn.id = 'edit-intents-btn';
+        btn.className = 'icon-btn';
+        btn.innerHTML = '📝';
+        btn.title = 'Редактировать сетку ответов';
+        btn.onclick = async () => {
+            const botId = window.activeChatId.slice(4);
+            const botDoc = await window.getDoc(window.doc(window.db, 'bots', botId));
+            if (!botDoc.exists()) return;
+            if (botDoc.data().ownerUid !== window.currentUser?.uid) return alert('Только владелец');
+            const intents = botDoc.data().intents || [];
+            // Формируем текст для редактирования
+            let text = '';
+            for (let int of intents) {
+                text += `${int.trigger} | ${int.reply}${int.uid ? ' | ' + int.uid : ''}\n`;
+            }
+            const newText = prompt('Редактируйте сетку ответов (каждая строка: фраза | ответ | UID_кнопки_опционально):', text);
+            if (newText !== null) {
+                const newIntents = [];
+                const lines = newText.split(/\r?\n/);
+                for (let line of lines) {
+                    line = line.trim();
+                    if (!line) continue;
+                    const parts = line.split('|').map(p => p.trim());
+                    if (parts.length >= 2) {
+                        newIntents.push({ trigger: parts[0], reply: parts[1], uid: parts[2] || null });
                     }
-                    const processor = new EasyBotProcessor(botId, botDoc.data().script);
+                }
+                await window.updateDoc(window.doc(window.db, 'bots', botId), { intents: newIntents });
+                alert('Сетка ответов обновлена!');
+            }
+        };
+        header.appendChild(btn);
+    }
+
+    setInterval(() => {
+        if (window.activeChatId?.startsWith('bot_') && !document.getElementById('edit-intents-btn')) addEditIntentsButton();
+    }, 1000);
+
+    // 5. Обработка сообщений бота с intents и кнопками
+    // Перехватываем подписку на сообщения
+    const origLoad = window.loadMessagesRealtime;
+    if (origLoad) {
+        window.loadMessagesRealtime = async function() {
+            const res = await origLoad();
+            if (window.activeChatId && window.activeChatId.startsWith('bot_')) {
+                const botId = window.activeChatId.slice(4);
+                const botDoc = await window.getDoc(window.doc(window.db, 'bots', botId));
+                if (botDoc.exists() && botDoc.data().intents && botDoc.data().intents.length) {
+                    if (window.botUnsubscribe) window.botUnsubscribe();
                     const q = window.query(window.collection(window.db, 'messages'),
                         window.where('chatId', '==', window.activeChatId),
                         window.orderBy('timestamp', 'desc'),
                         window.limit(1));
                     window.botUnsubscribe = window.onSnapshot(q, async (snap) => {
                         if (!snap.empty) {
-                            const msg = snap.docs[0].data();
+                            const lastMsg = snap.docs[0].data();
                             const msgId = snap.docs[0].id;
-                            if (msg.senderUid !== botId && !msg.botReplied && !msg.isBot) {
+                            if (lastMsg.senderUid !== botId && !lastMsg.botReplied && !lastMsg.isBot) {
                                 await window.updateDoc(window.doc(window.db, 'messages', msgId), { botReplied: true });
-                                await processor.processMessage(msg.text, window.activeChatId, msgId);
+                                // Находим подходящий intent
+                                const userText = lastMsg.text || '';
+                                let matchedIntent = null;
+                                for (let intent of botDoc.data().intents) {
+                                    if (userText.toLowerCase().includes(intent.trigger.toLowerCase())) {
+                                        matchedIntent = intent;
+                                        break;
+                                    }
+                                }
+                                let replyText = matchedIntent ? matchedIntent.reply : botDoc.data().defaultReply;
+                                // Отправляем ответ
+                                const replyMsgRef = await window.addDoc(window.collection(window.db, 'messages'), {
+                                    chatId: window.activeChatId,
+                                    text: replyText,
+                                    timestamp: window.serverTimestamp(),
+                                    senderUid: botId,
+                                    isBot: true,
+                                    botReplied: true
+                                });
+                                // Если у intents есть uid, добавляем кнопку к ответу бота
+                                if (matchedIntent && matchedIntent.uid) {
+                                    await window.updateDoc(window.doc(window.db, 'messages', replyMsgRef.id), {
+                                        buttons: [{ type: 'chat_redirect', uid: matchedIntent.uid, text: 'Перейти ➡️' }]
+                                    });
+                                }
                             }
                         }
                     });
-                } else if (botDoc.exists() && (!botDoc.data().script || botDoc.data().script.trim() === '')) {
-                    // Если скрипта нет, показываем подсказку
-                    console.log(`[EasyBot] У бота ${botId} нет скрипта. Используйте кнопку "Редактировать скрипт"`);
                 }
             }
-            return result;
+            return res;
         };
     }
 
-    // ---------- 4. Добавляем редактирование скрипта для существующих ботов ----------
-    function addBotEditButton() {
-        const header = document.querySelector('.chat-header');
-        if (!header || document.getElementById('edit-bot-script-btn')) return;
-        const editBtn = document.createElement('button');
-        editBtn.id = 'edit-bot-script-btn';
-        editBtn.className = 'icon-btn';
-        editBtn.innerHTML = '✏️';
-        editBtn.title = 'Редактировать скрипт бота';
-        editBtn.style.marginLeft = '8px';
-        editBtn.onclick = async () => {
-            if (!window.activeChatId || !window.activeChatId.startsWith('bot_')) {
-                alert('Это не чат с ботом');
-                return;
-            }
-            const botId = window.activeChatId.replace('bot_', '');
-            const botDoc = await window.getDoc(window.doc(window.db, 'bots', botId));
-            if (!botDoc.exists()) return;
-            const bot = botDoc.data();
-            if (bot.ownerUid !== window.currentUser?.uid) {
-                alert('Только владелец бота может редактировать скрипт');
-                return;
-            }
-            const newScript = prompt('Введите скрипт на EasyBot:', bot.script || '');
-            if (newScript !== null) {
-                await window.updateDoc(window.doc(window.db, 'bots', botId), { script: newScript });
-                alert('Скрипт сохранён. Перезайдите в чат с ботом, чтобы изменения вступили в силу.');
-                // Перезагружаем чат
-                window.switchToChat(window.activeChatId, window.activeChatName, null);
-            }
-        };
-        header.appendChild(editBtn);
-    }
-
-    // Периодически проверяем, активен ли чат с ботом, и добавляем кнопку
-    setInterval(() => {
-        if (window.activeChatId && window.activeChatId.startsWith('bot_') && !document.getElementById('edit-bot-script-btn')) {
-            addBotEditButton();
-        }
-    }, 1000);
-
-    // ---------- 5. Модальное окно создания бота с полем скрипта ----------
-    function enhanceCreateModal() {
-        const modal = document.getElementById('modal-create-bot');
-        if (!modal) return;
-        const content = modal.querySelector('.modal-content');
-        if (!content || document.getElementById('bot-script-textarea')) return;
-        const scriptArea = document.createElement('div');
-        scriptArea.innerHTML = `
-            <div class="input-group" style="margin-top:16px;">
-                <label>📜 Скрипт EasyBot (если оставить пустым, бот будет использовать тип личности)</label>
-                <textarea id="bot-script-textarea" rows="10" style="width:100%; padding:12px; border-radius:24px; border:1px solid #e5e5ea; font-family:monospace;"></textarea>
-                <div style="font-size:12px; margin-top:6px; color:#6c6c74;">
-                    Пример:<br>
-                    <code>bot MyBot "Имя" { on message { if (message.text == "Привет") { reply("И тебе привет!"); } } }</code>
-                </div>
-            </div>
-        `;
-        const submitBtn = document.getElementById('create-bot-submit');
-        if (submitBtn) content.insertBefore(scriptArea, submitBtn);
-        else content.appendChild(scriptArea);
-    }
-
-    // Переопределяем создание бота, чтобы сохранять скрипт
-    const oldCreateHandler = document.getElementById('create-bot-submit')?.onclick;
-    if (oldCreateHandler) document.getElementById('create-bot-submit').onclick = null;
-    document.getElementById('create-bot-submit')?.addEventListener('click', async (e) => {
-        e.preventDefault();
-        const name = document.getElementById('bot-name-input').value.trim();
-        if (!name) return alert('Введите имя бота');
-        const avatar = window.botAvatar || '🤖';
-        const personality = document.getElementById('bot-personality').value;
-        const script = document.getElementById('bot-script-textarea')?.value || '';
-        try {
-            await window.addDoc(window.collection(window.db, 'bots'), {
-                name: name,
-                avatar: avatar,
-                ownerUid: window.currentUser.uid,
-                personality: personality,
-                script: script,
-                createdAt: window.serverTimestamp()
-            });
-            document.getElementById('modal-create-bot').classList.remove('active');
-            await window.buildChatItems();
-        } catch(err) {
-            alert('Ошибка создания: ' + err.message);
-        }
-    });
-
-    // ---------- 6. Рендеринг кнопок в сообщениях ----------
-    const originalRender = window.renderMessages;
-    if (originalRender) {
+    // 6. Отображение кнопок в сообщениях (рендер)
+    const origRender = window.renderMessages;
+    if (origRender) {
         window.renderMessages = function() {
-            originalRender();
-            document.querySelectorAll('.easybot-buttons').forEach(el => el.remove());
+            origRender();
+            document.querySelectorAll('.bot-intent-btn').forEach(el => el.remove());
             document.querySelectorAll('.message').forEach(msgDiv => {
-                const msgId = msgDiv.dataset.msgId;
-                if (!msgId) return;
-                const msg = window.messages?.find(m => m.id === msgId);
+                const mid = msgDiv.dataset.msgId;
+                if (!mid) return;
+                const msg = window.messages?.find(m => m.id === mid);
                 if (msg?.buttons?.length) {
-                    const container = document.createElement('div');
-                    container.className = 'easybot-buttons';
-                    container.style.cssText = 'display:flex; gap:8px; margin-top:8px; flex-wrap:wrap;';
+                    const cont = document.createElement('div');
+                    cont.className = 'bot-intent-btn';
+                    cont.style.cssText = 'display:flex; gap:8px; margin-top:8px;';
                     for (const btn of msg.buttons) {
                         const button = document.createElement('button');
                         button.textContent = btn.text || 'Перейти';
-                        button.style.cssText = 'background:#7B2FBE; color:white; border:none; border-radius:40px; padding:6px 16px; font-size:13px; cursor:pointer;';
+                        button.style.cssText = 'background:#7B2FBE; color:white; border:none; border-radius:40px; padding:6px 16px; cursor:pointer;';
                         if (btn.type === 'chat_redirect' && btn.uid) {
                             button.onclick = () => {
                                 if (btn.uid.startsWith('room_') || btn.uid.startsWith('bot_') || btn.uid === 'self')
@@ -5198,20 +5073,16 @@ if (!window._archive_chats_module) {
                                 }
                             };
                         }
-                        container.appendChild(button);
+                        cont.appendChild(button);
                     }
-                    msgDiv.appendChild(container);
+                    msgDiv.appendChild(cont);
                 }
             });
         };
     }
 
-    // Инициализация
-    window.addEventListener('load', () => {
-        enhanceCreateModal();
-    });
+    window.addEventListener('load', enhanceBotModal);
 })();
 </script>
 </body>
 </html>
-
