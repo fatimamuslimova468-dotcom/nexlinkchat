@@ -4912,6 +4912,21 @@ if (!window._archive_chats_module) {
         addHistoryState();
     }
 })();
+    // Убираем синий квадрат при клике/фокусе
+(function() {
+    const style = document.createElement('style');
+    style.textContent = `
+        *:focus-visible { outline: none !important; }
+        *:focus { outline: none !important; }
+        * { -webkit-tap-highlight-color: transparent !important; }
+        .message-input, .chat-messages, .message, input, textarea, 
+        .modal-content, .settings-container, .auth-container {
+            -webkit-user-select: text !important;
+            user-select: text !important;
+        }
+    `;
+    document.head.appendChild(style);
+})();
 </script>
 </body>
 </html>
