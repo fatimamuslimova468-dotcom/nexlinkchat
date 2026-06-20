@@ -5309,6 +5309,101 @@ if (!window._archive_chats_module) {
 
     console.log('✅ Кастомные плееры с волнами активированы');
 })();
+    // ========== ПАТЧ ДЛЯ УЛУЧШЕННОЙ РАБОТЫ E2EE (исправление [Зашифрованное сообщение]) ==========
+(function() {
+    // 1. Улучшаем getE2EEKey – добавляем повторную инициализацию и ручное получение ключа
+    const originalGetE2EEKey = window.getE2EEKey;
+    if (!originalGetE2EEKey) {
+        console.warn('getE2EEKey не найдена, патч не применён');
+        return;
+    }
+
+    window.getE2EEKey = async function(chatId) {
+        // Пробуем оригинальный способ
+        let key = await originalGetE2EEKey(chatId);
+        if (key) return key;
+
+        // Если ключа нет – инициализируем E2EE (если ещё не)
+        if (window.initE2EEKeys) {
+            await window.initE2EEKeys();
+            key = await originalGetE2EEKey(chatId);
+            if (key) return key;
+        }
+
+        // Если всё ещё null – пробуем вычислить ключ вручную из публичного ключа собеседника
+        try {
+            if (window.myKeyPair && window.myKeyPair.privateKey && window.currentUser) {
+                const parts = chatId.split('_');
+                const peerUid = parts.find(p => p !== window.currentUser.uid && p !== 'chat');
+                if (peerUid) {
+                    const snap = await getDoc(doc(db, 'publicKeys', peerUid));
+                    if (snap.exists()) {
+                        const peerPublicKey = await crypto.subtle.importKey(
+                            'jwk',
+                            snap.data().publicKey,
+                            { name: 'ECDH', namedCurve: 'P-256' },
+                            true,
+                            []
+                        );
+                        const derivedKey = await crypto.subtle.deriveKey(
+                            { name: 'ECDH', public: peerPublicKey },
+                            window.myKeyPair.privateKey,
+                            { name: 'AES-GCM', length: 256 },
+                            true,
+                            ['encrypt', 'decrypt']
+                        );
+                        // Сохраняем в кэш
+                        if (window.e2eeSharedKeys) {
+                            window.e2eeSharedKeys.set(chatId, derivedKey);
+                        }
+                        return derivedKey;
+                    }
+                }
+            }
+        } catch(e) {
+            console.warn('Ручное получение ключа не удалось:', e);
+        }
+
+        return null;
+    };
+
+    // 2. Переопределяем loadMessagesRealtime, чтобы он при неудаче расшифровки повторял попытку с новым ключом
+    // Сохраняем оригинальную функцию
+    const originalLoadMessages = window.loadMessagesRealtime;
+    if (originalLoadMessages) {
+        window.loadMessagesRealtime = async function() {
+            // Вызываем оригинальную загрузку, но она уже подписывается на изменения
+            await originalLoadMessages.apply(this, arguments);
+
+            // Дополнительно: после получения сообщений пробуем расшифровать те, что остались зашифрованными
+            // Это сработает, если ключ появился позже
+            const messages = window.messages || [];
+            let needUpdate = false;
+            for (const msg of messages) {
+                if (msg.isE2EE && msg.text && msg.text.startsWith('[e2ee]') && !msg._decrypted) {
+                    const chatId = window.activeChatId;
+                    if (chatId && !chatId.startsWith('room_') && !chatId.startsWith('bot_')) {
+                        try {
+                            const key = await window.getE2EEKey(chatId);
+                            if (key) {
+                                msg.text = await window.decryptE2EE(msg.text.substring(6), key);
+                                msg._decrypted = true;
+                                needUpdate = true;
+                            }
+                        } catch(e) {
+                            console.warn('Ошибка расшифровки:', e);
+                        }
+                    }
+                }
+            }
+            if (needUpdate && window.renderMessages) {
+                window.renderMessages();
+            }
+        };
+    }
+
+    console.log('✅ Патч для E2EE применён – сообщения должны расшифровываться корректно');
+})();
 </script>
 </body>
 </html>
