@@ -4927,189 +4927,387 @@ if (!window._archive_chats_module) {
     `;
     document.head.appendChild(style);
 })();
-    // ========== ВОЛНОВОЙ ИНДИКАТОР ДЛЯ ГОЛОСОВОЙ ЗАПИСИ ==========
+// ========== КАСТОМНЫЙ ПЛЕЕР ДЛЯ ГОЛОСОВЫХ С ВОЛНАМИ (как в Telegram) ==========
 (function() {
-    // 1. Создаём контейнер для волн (если его нет)
-    let waveContainer = document.getElementById('voice-wave-container');
-    if (!waveContainer) {
-        waveContainer = document.createElement('div');
-        waveContainer.id = 'voice-wave-container';
-        waveContainer.style.cssText = `
-            position: absolute;
-            bottom: 110%;
-            left: 50%;
-            transform: translateX(-50%);
-            display: none;
+    // Стили для нового плеера
+    const style = document.createElement('style');
+    style.textContent = `
+        .voice-player-custom {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(123, 47, 190, 0.08);
+            border-radius: 30px;
+            padding: 8px 16px 8px 12px;
+            margin: 4px 0;
+            max-width: 280px;
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(123, 47, 190, 0.15);
+            transition: background 0.2s;
+        }
+        .voice-player-custom:hover {
+            background: rgba(123, 47, 190, 0.15);
+        }
+        .voice-play-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
             align-items: center;
             justify-content: center;
-            gap: 4px;
-            height: 40px;
-            padding: 8px 16px;
-            background: rgba(0,0,0,0.7);
-            backdrop-filter: blur(8px);
-            border-radius: 40px;
-            z-index: 300;
-            pointer-events: none;
-        `;
-        // Вставляем в контейнер сообщений (рядом с полем ввода)
-        const inputContainer = document.querySelector('.message-input-container');
-        if (inputContainer) {
-            inputContainer.style.position = 'relative';
-            inputContainer.appendChild(waveContainer);
-        } else {
-            document.body.appendChild(waveContainer);
+            transition: 0.2s;
+            color: #7B2FBE;
+            flex-shrink: 0;
         }
-    }
+        .voice-play-btn:hover {
+            background: rgba(123, 47, 190, 0.2);
+            transform: scale(1.05);
+        }
+        .voice-wave-canvas-wrap {
+            flex: 1;
+            height: 36px;
+            border-radius: 18px;
+            overflow: hidden;
+            background: rgba(255,255,255,0.3);
+            position: relative;
+            min-width: 60px;
+        }
+        .voice-wave-canvas-wrap canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            border-radius: 18px;
+        }
+        .voice-time {
+            font-size: 12px;
+            color: #6c6c74;
+            font-variant-numeric: tabular-nums;
+            min-width: 32px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+        .voice-progress-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 2px;
+            background: #7B2FBE;
+            width: 0%;
+            border-radius: 2px;
+            transition: width 0.1s linear;
+        }
+        .message-in .voice-player-custom {
+            background: rgba(255,255,255,0.6);
+            border-color: rgba(0,0,0,0.05);
+        }
+        .message-out .voice-player-custom {
+            background: rgba(255,255,255,0.2);
+            border-color: rgba(255,255,255,0.2);
+        }
+        .message-out .voice-play-btn {
+            color: white;
+        }
+        .message-out .voice-time {
+            color: rgba(255,255,255,0.7);
+        }
+        .message-out .voice-wave-canvas-wrap {
+            background: rgba(255,255,255,0.1);
+        }
+        .message-out .voice-progress-bar {
+            background: white;
+        }
+    `;
+    document.head.appendChild(style);
 
-    // 2. Создаём canvas для отрисовки волн
-    let canvas = document.getElementById('voice-wave-canvas');
-    if (!canvas) {
-        canvas = document.createElement('canvas');
-        canvas.id = 'voice-wave-canvas';
-        canvas.width = 200;
-        canvas.height = 40;
-        canvas.style.cssText = 'display: block; width: 200px; height: 40px; border-radius: 20px;';
-        waveContainer.appendChild(canvas);
-    }
-    const ctx = canvas.getContext('2d');
+    // Функция для создания кастомного плеера
+    function createVoicePlayer(audioElement, container) {
+        // Сохраняем оригинальный audio
+        const audio = audioElement;
+        const src = audio.src;
 
-    // 3. Переменные для аудио
-    let analyser = null;
-    let dataArray = null;
-    let animationId = null;
-    let isRecording = false;
+        // Создаём обёртку
+        const wrapper = document.createElement('div');
+        wrapper.className = 'voice-player-custom';
 
-    // 4. Функция отрисовки волн
-    function drawWaves() {
-        if (!analyser || !isRecording) return;
-        analyser.getByteFrequencyData(dataArray);
-        const bufferLength = analyser.frequencyBinCount;
-        const step = Math.floor(bufferLength / 40); // количество столбцов = 40
-        const barWidth = canvas.width / 40;
+        // Кнопка Play/Pause
+        const playBtn = document.createElement('button');
+        playBtn.className = 'voice-play-btn';
+        playBtn.textContent = '▶️';
+        playBtn.setAttribute('aria-label', 'Воспроизвести');
 
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = '#ffffff';
-        ctx.shadowColor = 'rgba(255,255,255,0.3)';
-        ctx.shadowBlur = 8;
+        // Canvas для волн
+        const canvasWrap = document.createElement('div');
+        canvasWrap.className = 'voice-wave-canvas-wrap';
+        const canvas = document.createElement('canvas');
+        canvas.width = 300;
+        canvas.height = 36;
+        canvasWrap.appendChild(canvas);
+        const progressBar = document.createElement('div');
+        progressBar.className = 'voice-progress-bar';
+        canvasWrap.appendChild(progressBar);
 
-        // Рисуем волнистые линии (как в Telegram)
-        ctx.beginPath();
-        ctx.moveTo(0, canvas.height / 2);
-        for (let i = 0; i < 40; i++) {
-            const index = Math.floor(i * step);
-            const value = dataArray[index] || 0;
-            const percent = value / 255; // 0..1
-            const height = percent * (canvas.height / 2) * 1.5;
-            const x = i * barWidth + barWidth / 2;
-            const y = canvas.height / 2 - height;
-            // Плавная кривая
-            if (i === 0) ctx.lineTo(x, y);
-            else {
-                const prevIndex = Math.floor((i - 1) * step);
-                const prevValue = dataArray[prevIndex] || 0;
-                const prevPercent = prevValue / 255;
-                const prevHeight = prevPercent * (canvas.height / 2) * 1.5;
-                const prevX = (i - 1) * barWidth + barWidth / 2;
-                const prevY = canvas.height / 2 - prevHeight;
-                const cpX = (prevX + x) / 2;
-                const cpY = (prevY + y) / 2;
-                ctx.quadraticCurveTo(cpX, cpY, x, y);
+        // Время
+        const timeDisplay = document.createElement('span');
+        timeDisplay.className = 'voice-time';
+        timeDisplay.textContent = '0:00';
+
+        // Собираем
+        wrapper.appendChild(playBtn);
+        wrapper.appendChild(canvasWrap);
+        wrapper.appendChild(timeDisplay);
+
+        // Заменяем audio на wrapper в DOM
+        container.replaceChild(wrapper, audio);
+
+        // Настройка Web Audio
+        let audioContext = null;
+        let analyser = null;
+        let dataArray = null;
+        let animationId = null;
+        let isPlaying = false;
+
+        // Функция обновления времени
+        function updateTime() {
+            const dur = audio.duration || 0;
+            const cur = audio.currentTime || 0;
+            const format = (t) => {
+                const m = Math.floor(t / 60);
+                const s = Math.floor(t % 60);
+                return `${m}:${s.toString().padStart(2, '0')}`;
+            };
+            timeDisplay.textContent = `${format(cur)} / ${format(dur)}`;
+            if (dur > 0) {
+                const percent = (cur / dur) * 100;
+                progressBar.style.width = Math.min(percent, 100) + '%';
             }
         }
-        ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 3;
-        ctx.stroke();
 
-        // Зеркальное отражение (нижняя часть)
-        ctx.beginPath();
-        ctx.moveTo(0, canvas.height / 2);
-        for (let i = 0; i < 40; i++) {
-            const index = Math.floor(i * step);
-            const value = dataArray[index] || 0;
-            const percent = value / 255;
-            const height = percent * (canvas.height / 2) * 1.5;
-            const x = i * barWidth + barWidth / 2;
-            const y = canvas.height / 2 + height;
-            if (i === 0) ctx.lineTo(x, y);
-            else {
-                const prevIndex = Math.floor((i - 1) * step);
-                const prevValue = dataArray[prevIndex] || 0;
-                const prevPercent = prevValue / 255;
-                const prevHeight = prevPercent * (canvas.height / 2) * 1.5;
-                const prevX = (i - 1) * barWidth + barWidth / 2;
-                const prevY = canvas.height / 2 + prevHeight;
-                const cpX = (prevX + x) / 2;
-                const cpY = (prevY + y) / 2;
-                ctx.quadraticCurveTo(cpX, cpY, x, y);
+        // Отрисовка волн
+        function drawWaves() {
+            if (!analyser || !isPlaying) {
+                // Если не играет, показываем плоскую линию
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.beginPath();
+                ctx.moveTo(0, canvas.height / 2);
+                for (let i = 0; i < canvas.width; i += 2) {
+                    ctx.lineTo(i, canvas.height / 2);
+                }
+                ctx.strokeStyle = '#7B2FBE';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                // зеркало
+                ctx.beginPath();
+                ctx.moveTo(0, canvas.height / 2);
+                for (let i = 0; i < canvas.width; i += 2) {
+                    ctx.lineTo(i, canvas.height / 2);
+                }
+                ctx.strokeStyle = '#7B2FBE';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                return;
             }
+
+            analyser.getByteFrequencyData(dataArray);
+            const bufferLength = analyser.frequencyBinCount;
+            const step = Math.floor(bufferLength / 60);
+            const barWidth = canvas.width / 60;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.strokeStyle = '#7B2FBE';
+            ctx.lineWidth = 2;
+            ctx.shadowColor = 'rgba(123,47,190,0.3)';
+            ctx.shadowBlur = 4;
+
+            // Верхняя половина
+            ctx.beginPath();
+            ctx.moveTo(0, canvas.height / 2);
+            for (let i = 0; i < 60; i++) {
+                const index = Math.floor(i * step);
+                const value = dataArray[index] || 0;
+                const percent = value / 255;
+                const height = percent * (canvas.height / 2) * 0.9;
+                const x = i * barWidth + barWidth / 2;
+                const y = canvas.height / 2 - height;
+                if (i === 0) ctx.lineTo(x, y);
+                else {
+                    const prevIndex = Math.floor((i - 1) * step);
+                    const prevValue = dataArray[prevIndex] || 0;
+                    const prevPercent = prevValue / 255;
+                    const prevHeight = prevPercent * (canvas.height / 2) * 0.9;
+                    const prevX = (i - 1) * barWidth + barWidth / 2;
+                    const prevY = canvas.height / 2 - prevHeight;
+                    const cpX = (prevX + x) / 2;
+                    const cpY = (prevY + y) / 2;
+                    ctx.quadraticCurveTo(cpX, cpY, x, y);
+                }
+            }
+            ctx.stroke();
+
+            // Нижняя половина (зеркально)
+            ctx.beginPath();
+            ctx.moveTo(0, canvas.height / 2);
+            for (let i = 0; i < 60; i++) {
+                const index = Math.floor(i * step);
+                const value = dataArray[index] || 0;
+                const percent = value / 255;
+                const height = percent * (canvas.height / 2) * 0.9;
+                const x = i * barWidth + barWidth / 2;
+                const y = canvas.height / 2 + height;
+                if (i === 0) ctx.lineTo(x, y);
+                else {
+                    const prevIndex = Math.floor((i - 1) * step);
+                    const prevValue = dataArray[prevIndex] || 0;
+                    const prevPercent = prevValue / 255;
+                    const prevHeight = prevPercent * (canvas.height / 2) * 0.9;
+                    const prevX = (i - 1) * barWidth + barWidth / 2;
+                    const prevY = canvas.height / 2 + prevHeight;
+                    const cpX = (prevX + x) / 2;
+                    const cpY = (prevY + y) / 2;
+                    ctx.quadraticCurveTo(cpX, cpY, x, y);
+                }
+            }
+            ctx.stroke();
+
+            animationId = requestAnimationFrame(drawWaves);
         }
-        ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 3;
-        ctx.stroke();
 
-        animationId = requestAnimationFrame(drawWaves);
-    }
-
-    // 5. Подключаемся к существующей записи (перехватываем startRecording и stopRecording)
-    const originalStart = window.startRecording;
-    const originalStop = window.stopRecording;
-
-    if (originalStart) {
-        window.startRecording = async function() {
-            await originalStart.apply(this, arguments);
-            // После запуска записи активируем визуализацию
-            const stream = localStream; // предположим, что localStream определён глобально
-            if (stream && stream.getAudioTracks().length > 0) {
-                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                const source = audioContext.createMediaStreamSource(stream);
+        // Инициализация анализатора
+        function initAnalyser() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const source = audioContext.createMediaElementSource(audio);
                 analyser = audioContext.createAnalyser();
                 analyser.fftSize = 256;
                 source.connect(analyser);
+                analyser.connect(audioContext.destination);
                 dataArray = new Uint8Array(analyser.frequencyBinCount);
-                isRecording = true;
-                waveContainer.style.display = 'flex';
-                drawWaves();
             }
-        };
-    }
+        }
 
-    if (originalStop) {
-        window.stopRecording = function() {
-            originalStop.apply(this, arguments);
-            // Останавливаем визуализацию
-            isRecording = false;
+        // Запуск / остановка визуализации
+        function startVisualization() {
+            if (!analyser) initAnalyser();
+            isPlaying = true;
+            drawWaves();
+            // Обновление времени
+            const timeInterval = setInterval(() => {
+                if (!audio.paused) {
+                    updateTime();
+                } else {
+                    clearInterval(timeInterval);
+                }
+            }, 200);
+            // При окончании
+            audio.onended = () => {
+                isPlaying = false;
+                playBtn.textContent = '▶️';
+                if (animationId) cancelAnimationFrame(animationId);
+                updateTime();
+            };
+        }
+
+        function stopVisualization() {
+            isPlaying = false;
             if (animationId) {
                 cancelAnimationFrame(animationId);
                 animationId = null;
             }
-            waveContainer.style.display = 'none';
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            if (analyser) {
-                analyser.disconnect();
-                analyser = null;
-            }
-        };
-    }
-
-    // 6. Также обрабатываем случай, если запись уже была запущена до загрузки этого скрипта (на всякий случай)
-    // Проверяем глобальный флаг isRecording из основного кода
-    if (window.isRecording === true) {
-        // Если уже идёт запись, активируем визуализацию (но нам нужен stream)
-        // В основном коде localStream доступен глобально
-        if (window.localStream && window.localStream.getAudioTracks().length > 0) {
-            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            const source = audioContext.createMediaStreamSource(window.localStream);
-            analyser = audioContext.createAnalyser();
-            analyser.fftSize = 256;
-            source.connect(analyser);
-            dataArray = new Uint8Array(analyser.frequencyBinCount);
-            isRecording = true;
-            waveContainer.style.display = 'flex';
+            // Рисуем статичную линию
             drawWaves();
         }
+
+        // Обработчик клика
+        playBtn.addEventListener('click', () => {
+            if (audio.paused) {
+                // Если другой аудио играет – остановить его (опционально)
+                // Можно реализовать остановку всех других плееров
+                audio.play().catch(e => console.warn(e));
+                playBtn.textContent = '⏸️';
+                initAnalyser();
+                startVisualization();
+                // Обновляем кнопку при паузе
+                audio.onpause = () => {
+                    playBtn.textContent = '▶️';
+                    isPlaying = false;
+                    if (animationId) cancelAnimationFrame(animationId);
+                };
+            } else {
+                audio.pause();
+                playBtn.textContent = '▶️';
+                isPlaying = false;
+                if (animationId) cancelAnimationFrame(animationId);
+                drawWaves();
+            }
+        });
+
+        // Событие загрузки метаданных
+        audio.addEventListener('loadedmetadata', updateTime);
+        audio.addEventListener('timeupdate', updateTime);
+
+        // Отрисовка статичной линии (плоская)
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.beginPath();
+        ctx.moveTo(0, canvas.height / 2);
+        for (let i = 0; i < canvas.width; i += 2) {
+            ctx.lineTo(i, canvas.height / 2);
+        }
+        ctx.strokeStyle = '#7B2FBE';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(0, canvas.height / 2);
+        for (let i = 0; i < canvas.width; i += 2) {
+            ctx.lineTo(i, canvas.height / 2);
+        }
+        ctx.stroke();
+
+        // Принудительно обновить время
+        setTimeout(updateTime, 100);
     }
 
-    console.log('✅ Волновой индикатор голоса активирован');
+    // Функция поиска всех голосовых сообщений и замены
+    function upgradeVoiceMessages() {
+        // Ищем все контейнеры с аудио внутри .message-voice или с классом voice-message
+        document.querySelectorAll('.message-voice').forEach(container => {
+            const audio = container.querySelector('audio');
+            if (audio && !container.dataset.upgraded) {
+                container.dataset.upgraded = 'true';
+                // Удаляем старый аудио (но сохраним ссылку)
+                createVoicePlayer(audio, container);
+            }
+        });
+        // Также можем обработать элементы, где audio просто внутри сообщения с классом .voice-message
+        document.querySelectorAll('.voice-message audio').forEach(audio => {
+            const container = audio.closest('.message-voice') || audio.parentElement;
+            if (container && !container.dataset.upgraded) {
+                container.dataset.upgraded = 'true';
+                createVoicePlayer(audio, container);
+            }
+        });
+    }
+
+    // Запускаем сразу, если DOM готов
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', upgradeVoiceMessages);
+    } else {
+        upgradeVoiceMessages();
+    }
+
+    // Также подписываемся на изменения в сообщениях (если они подгружаются динамически)
+    const observer = new MutationObserver(() => {
+        upgradeVoiceMessages();
+    });
+    observer.observe(document.getElementById('chat-messages') || document.body, {
+        childList: true,
+        subtree: true
+    });
+
+    console.log('✅ Кастомные плееры с волнами активированы');
 })();
 </script>
 </body>
