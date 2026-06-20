@@ -5309,231 +5309,105 @@ if (!window._archive_chats_module) {
 
     console.log('✅ Кастомные плееры с волнами активированы');
 })();
-// ========== ПАТЧ: ВОССТАНОВЛЕНИЕ E2EE (глобальные функции) ==========
+// ========== УБИРАЕМ ШИФРОВАНИЕ (E2EE) ==========
 (function() {
-    // Если уже есть, не переопределяем
-    if (window.getE2EEKey && window.decryptE2EE && window.encryptE2EE) {
-        console.log('E2EE уже инициализирован глобально');
-        return;
-    }
-
-    console.log('Инициализация E2EE глобально...');
-
-    // Получаем ссылки на глобальные объекты
-    const db = window.db;
-    const auth = window.auth;
-    const currentUser = window.currentUser;
-
-    if (!db || !auth || !currentUser) {
-        console.warn('E2EE патч: db, auth или currentUser не найдены');
-        return;
-    }
-
-    // Кэш ключей
-    const e2eeSharedKeys = new Map();
-    let myKeyPair = null;
-
-    // Функция инициализации ключей
-    async function initMyKeys() {
-        const uid = currentUser.uid;
-        const stored = localStorage.getItem(`nexlink_e2ee_${uid}`);
-        if (stored) {
-            try {
-                const data = JSON.parse(stored);
-                const privateKey = await crypto.subtle.importKey(
-                    'jwk',
-                    data.privateKeyJwk,
-                    { name: 'ECDH', namedCurve: 'P-256' },
-                    true,
-                    ['deriveKey']
-                );
-                const publicKey = await crypto.subtle.importKey(
-                    'jwk',
-                    data.publicKeyJwk,
-                    { name: 'ECDH', namedCurve: 'P-256' },
-                    true,
-                    []
-                );
-                myKeyPair = { privateKey, publicKey, publicKeyJwk: data.publicKeyJwk };
-                return;
-            } catch(e) {}
-        }
-        // Генерация новой пары
-        const kp = await crypto.subtle.generateKey(
-            { name: 'ECDH', namedCurve: 'P-256' },
-            true,
-            ['deriveKey']
-        );
-        const publicKeyJwk = await crypto.subtle.exportKey('jwk', kp.publicKey);
-        const privateKeyJwk = await crypto.subtle.exportKey('jwk', kp.privateKey);
-        myKeyPair = { privateKey: kp.privateKey, publicKey: kp.publicKey, publicKeyJwk };
-        localStorage.setItem(`nexlink_e2ee_${uid}`, JSON.stringify({ privateKeyJwk, publicKeyJwk }));
-        // Сохраняем публичный ключ в Firestore
-        await setDoc(doc(db, 'publicKeys', uid), { publicKey: publicKeyJwk, updatedAt: serverTimestamp() });
-    }
-
-    // Функция получения общего ключа для чата
-    window.getE2EEKey = async function(chatId) {
-        if (e2eeSharedKeys.has(chatId)) return e2eeSharedKeys.get(chatId);
-        if (!myKeyPair) await initMyKeys();
-        if (!myKeyPair) return null;
-        const parts = chatId.split('_');
-        const peerUid = parts.find(p => p !== currentUser.uid && p !== 'chat');
-        if (!peerUid) return null;
-        try {
-            const snap = await getDoc(doc(db, 'publicKeys', peerUid));
-            if (!snap.exists()) return null;
-            const peerPublicKey = await crypto.subtle.importKey(
-                'jwk',
-                snap.data().publicKey,
-                { name: 'ECDH', namedCurve: 'P-256' },
-                true,
-                []
-            );
-            const key = await crypto.subtle.deriveKey(
-                { name: 'ECDH', public: peerPublicKey },
-                myKeyPair.privateKey,
-                { name: 'AES-GCM', length: 256 },
-                true,
-                ['encrypt', 'decrypt']
-            );
-            e2eeSharedKeys.set(chatId, key);
-            return key;
-        } catch(e) {
-            console.warn('Ошибка получения ключа E2EE:', e);
-            return null;
-        }
-    };
-
-    window.encryptE2EE = async function(text, key) {
-        const iv = crypto.getRandomValues(new Uint8Array(12));
-        const encrypted = await crypto.subtle.encrypt(
-            { name: 'AES-GCM', iv },
-            key,
-            new TextEncoder().encode(text)
-        );
-        const result = new Uint8Array(iv.length + encrypted.byteLength);
-        result.set(iv);
-        result.set(new Uint8Array(encrypted), iv.length);
-        return btoa(String.fromCharCode(...result));
-    };
-
-    window.decryptE2EE = async function(encryptedBase64, key) {
-        const data = Uint8Array.from(atob(encryptedBase64), c => c.charCodeAt(0));
-        const iv = data.slice(0, 12);
-        const ciphertext = data.slice(12);
-        const decrypted = await crypto.subtle.decrypt(
-            { name: 'AES-GCM', iv },
-            key,
-            ciphertext
-        );
-        return new TextDecoder().decode(decrypted);
-    };
-
-    // Инициализируем ключи при запуске
-    initMyKeys().catch(console.warn);
-
-    // Перехватываем отправку сообщений (если нужно шифровать)
-    const originalSendMessage = window.sendMessage;
-    if (originalSendMessage) {
-        window.sendMessage = async function() {
-            const text = document.getElementById('message-input')?.value?.trim();
-            if (!text || !currentUser) return originalSendMessage.apply(this, arguments);
-            const chatId = await window.getChatIdForActive();
-            if (!chatId) return originalSendMessage.apply(this, arguments);
-            // Если это не группа и не бот и не избранное – шифруем
-            if (!chatId.startsWith('room_') && !chatId.startsWith('bot_') && chatId !== `self_${currentUser.uid}`) {
-                const key = await window.getE2EEKey(chatId);
-                if (key) {
-                    const encrypted = await window.encryptE2EE(text, key);
-                    const msgData = {
-                        chatId,
-                        text: `[e2ee]${encrypted}`,
-                        timestamp: serverTimestamp(),
-                        senderUid: currentUser.uid,
-                        isE2EE: true
-                    };
-                    await addDoc(collection(db, 'messages'), msgData);
-                    document.getElementById('message-input').value = '';
-                    document.getElementById('message-input').focus();
-                    await updateTypingStatus(chatId, false);
-                    return;
-                }
+    if (!window.currentUser) {
+        console.warn('Пользователь не авторизован, отложим отключение E2EE');
+        // Подождём появления currentUser
+        const checkInterval = setInterval(() => {
+            if (window.currentUser) {
+                clearInterval(checkInterval);
+                disableE2EE();
             }
-            return originalSendMessage.apply(this, arguments);
-        };
+        }, 500);
+        return;
     }
+    disableE2EE();
 
-    // Обработчик расшифровки сообщений при рендеринге
-    const originalRenderMessages = window.renderMessages;
-    if (originalRenderMessages) {
-        window.renderMessages = async function() {
-            // Расшифровываем все ещё зашифрованные
-            const messages = window.messages || [];
-            let needUpdate = false;
-            for (const msg of messages) {
-                if (msg.isE2EE && msg.text && msg.text.startsWith('[e2ee]') && !msg._decrypted) {
-                    const chatId = msg.chatId || window.activeChatId;
-                    if (chatId) {
-                        try {
-                            const key = await window.getE2EEKey(chatId);
-                            if (key) {
-                                const decrypted = await window.decryptE2EE(msg.text.substring(6), key);
-                                msg.text = decrypted;
-                                msg._decrypted = true;
-                                needUpdate = true;
-                            }
-                        } catch(e) {
-                            console.warn('Ошибка расшифровки:', e);
+    function disableE2EE() {
+        console.log('Отключаем E2EE...');
+
+        // 1. Переопределяем sendMessage – убираем шифрование
+        if (window.sendMessage) {
+            const originalSend = window.sendMessage;
+            window.sendMessage = async function() {
+                const text = document.getElementById('message-input')?.value?.trim();
+                if (!text || !window.currentUser || !window.activeChatId) return;
+                const chatId = await window.getChatIdForActive();
+                // Отправляем без шифрования
+                await window.addDoc(window.collection(window.db, 'messages'), {
+                    chatId: chatId,
+                    text: text,
+                    timestamp: window.serverTimestamp(),
+                    senderUid: window.currentUser.uid
+                });
+                const input = document.getElementById('message-input');
+                if (input) input.value = '';
+                if (window.typingTimeout) clearTimeout(window.typingTimeout);
+                await window.updateTypingStatus(chatId, false);
+            };
+            console.log('sendMessage переопределён (без шифрования)');
+        }
+
+        // 2. Переопределяем loadMessagesRealtime – убираем расшифровку
+        if (window.loadMessagesRealtime) {
+            const originalLoad = window.loadMessagesRealtime;
+            window.loadMessagesRealtime = async function() {
+                // Просто вызываем оригинал, но он внутри может расшифровывать – мы перехватим renderMessages
+                await originalLoad.apply(this, arguments);
+                // Дополнительно: в renderMessages тоже убираем расшифровку
+            };
+            console.log('loadMessagesRealtime переопределён');
+        }
+
+        // 3. Переопределяем renderMessages – чтобы не пытался расшифровывать
+        if (window.renderMessages) {
+            const originalRender = window.renderMessages;
+            window.renderMessages = function() {
+                // Проходим по сообщениям и убираем любые попытки расшифровки
+                const messages = window.messages || [];
+                for (const msg of messages) {
+                    if (msg.text && typeof msg.text === 'string') {
+                        // Если сообщение было зашифровано, удаляем префикс [e2ee] или [group_e2ee] и показываем как есть
+                        if (msg.text.startsWith('[e2ee]')) {
+                            msg.text = msg.text.substring(6);
+                            msg.isE2EE = false;
+                            msg._decrypted = true;
+                        } else if (msg.text.startsWith('[group_e2ee]')) {
+                            msg.text = msg.text.substring(13);
+                            msg.isGroupE2EE = false;
+                            msg._decrypted = true;
                         }
                     }
                 }
-            }
-            originalRenderMessages();
-            if (needUpdate) {
-                // Если обновили сообщения, перерисовываем снова (но чтобы избежать цикла, проверяем)
-                // Можно просто вызвать оригинал ещё раз, но это может привести к бесконечности.
-                // Лучше перерисовать через setTimeout
-                setTimeout(() => {
-                    if (window.renderMessages) window.renderMessages();
-                }, 100);
-            }
-        };
-    }
+                // Вызываем оригинальный рендер
+                originalRender();
+            };
+            console.log('renderMessages переопределён (убрана расшифровка)');
+        }
 
-    // Также подписываемся на новые сообщения (уже есть в оригинальном коде, но мы добавим обработку)
-    // Можно переопределить onSnapshot, но проще добавить расшифровку в существующий поток.
-    // В оригинале есть loadMessagesRealtime, который подписывается и вызывает renderMessages.
-    // Мы можем переопределить loadMessagesRealtime, чтобы после получения сообщений расшифровывать.
-    const originalLoadMessages = window.loadMessagesRealtime;
-    if (originalLoadMessages) {
-        window.loadMessagesRealtime = async function() {
-            await originalLoadMessages.apply(this, arguments);
-            // После загрузки попробовать расшифровать
-            const messages = window.messages || [];
-            let needUpdate = false;
-            for (const msg of messages) {
-                if (msg.isE2EE && msg.text && msg.text.startsWith('[e2ee]') && !msg._decrypted) {
-                    const chatId = msg.chatId || window.activeChatId;
-                    if (chatId) {
-                        try {
-                            const key = await window.getE2EEKey(chatId);
-                            if (key) {
-                                msg.text = await window.decryptE2EE(msg.text.substring(6), key);
-                                msg._decrypted = true;
-                                needUpdate = true;
-                            }
-                        } catch(e) {}
+        // 4. Также можно очистить все существующие сообщения от [e2ee] при первом рендере
+        setTimeout(() => {
+            if (window.messages) {
+                for (const msg of window.messages) {
+                    if (msg.text && msg.text.startsWith('[e2ee]')) {
+                        msg.text = msg.text.substring(6);
+                    } else if (msg.text && msg.text.startsWith('[group_e2ee]')) {
+                        msg.text = msg.text.substring(13);
                     }
                 }
+                if (window.renderMessages) window.renderMessages();
             }
-            if (needUpdate && window.renderMessages) {
-                window.renderMessages();
-            }
-        };
-    }
+        }, 100);
 
-    console.log('✅ E2EE патч применён: шифрование и расшифровка работают');
+        // 5. Удаляем функции шифрования, чтобы они не вызывались случайно
+        window.encryptE2EE = async (text) => text;
+        window.decryptE2EE = async (text) => text;
+        window.getE2EEKey = async () => null;
+        window.initE2EEKeys = async () => {};
+
+        console.log('✅ E2EE полностью отключён, сообщения передаются открыто');
+    }
 })();
 </script>
 </body>
