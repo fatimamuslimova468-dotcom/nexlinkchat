@@ -4927,6 +4927,190 @@ if (!window._archive_chats_module) {
     `;
     document.head.appendChild(style);
 })();
+    // ========== ВОЛНОВОЙ ИНДИКАТОР ДЛЯ ГОЛОСОВОЙ ЗАПИСИ ==========
+(function() {
+    // 1. Создаём контейнер для волн (если его нет)
+    let waveContainer = document.getElementById('voice-wave-container');
+    if (!waveContainer) {
+        waveContainer = document.createElement('div');
+        waveContainer.id = 'voice-wave-container';
+        waveContainer.style.cssText = `
+            position: absolute;
+            bottom: 110%;
+            left: 50%;
+            transform: translateX(-50%);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            height: 40px;
+            padding: 8px 16px;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(8px);
+            border-radius: 40px;
+            z-index: 300;
+            pointer-events: none;
+        `;
+        // Вставляем в контейнер сообщений (рядом с полем ввода)
+        const inputContainer = document.querySelector('.message-input-container');
+        if (inputContainer) {
+            inputContainer.style.position = 'relative';
+            inputContainer.appendChild(waveContainer);
+        } else {
+            document.body.appendChild(waveContainer);
+        }
+    }
+
+    // 2. Создаём canvas для отрисовки волн
+    let canvas = document.getElementById('voice-wave-canvas');
+    if (!canvas) {
+        canvas = document.createElement('canvas');
+        canvas.id = 'voice-wave-canvas';
+        canvas.width = 200;
+        canvas.height = 40;
+        canvas.style.cssText = 'display: block; width: 200px; height: 40px; border-radius: 20px;';
+        waveContainer.appendChild(canvas);
+    }
+    const ctx = canvas.getContext('2d');
+
+    // 3. Переменные для аудио
+    let analyser = null;
+    let dataArray = null;
+    let animationId = null;
+    let isRecording = false;
+
+    // 4. Функция отрисовки волн
+    function drawWaves() {
+        if (!analyser || !isRecording) return;
+        analyser.getByteFrequencyData(dataArray);
+        const bufferLength = analyser.frequencyBinCount;
+        const step = Math.floor(bufferLength / 40); // количество столбцов = 40
+        const barWidth = canvas.width / 40;
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#ffffff';
+        ctx.shadowColor = 'rgba(255,255,255,0.3)';
+        ctx.shadowBlur = 8;
+
+        // Рисуем волнистые линии (как в Telegram)
+        ctx.beginPath();
+        ctx.moveTo(0, canvas.height / 2);
+        for (let i = 0; i < 40; i++) {
+            const index = Math.floor(i * step);
+            const value = dataArray[index] || 0;
+            const percent = value / 255; // 0..1
+            const height = percent * (canvas.height / 2) * 1.5;
+            const x = i * barWidth + barWidth / 2;
+            const y = canvas.height / 2 - height;
+            // Плавная кривая
+            if (i === 0) ctx.lineTo(x, y);
+            else {
+                const prevIndex = Math.floor((i - 1) * step);
+                const prevValue = dataArray[prevIndex] || 0;
+                const prevPercent = prevValue / 255;
+                const prevHeight = prevPercent * (canvas.height / 2) * 1.5;
+                const prevX = (i - 1) * barWidth + barWidth / 2;
+                const prevY = canvas.height / 2 - prevHeight;
+                const cpX = (prevX + x) / 2;
+                const cpY = (prevY + y) / 2;
+                ctx.quadraticCurveTo(cpX, cpY, x, y);
+            }
+        }
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+
+        // Зеркальное отражение (нижняя часть)
+        ctx.beginPath();
+        ctx.moveTo(0, canvas.height / 2);
+        for (let i = 0; i < 40; i++) {
+            const index = Math.floor(i * step);
+            const value = dataArray[index] || 0;
+            const percent = value / 255;
+            const height = percent * (canvas.height / 2) * 1.5;
+            const x = i * barWidth + barWidth / 2;
+            const y = canvas.height / 2 + height;
+            if (i === 0) ctx.lineTo(x, y);
+            else {
+                const prevIndex = Math.floor((i - 1) * step);
+                const prevValue = dataArray[prevIndex] || 0;
+                const prevPercent = prevValue / 255;
+                const prevHeight = prevPercent * (canvas.height / 2) * 1.5;
+                const prevX = (i - 1) * barWidth + barWidth / 2;
+                const prevY = canvas.height / 2 + prevHeight;
+                const cpX = (prevX + x) / 2;
+                const cpY = (prevY + y) / 2;
+                ctx.quadraticCurveTo(cpX, cpY, x, y);
+            }
+        }
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+
+        animationId = requestAnimationFrame(drawWaves);
+    }
+
+    // 5. Подключаемся к существующей записи (перехватываем startRecording и stopRecording)
+    const originalStart = window.startRecording;
+    const originalStop = window.stopRecording;
+
+    if (originalStart) {
+        window.startRecording = async function() {
+            await originalStart.apply(this, arguments);
+            // После запуска записи активируем визуализацию
+            const stream = localStream; // предположим, что localStream определён глобально
+            if (stream && stream.getAudioTracks().length > 0) {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const source = audioContext.createMediaStreamSource(stream);
+                analyser = audioContext.createAnalyser();
+                analyser.fftSize = 256;
+                source.connect(analyser);
+                dataArray = new Uint8Array(analyser.frequencyBinCount);
+                isRecording = true;
+                waveContainer.style.display = 'flex';
+                drawWaves();
+            }
+        };
+    }
+
+    if (originalStop) {
+        window.stopRecording = function() {
+            originalStop.apply(this, arguments);
+            // Останавливаем визуализацию
+            isRecording = false;
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+                animationId = null;
+            }
+            waveContainer.style.display = 'none';
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            if (analyser) {
+                analyser.disconnect();
+                analyser = null;
+            }
+        };
+    }
+
+    // 6. Также обрабатываем случай, если запись уже была запущена до загрузки этого скрипта (на всякий случай)
+    // Проверяем глобальный флаг isRecording из основного кода
+    if (window.isRecording === true) {
+        // Если уже идёт запись, активируем визуализацию (но нам нужен stream)
+        // В основном коде localStream доступен глобально
+        if (window.localStream && window.localStream.getAudioTracks().length > 0) {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const source = audioContext.createMediaStreamSource(window.localStream);
+            analyser = audioContext.createAnalyser();
+            analyser.fftSize = 256;
+            source.connect(analyser);
+            dataArray = new Uint8Array(analyser.frequencyBinCount);
+            isRecording = true;
+            waveContainer.style.display = 'flex';
+            drawWaves();
+        }
+    }
+
+    console.log('✅ Волновой индикатор голоса активирован');
+})();
 </script>
 </body>
 </html>
