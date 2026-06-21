@@ -2731,54 +2731,24 @@ function createPeerConnection(callId, role) {
         });
     }
 
-    // Внутри createPeerConnection
-peerConnection.ontrack = (event) => {
-    console.log('ontrack fired, kind:', event.track.kind);
+    // ИСПРАВЛЕНИЕ: Принимаем удалённые треки и явно снимаем mute
+    peerConnection.ontrack = (event) => {
+        console.log('ontrack fired, kind:', event.track.kind);
+        event.streams[0].getTracks().forEach(track => {
+            remoteStream.addTrack(track);
+        });
 
-    // Добавляем трек в общий remoteStream
-    event.streams[0].getTracks().forEach(track => {
-        remoteStream.addTrack(track);
-    });
-
-    // Устанавливаем srcObject только если он ещё не установлен или изменился
-    if (remoteVideo.srcObject !== remoteStream) {
+        // КРИТИЧНО: явно назначаем srcObject и снимаем muted
         remoteVideo.srcObject = remoteStream;
         remoteVideo.muted = false;
         remoteVideo.volume = 1.0;
 
-        // Ждём, пока поток будет готов, затем запускаем воспроизведение
-        if (remoteVideo.readyState < 2) { // HAVE_CURRENT_DATA
-            remoteVideo.onloadedmetadata = () => {
-                playRemoteVideo();
-            };
-        } else {
-            playRemoteVideo();
-        }
-    }
-
-    // Если есть видео-треки, скрываем плейсхолдер
-    if (remoteStream.getVideoTracks().length > 0) {
-        callAvatarPlaceholder.style.display = 'none';
-    }
-
-    // Показываем индикатор звука
-    audioLevelIndicator.classList.remove('hidden');
-    callStatusText.textContent = 'Соединено ✓';
-};
-
-// Вспомогательная функция для воспроизведения
-async function playRemoteVideo() {
-    try {
-        await remoteVideo.play();
-        console.log('remoteVideo started playing');
-    } catch (err) {
-        console.warn('remoteVideo.play() failed:', err);
-        // Если ошибка из-за политики автовоспроизведения – показываем кнопку
-        if (err.name === 'NotAllowedError' || err.name === 'AbortError') {
+        // Принудительно запускаем воспроизведение (обход autoplay policy)
+        remoteVideo.play().catch(err => {
+            console.warn('remoteVideo.play() failed:', err);
+            // Показываем кнопку разблокировки если браузер блокирует
             showUnmuteButton();
-        }
-    }
-}
+        });
 
         if (remoteStream.getVideoTracks().length > 0) {
             callAvatarPlaceholder.style.display = 'none';
@@ -5340,6 +5310,7 @@ if (!window._archive_chats_module) {
 
     console.log('✅ Кастомные плееры с волнами активированы');
 })();
+// ========
 </script>
 </body>
 </html>
