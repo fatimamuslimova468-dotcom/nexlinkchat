@@ -2730,31 +2730,28 @@ function createPeerConnection(callId, role) {
         });
     }
 
-    // ИСПРАВЛЕНИЕ: Принимаем удалённые треки и явно снимаем mute
     peerConnection.ontrack = (event) => {
-        console.log('ontrack fired, kind:', event.track.kind);
-        event.streams[0].getTracks().forEach(track => {
-            remoteStream.addTrack(track);
-        });
+    console.log('ontrack fired, kind:', event.track.kind);
 
-        // КРИТИЧНО: явно назначаем srcObject и снимаем muted
+    event.streams[0].getTracks().forEach(track => {
+        remoteStream.addTrack(track);
+    });
+
+    // Устанавливаем srcObject только если он ещё не установлен
+    if (remoteVideo.srcObject !== remoteStream) {
         remoteVideo.srcObject = remoteStream;
         remoteVideo.muted = false;
         remoteVideo.volume = 1.0;
+        // autoplay сработает автоматически, play() не вызываем
+    }
 
-        // Принудительно запускаем воспроизведение (обход autoplay policy)
-            console.warn('remoteVideo.play() failed:', err);
-            // Показываем кнопку разблокировки если браузер блокирует
-            showUnmuteButton();
-        });
+    if (remoteStream.getVideoTracks().length > 0) {
+        callAvatarPlaceholder.style.display = 'none';
+    }
 
-        if (remoteStream.getVideoTracks().length > 0) {
-            callAvatarPlaceholder.style.display = 'none';
-        }
-        // Показываем индикатор звука
-        audioLevelIndicator.classList.remove('hidden');
-        callStatusText.textContent = 'Соединено ✓';
-    };
+    audioLevelIndicator.classList.remove('hidden');
+    callStatusText.textContent = 'Соединено ✓';
+};
 
     // ICE кандидаты → Firestore
     const iceSide = role === 'caller' ? 'callerCandidates' : 'calleeCandidates';
