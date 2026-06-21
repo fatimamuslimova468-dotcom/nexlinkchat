@@ -2743,7 +2743,6 @@ function createPeerConnection(callId, role) {
         remoteVideo.volume = 1.0;
 
         // Принудительно запускаем воспроизведение (обход autoplay policy)
-        remoteVideo.play().catch(err => {
             console.warn('remoteVideo.play() failed:', err);
             // Показываем кнопку разблокировки если браузер блокирует
             showUnmuteButton();
