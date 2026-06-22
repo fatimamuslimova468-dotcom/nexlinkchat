@@ -3736,6 +3736,166 @@ updateLayout();
 
   console.log('✅ Новый профиль собеседника (как на скриншоте) загружен');
 })();
+
+
+    (function() {
+        'use strict';
+
+        // ----- Определяем элементы -----
+        const sidebar = document.getElementById('sidebar');
+        const sidePanel = document.getElementById('side-panel');
+        const backBtn = document.getElementById('back-btn');
+        const chatArea = document.getElementById('chat-area');
+        const emptyState = document.getElementById('empty-state');
+
+        // ----- Проверка состояния -----
+        function isPanelOpen() {
+            return sidePanel && sidePanel.classList.contains('open');
+        }
+
+        function isChatOpenMobile() {
+            if (window.innerWidth > 768) return false;
+            return sidebar && sidebar.classList.contains('hidden-mobile');
+        }
+
+        // ----- Закрытие панели -----
+        function closePanel() {
+            if (!isPanelOpen()) return;
+            if (sidePanel) sidePanel.classList.remove('open');
+            // Снимаем активность с кнопок сайдбара
+            document.querySelectorAll('.sf-btn').forEach(x => x.classList.remove('active'));
+            const chatsTab = document.querySelector('.sf-btn[data-view="chats"]');
+            if (chatsTab) chatsTab.classList.add('active');
+            // Убираем состояние из истории
+            history.replaceState(null, '', location.href);
+        }
+
+        // ----- Закрытие чата на мобильном -----
+        function closeChatMobile() {
+            if (!isChatOpenMobile()) return;
+            if (sidebar) sidebar.classList.remove('hidden-mobile');
+            if (backBtn) backBtn.style.display = 'none';
+            if (chatArea) {
+                chatArea.classList.add('hidden');
+                chatArea.style.display = 'none';
+            }
+            if (emptyState) emptyState.classList.remove('hidden');
+            // Очищаем активный чат
+            if (window.activeChat) {
+                window.activeChat = null;
+                if (typeof window.stopAllSubs === 'function') window.stopAllSubs();
+            }
+            // Убираем состояние из истории
+            history.replaceState(null, '', location.href);
+            // Если панель была открыта поверх чата, она останется открытой — это ок
+        }
+
+        // ----- Добавление состояния в историю -----
+        function addHistoryState(type) {
+            // Не добавляем, если уже есть такое же состояние
+            const current = history.state;
+            if (current && current.type === type) return;
+            history.pushState({ type: type }, '');
+        }
+
+        // ----- Перехват открытия панели -----
+        const origOpenSidePanel = window.openSidePanel;
+        if (typeof origOpenSidePanel === 'function') {
+            window.openSidePanel = function(view) {
+                origOpenSidePanel(view);
+                // Если панель открылась (view !== 'chats') и мы на мобильном
+                if (view !== 'chats' && window.innerWidth <= 768) {
+                    // Если панель уже была открыта – не добавляем новое состояние
+                    if (!isPanelOpen()) {
+                        addHistoryState('panel');
+                    }
+                }
+            };
+        }
+
+        // ----- Перехват открытия чата -----
+        const origOpenChat = window.openChat;
+        if (typeof origOpenChat === 'function') {
+            window.openChat = function(chat) {
+                origOpenChat(chat);
+                // Если чат открыт на мобильном
+                if (window.innerWidth <= 768 && sidebar && sidebar.classList.contains('hidden-mobile')) {
+                    // Проверяем, что чат действительно открыт (не пустой)
+                    if (chatArea && !chatArea.classList.contains('hidden')) {
+                        addHistoryState('chat');
+                    }
+                }
+            };
+        }
+
+        // ----- Перехват закрытия панели через штатный механизм -----
+        // Добавляем listener на кнопку закрытия панели (panel-close)
+        const panelCloseBtn = document.getElementById('panel-close');
+        if (panelCloseBtn) {
+            const origClick = panelCloseBtn.onclick;
+            panelCloseBtn.onclick = function(e) {
+                if (origClick) origClick.call(this, e);
+                closePanel();
+            };
+        }
+
+        // ----- Перехват закрытия чата через кнопку "Назад" -----
+        if (backBtn) {
+            const origBackClick = backBtn.onclick;
+            backBtn.onclick = function(e) {
+                // Вызываем оригинальный обработчик (он скрывает чат)
+                if (origBackClick) origBackClick.call(this, e);
+                // Затем заменяем состояние
+                closeChatMobile(); // но чтобы не дублировать, оставим вызов после
+                // Но оригинал уже делает то же самое, поэтому просто заменим состояние
+                history.replaceState(null, '', location.href);
+            };
+        }
+
+        // ----- Обработчик события popstate (нажатие "Назад") -----
+        window.addEventListener('popstate', function(event) {
+            const state = event.state;
+            if (!state) return;
+
+            // Если открыта панель – закрываем её
+            if (state.type === 'panel' && isPanelOpen()) {
+                closePanel();
+                // Заменяем состояние, чтобы следующее нажатие ушло дальше
+                history.replaceState(null, '', location.href);
+                return;
+            }
+
+            // Если открыт чат на мобильном – закрываем его
+            if (state.type === 'chat' && isChatOpenMobile()) {
+                closeChatMobile();
+                history.replaceState(null, '', location.href);
+                return;
+            }
+
+            // Если ничего не подошло – позволяем браузеру уйти назад
+            // (ничего не делаем)
+        });
+
+        // ----- Инициализация: если чат открыт при загрузке (редко) – добавляем состояние -----
+        if (isChatOpenMobile()) {
+            addHistoryState('chat');
+        }
+
+        // ----- При изменении размера окна обновляем состояние -----
+        let lastWidth = window.innerWidth;
+        window.addEventListener('resize', function() {
+            const now = window.innerWidth;
+            if (now > 768 && lastWidth <= 768) {
+                // Перешли на десктоп – если чат был открыт, состояние больше не нужно
+                if (isChatOpenMobile()) {
+                    history.replaceState(null, '', location.href);
+                }
+            }
+            lastWidth = now;
+        });
+
+        console.log('✅ Обработка кнопки "Назад" активирована');
+    })();
 </script>
 </body>
 </html>
