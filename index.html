@@ -1401,6 +1401,11 @@ async function buildChatList() {
       const other = parts.find(p => p !== me.uid && p !== 'chat');
       if (other) peerSet.add(other);
     }
+	items.sort((a, b) => {
+  const ta = a.lastMsgTime || 0;
+  const tb = b.lastMsgTime || 0;
+  return tb - ta; // по убыванию (новые сверху)
+});
   });
   for (const uid of peerSet) {
     const u = usersCache.get(uid);
@@ -1603,140 +1608,174 @@ function botReply(msg, bot) {
 }
  
 function renderMessages() {
-  const wrap = $('messages-wrap');
+  const wrap = document.getElementById('messages-wrap');
   if (!wrap) return;
   wrap.innerHTML = '';
   if (!allMessages.length) {
     wrap.innerHTML = '<div style="text-align:center;color:var(--text-hint);padding:40px;font-size:14px;">Нет сообщений. Напишите первым! 👋</div>';
     return;
   }
- 
+
   let lastDate = null;
   const fragment = document.createDocumentFragment();
- 
-  for (let i = 0; i < allMessages.length; i++) {
-    const msg = allMessages[i];
-    const isOut = msg.senderUid === me?.uid;
-    const msgDate = msg.timestamp?.toDate?.();
-    const dateStr = msgDate ? msgDate.toLocaleDateString('ru', {day:'numeric',month:'long'}) : null;
- 
-    if (dateStr && dateStr !== lastDate) {
+
+  // 1. Группируем сообщения по отправителю (подряд идущие)
+  const groups = [];
+  let currentGroup = null;
+
+  for (const msg of allMessages) {
+    const dateObj = msg.timestamp?.toDate?.();
+    const dateStr = dateObj ? dateObj.toLocaleDateString('ru', { day: 'numeric', month: 'long' }) : null;
+
+    // Если сменился день — создаём разделитель и разрываем группу
+    if (dateStr !== lastDate) {
+      if (currentGroup) {
+        groups.push(currentGroup);
+        currentGroup = null;
+      }
       lastDate = dateStr;
       const dl = document.createElement('div');
       dl.className = 'day-label';
       dl.textContent = dateStr;
       fragment.appendChild(dl);
     }
- 
+
+    const isOut = msg.senderUid === me?.uid;
+
+    // Начинаем новую группу, если отправитель изменился или направление (вх/исх)
+    if (!currentGroup || currentGroup.senderUid !== msg.senderUid || currentGroup.isOut !== isOut) {
+      if (currentGroup) groups.push(currentGroup);
+      currentGroup = {
+        senderUid: msg.senderUid,
+        isOut: isOut,
+        messages: [msg]
+      };
+    } else {
+      currentGroup.messages.push(msg);
+    }
+  }
+  if (currentGroup) groups.push(currentGroup);
+
+  // 2. Рендерим группы
+  for (const group of groups) {
     const grp = document.createElement('div');
-    grp.className = `msg-group ${isOut?'out':'in'}`;
- 
-    // Show sender name in groups
-    const showName = !isOut && (activeChat?.type === 'group') && msg.senderUid;
-    if (showName) {
+    grp.className = `msg-group ${group.isOut ? 'out' : 'in'}`;
+
+    // Имя отправителя (только для групп/каналов)
+    if (!group.isOut && (activeChat?.type === 'group' || activeChat?.type === 'channel')) {
       const ns = document.createElement('div');
       ns.className = 'msg-sender-name';
-      ns.textContent = getDisplayName(msg.senderUid);
+      ns.textContent = getDisplayName(group.senderUid);
       grp.appendChild(ns);
     }
- 
-    const row = document.createElement('div');
-    row.className = 'msg-row';
- 
-    // Avatar for incoming (groups)
-    if (!isOut && activeChat?.type === 'group') {
-      const av = document.createElement('div');
-      av.className = 'msg-av-small';
-      const u = usersCache.get(msg.senderUid);
-      av.innerHTML = avatarHtml(u?.avatar || '😊');
-      row.appendChild(av);
-    } else if (!isOut) {
-      const sp = document.createElement('div');
-      sp.className = 'msg-av-spacer';
-      row.appendChild(sp);
-    }
- 
-    // Bubble
-    const bubble = document.createElement('div');
-    bubble.className = `bubble${msg._pending?' pending':''}${msg.isDeleted?' deleted':''}`;
-    bubble.dataset.msgId = msg.id;
- 
-    // Reply quote
-    if (msg.replyToText) {
-      const rq = document.createElement('div');
-      rq.style.cssText = 'border-left:3px solid var(--accent);padding:4px 8px;margin-bottom:6px;border-radius:3px;background:rgba(42,171,238,0.08);font-size:12px;';
-      rq.innerHTML = `<div style="color:var(--accent);font-size:11px;font-weight:600;">Ответ</div><div style="color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc((msg.replyToText||'').slice(0,80))}</div>`;
-      bubble.appendChild(rq);
-    }
- 
-    // Content
-    const content = document.createElement('div');
-    content.className = 'bubble-text';
-    if (msg.isDeleted) {
-      content.innerHTML = '<i>Сообщение удалено</i>';
-    } else if (msg.isCallEvent) {
-      const ic = msg.callType==='video'?'📹':'📞';
-      const st = msg.callStatus==='missed'?'📵 Нет ответа':msg.callStatus==='rejected'?'🚫 Отклонён':`${ic} Звонок`;
-      const dur = msg.callDuration ? ` · ${fmtDuration(msg.callDuration)}` : '';
-      content.innerHTML = `<div class="call-event-msg">${st}${dur}</div>`;
-    } else if (msg.isSticker && msg.text?.startsWith('[sticker]')) {
-      content.innerHTML = `<img src="${esc(msg.text.slice(9))}" class="sticker-img" loading="lazy">`;
-    } else if (msg.isVoice && msg.text?.startsWith('[voice]')) {
-      content.innerHTML = `<div class="voice-player"><span>🎙️</span><audio controls src="${esc(msg.text.slice(7))}" style="flex:1;height:30px;"></audio></div>`;
-    } else if (msg.isFileLink) {
-      // Image link
-      content.innerHTML = `<img src="${esc(msg.text||'')}" style="max-width:240px;border-radius:12px;display:block;" loading="lazy" onerror="this.style.display='none'"><a href="${esc(msg.text||'')}" target="_blank" style="font-size:12px;color:var(--accent);display:block;margin-top:4px;">📎 Открыть</a>`;
-    } else {
-      const txt = msg.text || '';
-      // Render as text but also detect image URLs
-      if (/\.(jpg|jpeg|png|gif|webp)$/i.test(txt) && (txt.startsWith('http'))) {
-        content.innerHTML = `<img src="${esc(txt)}" style="max-width:240px;border-radius:12px;display:block;" loading="lazy">`;
-      } else {
-        content.textContent = txt;
+
+    // Проходим по сообщениям внутри группы
+    for (let i = 0; i < group.messages.length; i++) {
+      const msg = group.messages[i];
+      const row = document.createElement('div');
+      row.className = 'msg-row';
+
+      // Аватарка (или отступ) только у первого сообщения в группе
+      if (!group.isOut) {
+        if (i === 0) {
+          const av = document.createElement('div');
+          av.className = 'msg-av-small';
+          const u = usersCache.get(msg.senderUid);
+          av.innerHTML = avatarHtml(u?.avatar || '😊');
+          row.appendChild(av);
+        } else {
+          const sp = document.createElement('div');
+          sp.className = 'msg-av-spacer';
+          row.appendChild(sp);
+        }
       }
+
+      // Создаём баббл
+      const bubble = document.createElement('div');
+      bubble.className = `bubble${msg._pending ? ' pending' : ''}${msg.isDeleted ? ' deleted' : ''}`;
+      bubble.dataset.msgId = msg.id;
+
+      // Ответ (если есть)
+      if (msg.replyToText) {
+        const rq = document.createElement('div');
+        rq.style.cssText = 'border-left:3px solid var(--accent);padding:4px 8px;margin-bottom:6px;border-radius:3px;background:rgba(42,171,238,0.08);font-size:12px;';
+        rq.innerHTML = `<div style="color:var(--accent);font-size:11px;font-weight:600;">Ответ</div><div style="color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc((msg.replyToText||'').slice(0,80))}</div>`;
+        bubble.appendChild(rq);
+      }
+
+      // Содержимое
+      const content = document.createElement('div');
+      content.className = 'bubble-text';
+
+      if (msg.isDeleted) {
+        content.innerHTML = '<i>Сообщение удалено</i>';
+      } else if (msg.isCallEvent) {
+        const icon = msg.callType === 'video' ? '📹' : '📞';
+        const statusText = msg.callStatus === 'missed' ? '📵 Нет ответа'
+                         : msg.callStatus === 'rejected' ? '🚫 Отклонён'
+                         : `${icon} Звонок`;
+        const dur = msg.callDuration ? ` · ${fmtDuration(msg.callDuration)}` : '';
+        content.innerHTML = `<div class="call-event-msg">${statusText}${dur}</div>`;
+      } else if (msg.isSticker && msg.text?.startsWith('[sticker]')) {
+        content.innerHTML = `<img src="${esc(msg.text.slice(9))}" class="sticker-img" loading="lazy">`;
+      } else if (msg.isVoice && msg.text?.startsWith('[voice]')) {
+        content.innerHTML = `<div class="voice-player"><span>🎙️</span><audio controls src="${esc(msg.text.slice(7))}" style="flex:1;height:30px;"></audio></div>`;
+      } else if (msg.isFileLink) {
+        content.innerHTML = `<img src="${esc(msg.text||'')}" style="max-width:240px;border-radius:12px;display:block;" loading="lazy" onerror="this.style.display='none'"><a href="${esc(msg.text||'')}" target="_blank" style="font-size:12px;color:var(--accent);display:block;margin-top:4px;">📎 Открыть</a>`;
+      } else {
+        const txt = msg.text || '';
+        if (/\.(jpg|jpeg|png|gif|webp)$/i.test(txt) && txt.startsWith('http')) {
+          content.innerHTML = `<img src="${esc(txt)}" style="max-width:240px;border-radius:12px;display:block;" loading="lazy">`;
+        } else {
+          content.textContent = txt;
+        }
+      }
+      bubble.appendChild(content);
+
+      // Реакция
+      if (msg.reaction) {
+        const rc = document.createElement('div');
+        rc.className = 'reaction-chip';
+        rc.textContent = msg.reaction;
+        rc.onclick = async () => await updateDoc(doc(db,'messages',msg.id), { reaction: null });
+        bubble.appendChild(rc);
+      }
+
+      // Время и галочки
+      const timeEl = document.createElement('div');
+      timeEl.className = 'bubble-time';
+      const t = msg.timestamp?.toDate?.()?.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' }) || '';
+      const edited = msg.edited ? '<span style="font-size:10px;margin-right:3px;">ред.</span>' : '';
+      const tick = group.isOut ? `<span class="tick">${msg._pending ? '🕐' : '✓✓'}</span>` : '';
+      timeEl.innerHTML = `${edited}${esc(t)}${tick}`;
+      bubble.appendChild(timeEl);
+
+      // Действия (реакция, ответ, переслать, удалить)
+      if (!msg.isDeleted && !msg.isCallEvent) {
+        const acts = document.createElement('div');
+        acts.className = 'msg-actions';
+        acts.innerHTML = `
+          <button class="ma-btn" data-action="react" title="Реакция">😊</button>
+          <button class="ma-btn" data-action="reply" title="Ответить">↩️</button>
+          <button class="ma-btn" data-action="fwd" title="Переслать">📤</button>
+          ${group.isOut ? `<button class="ma-btn" data-action="edit" title="Изменить">✏️</button><button class="ma-btn" data-action="del" title="Удалить" style="color:var(--red);">🗑️</button>` : ''}
+        `;
+        acts.querySelectorAll('.ma-btn').forEach(b => b.onclick = e => {
+          e.stopPropagation();
+          handleMsgAction(b.dataset.action, msg, bubble);
+        });
+        row.appendChild(acts);
+      }
+
+      row.appendChild(bubble);
+      grp.appendChild(row);
     }
-    bubble.appendChild(content);
- 
-    // Reaction
-    if (msg.reaction) {
-      const rc = document.createElement('div');
-      rc.className = 'reaction-chip';
-      rc.textContent = msg.reaction;
-      rc.onclick = async () => await updateDoc(doc(db,'messages',msg.id), { reaction:null });
-      bubble.appendChild(rc);
-    }
- 
-    // Time + tick
-    const timeEl = document.createElement('div');
-    timeEl.className = 'bubble-time';
-    const t = msgDate ? msgDate.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : '';
-    const edited = msg.edited ? '<span style="font-size:10px;margin-right:3px;">ред.</span>' : '';
-    const tick = isOut ? `<span class="tick">${msg._pending?'🕐':'✓✓'}</span>` : '';
-    timeEl.innerHTML = `${edited}${esc(t)}${tick}`;
-    bubble.appendChild(timeEl);
- 
-    // Message actions
-    if (!msg.isDeleted && !msg.isCallEvent) {
-      const acts = document.createElement('div');
-      acts.className = 'msg-actions';
-      acts.innerHTML = `
-        <button class="ma-btn" data-action="react" title="Реакция">😊</button>
-        <button class="ma-btn" data-action="reply" title="Ответить">↩️</button>
-        <button class="ma-btn" data-action="fwd" title="Переслать">📤</button>
-        ${isOut ? `<button class="ma-btn" data-action="edit" title="Изменить">✏️</button><button class="ma-btn" data-action="del" title="Удалить" style="color:var(--red);">🗑️</button>` : ''}
-      `;
-      acts.querySelectorAll('.ma-btn').forEach(b => b.onclick = e => {
-        e.stopPropagation();
-        handleMsgAction(b.dataset.action, msg, bubble);
-      });
-      row.appendChild(acts);
-    }
- 
-    row.appendChild(bubble);
-    grp.appendChild(row);
+
     fragment.appendChild(grp);
   }
+
   wrap.appendChild(fragment);
+  scrollToBottom();
 }
  
 function handleMsgAction(action, msg, bubbleEl) {
@@ -2779,6 +2818,923 @@ updateLayout();
     });
 
     console.log('✅ Обработчик клика на шапку чата добавлен');
+})();
+// ======================= ФИНАЛЬНЫЙ ПАТЧ (контекстное меню, без старых кнопок) =======================
+(function() {
+  // Ждём, пока появится контейнер сообщений
+  function initWhenReady() {
+    var wrap = document.getElementById('messages-wrap');
+    if (!wrap) {
+      setTimeout(initWhenReady, 300);
+      return;
+    }
+
+    // 1. Скрываем все существующие кнопки действий (msg-actions)
+    var existingActions = wrap.querySelectorAll('.msg-actions');
+    for (var i = 0; i < existingActions.length; i++) {
+      existingActions[i].style.display = 'none';
+    }
+
+    // 2. Наблюдаем за добавлением новых сообщений (чтобы скрывать кнопки в них)
+    var observer = new MutationObserver(function(mutations) {
+      mutations.forEach(function(mutation) {
+        if (mutation.addedNodes && mutation.addedNodes.length) {
+          for (var j = 0; j < mutation.addedNodes.length; j++) {
+            var node = mutation.addedNodes[j];
+            if (node.querySelectorAll) {
+              var actions = node.querySelectorAll('.msg-actions');
+              for (var k = 0; k < actions.length; k++) {
+                actions[k].style.display = 'none';
+              }
+            }
+          }
+        }
+      });
+    });
+    observer.observe(wrap, { childList: true, subtree: true });
+
+    // 3. Вешаем глобальный обработчик правого клика на .bubble
+    document.addEventListener('contextmenu', function(e) {
+      var bubble = e.target.closest('.bubble');
+      if (!bubble) return;
+
+      var msgId = bubble.getAttribute('data-msg-id');
+      if (!msgId) return;
+
+      // Ищем сообщение в глобальном массиве allMessages (без optional chaining)
+      var allMsgs = window.allMessages || [];
+      var msg = null;
+      for (var i = 0; i < allMsgs.length; i++) {
+        if (allMsgs[i].id === msgId) {
+          msg = allMsgs[i];
+          break;
+        }
+      }
+      if (!msg) return;
+
+      e.preventDefault();
+      showContextMenu(e, msg, bubble);
+    });
+  }
+
+  // 4. Создание контекстного меню
+  function showContextMenu(e, msg, bubble) {
+    // Удаляем предыдущее меню
+    var oldMenu = document.getElementById('custom-ctx-menu');
+    if (oldMenu) oldMenu.parentNode.removeChild(oldMenu);
+
+    var menu = document.createElement('div');
+    menu.id = 'custom-ctx-menu';
+    menu.className = 'ctx-menu show';
+    menu.style.position = 'fixed';
+    menu.style.left = Math.min(e.clientX, window.innerWidth - 200) + 'px';
+    menu.style.top = Math.min(e.clientY, window.innerHeight - 100) + 'px';
+
+    var isOut = (window.me && msg.senderUid === window.me.uid);
+    var items = [
+      { action: 'react', icon: '😊', label: 'Реакция' },
+      { action: 'reply', icon: '↩️', label: 'Ответить' },
+      { action: 'fwd',   icon: '📤', label: 'Переслать' }
+    ];
+    if (isOut && !msg.isDeleted) {
+      items.push({ action: 'edit', icon: '✏️', label: 'Изменить' });
+      items.push({ action: 'del',  icon: '🗑️', label: 'Удалить', danger: true });
+    }
+
+    for (var i = 0; i < items.length; i++) {
+      var item = items[i];
+      var div = document.createElement('div');
+      div.className = 'ctx-item' + (item.danger ? ' danger' : '');
+      div.innerHTML = '<span class="ctx-icon">' + item.icon + '</span>' + item.label;
+      div.addEventListener('click', (function(action, msg, bubble) {
+        return function() {
+          menu.parentNode.removeChild(menu);
+          if (action === 'react') {
+            if (typeof window.showReactionPicker === 'function') {
+              window.showReactionPicker(msg, bubble);
+            }
+          } else {
+            if (typeof window.handleMsgAction === 'function') {
+              window.handleMsgAction(action, msg, bubble);
+            }
+          }
+        };
+      })(item.action, msg, bubble));
+      menu.appendChild(div);
+    }
+
+    document.body.appendChild(menu);
+
+    // Закрытие при клике вне меню
+    var closeHandler = function(event) {
+      if (!menu.contains(event.target)) {
+        if (menu.parentNode) menu.parentNode.removeChild(menu);
+        document.removeEventListener('click', closeHandler);
+      }
+    };
+    setTimeout(function() {
+      document.addEventListener('click', closeHandler);
+    }, 0);
+  }
+
+  // Старт, когда DOM готов
+  if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    setTimeout(initWhenReady, 100);
+  } else {
+    window.addEventListener('DOMContentLoaded', function() { setTimeout(initWhenReady, 100); });
+  }
+})();
+// ============================================================
+//  🎙️  КРАСИВЫЙ ДИЗАЙН ГОЛОСОВЫХ СООБЩЕНИЙ
+// ============================================================
+
+(function() {
+  // ---------- 1. ВНЕДРЕНИЕ CSS ----------
+  const voiceStyles = document.createElement('style');
+  voiceStyles.textContent = `
+    /* ---- Кнопка записи ---- */
+    .voice-btn-recording {
+      position: relative;
+      color: #E74C3C !important;
+      animation: voicePulse 1.2s ease-in-out infinite;
+    }
+    .voice-btn-recording::after {
+      content: '';
+      position: absolute;
+      inset: -6px;
+      border-radius: 50%;
+      border: 2px solid rgba(231, 76, 60, 0.3);
+      animation: voiceRing 1.2s ease-out infinite;
+    }
+    @keyframes voicePulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.15); }
+    }
+    @keyframes voiceRing {
+      0% { transform: scale(0.8); opacity: 1; }
+      100% { transform: scale(1.5); opacity: 0; }
+    }
+
+    /* ---- Таймер записи ---- */
+    .rec-timer {
+      position: absolute;
+      bottom: calc(100% + 8px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.75);
+      backdrop-filter: blur(8px);
+      color: #fff;
+      padding: 4px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+      display: none;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+    }
+    .rec-timer.show {
+      display: block;
+      animation: fadeUp 0.25s ease-out;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateX(-50%) translateY(8px); }
+      to { opacity: 1; transform: translateX(-50%) translateY(0); }
+    }
+
+    /* ---- Голосовое сообщение (карточка) ---- */
+    .voice-msg-card {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 12px 6px 10px;
+      border-radius: 16px;
+      min-width: 200px;
+      max-width: 280px;
+      background: linear-gradient(135deg, rgba(42,171,238,0.08), rgba(42,171,238,0.02));
+      backdrop-filter: blur(4px);
+      border: 1px solid rgba(42,171,238,0.08);
+      transition: background 0.2s;
+    }
+    .voice-msg-card:hover {
+      background: linear-gradient(135deg, rgba(42,171,238,0.14), rgba(42,171,238,0.04));
+    }
+    .msg-group.out .voice-msg-card {
+      background: linear-gradient(135deg, rgba(46,204,113,0.10), rgba(46,204,113,0.02));
+      border-color: rgba(46,204,113,0.08);
+    }
+    .msg-group.out .voice-msg-card:hover {
+      background: linear-gradient(135deg, rgba(46,204,113,0.18), rgba(46,204,113,0.04));
+    }
+
+    /* ---- Кнопка play/pause ---- */
+    .voice-play-btn {
+      flex-shrink: 0;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      border: none;
+      background: linear-gradient(135deg, #2AABEE, #1a8bc5);
+      color: #fff;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 2px 12px rgba(42,171,238,0.25);
+    }
+    .voice-play-btn:hover {
+      transform: scale(1.06);
+      box-shadow: 0 4px 20px rgba(42,171,238,0.35);
+    }
+    .voice-play-btn:active {
+      transform: scale(0.94);
+    }
+    .voice-play-btn.playing {
+      background: linear-gradient(135deg, #f39c12, #e67e22);
+      box-shadow: 0 2px 12px rgba(243,156,18,0.3);
+    }
+    .msg-group.out .voice-play-btn {
+      background: linear-gradient(135deg, #27AE60, #1e8449);
+      box-shadow: 0 2px 12px rgba(39,174,96,0.25);
+    }
+    .msg-group.out .voice-play-btn.playing {
+      background: linear-gradient(135deg, #f39c12, #e67e22);
+      box-shadow: 0 2px 12px rgba(243,156,18,0.3);
+    }
+
+    /* ---- Волновая форма (canvas) ---- */
+    .voice-waveform {
+      flex: 1;
+      height: 40px;
+      border-radius: 8px;
+      cursor: pointer;
+      min-width: 80px;
+    }
+
+    /* ---- Прогресс-бар под волной ---- */
+    .voice-progress-wrap {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 2px;
+      width: 100%;
+    }
+    .voice-progress-track {
+      flex: 1;
+      height: 3px;
+      border-radius: 4px;
+      background: rgba(0,0,0,0.08);
+      position: relative;
+      cursor: pointer;
+      transition: height 0.15s;
+    }
+    .voice-progress-track:hover {
+      height: 5px;
+    }
+    .voice-progress-fill {
+      height: 100%;
+      border-radius: 4px;
+      background: linear-gradient(90deg, #2AABEE, #52c7f5);
+      width: 0%;
+      transition: width 0.1s linear;
+    }
+    .msg-group.out .voice-progress-fill {
+      background: linear-gradient(90deg, #27AE60, #6ddb8f);
+    }
+    .voice-time {
+      font-size: 11px;
+      color: var(--text-secondary);
+      font-variant-numeric: tabular-nums;
+      min-width: 36px;
+      text-align: center;
+      letter-spacing: 0.3px;
+    }
+
+    /* ---- Бейдж "Новое" для непрослушанных ---- */
+    .voice-unread {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #2AABEE;
+      flex-shrink: 0;
+      animation: pulseDot 1.6s ease-in-out infinite;
+    }
+    .msg-group.out .voice-unread {
+      background: #27AE60;
+    }
+    @keyframes pulseDot {
+      0%, 100% { opacity: 0.4; transform: scale(0.8); }
+      50% { opacity: 1; transform: scale(1.2); }
+    }
+
+    /* ---- Адаптив ---- */
+    @media (max-width: 480px) {
+      .voice-msg-card {
+        min-width: 140px;
+        max-width: 220px;
+        padding: 4px 8px 4px 6px;
+      }
+      .voice-play-btn {
+        width: 32px;
+        height: 32px;
+        font-size: 14px;
+      }
+      .voice-waveform {
+        height: 32px;
+      }
+    }
+  `;
+  document.head.appendChild(voiceStyles);
+
+  // ---------- 2. УТИЛИТЫ ----------
+  function formatTime(seconds) {
+    if (!seconds || seconds < 0) return '0:00';
+    const m = Math.floor(seconds / 60);
+    const s = Math.floor(seconds % 60);
+    return `${m}:${s.toString().padStart(2, '0')}`;
+  }
+
+  // ---------- 3. ГЕНЕРАЦИЯ ВОЛНЫ (canvas) ----------
+  function drawWaveform(canvas, audioData, isPlaying = false, progress = 0) {
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width;
+    const H = canvas.height;
+    ctx.clearRect(0, 0, W, H);
+
+    // Если нет данных — рисуем случайную "живую" волну
+    const bars = audioData && audioData.length > 0 ? audioData : null;
+    const count = Math.min(bars ? bars.length : 32, W / 4);
+    const barWidth = Math.max(2, (W - 8) / count);
+    const gap = 1.5;
+
+    // Цвета
+    const isOut = canvas.dataset.out === 'true';
+    const c1 = isOut ? 'rgba(39,174,96,' : 'rgba(42,171,238,';
+    const c2 = isOut ? 'rgba(46,204,113,' : 'rgba(82,199,245,';
+
+    // Прогресс-маркер (закрашенная часть)
+    const progressPos = progress * W;
+
+    for (let i = 0; i < count; i++) {
+      let val;
+      if (bars) {
+        // Нормализуем значение из audioData
+        const idx = Math.floor((i / count) * bars.length);
+        val = Math.abs(bars[idx] || 0) * 2.2;
+      } else {
+        // Случайная волна для "живого" вида
+        val = 0.3 + 0.7 * (0.5 + 0.5 * Math.sin(i * 0.7 + Date.now() / 280));
+        if (isPlaying) {
+          val += 0.25 * Math.sin(i * 1.2 + Date.now() / 120);
+        }
+        val = Math.min(1, val);
+      }
+      const h = Math.max(3, val * H * 0.85);
+      const x = 4 + i * (barWidth + gap);
+
+      // Градиент прогресса
+      const centerX = x + barWidth / 2;
+      const isFilled = centerX < progressPos;
+
+      let alpha = 0.5 + 0.5 * val;
+      if (isPlaying && isFilled) alpha = Math.min(1, alpha + 0.3);
+
+      const color = isFilled
+        ? (isOut ? 'rgba(39,174,96,' : 'rgba(42,171,238,') + alpha + ')'
+        : (isOut ? 'rgba(39,174,96,' : 'rgba(42,171,238,') + (alpha * 0.35) + ')';
+
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      const radius = Math.min(3, barWidth / 2);
+      const rx = x;
+      const ry = (H - h) / 2;
+      const rw = barWidth;
+      const rh = h;
+      ctx.roundRect ? ctx.roundRect(rx, ry, rw, rh, radius) : ctx.rect(rx, ry, rw, rh);
+      ctx.fill();
+    }
+  }
+
+  // ---------- 4. КАСТОМНЫЙ АУДИО ПЛЕЕР ----------
+  class VoicePlayer {
+    constructor(audioUrl, container, isOut = false, onPlay = null) {
+      this.audioUrl = audioUrl;
+      this.container = container;
+      this.isOut = isOut;
+      this.onPlay = onPlay;
+      this.audio = null;
+      this.isPlaying = false;
+      this.audioData = null;
+      this.raf = null;
+      this.progress = 0;
+      this.duration = 0;
+
+      this._buildUI();
+      this._initAudio();
+    }
+
+    _buildUI() {
+      const card = document.createElement('div');
+      card.className = 'voice-msg-card';
+
+      // Кнопка play
+      this.playBtn = document.createElement('button');
+      this.playBtn.className = 'voice-play-btn';
+      this.playBtn.textContent = '▶';
+      this.playBtn.type = 'button';
+      card.appendChild(this.playBtn);
+
+      // Canvas для волны
+      this.canvas = document.createElement('canvas');
+      this.canvas.className = 'voice-waveform';
+      this.canvas.dataset.out = this.isOut ? 'true' : 'false';
+      this.canvas.width = 240;
+      this.canvas.height = 40;
+      card.appendChild(this.canvas);
+
+      // Время
+      this.timeDisplay = document.createElement('span');
+      this.timeDisplay.className = 'voice-time';
+      this.timeDisplay.textContent = '0:00';
+      card.appendChild(this.timeDisplay);
+
+      // Прогресс-бар под всем
+      const wrap = document.createElement('div');
+      wrap.className = 'voice-progress-wrap';
+
+      const track = document.createElement('div');
+      track.className = 'voice-progress-track';
+
+      this.fill = document.createElement('div');
+      this.fill.className = 'voice-progress-fill';
+      track.appendChild(this.fill);
+      wrap.appendChild(track);
+
+      // Время под прогрессом (дублируем, можно убрать)
+      const timeSmall = document.createElement('span');
+      timeSmall.className = 'voice-time';
+      timeSmall.textContent = '0:00';
+      wrap.appendChild(timeSmall);
+      this.timeSmall = timeSmall;
+
+      // Собираем
+      const innerWrap = document.createElement('div');
+      innerWrap.style.cssText = 'display:flex;flex-direction:column;flex:1;gap:2px;';
+      innerWrap.appendChild(card);
+      innerWrap.appendChild(wrap);
+      this.container.innerHTML = '';
+      this.container.appendChild(innerWrap);
+
+      // Ссылки на элементы
+      this.card = card;
+      this.track = track;
+
+      // События
+      this.playBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.togglePlay();
+      });
+
+      track.addEventListener('click', (e) => {
+        const rect = track.getBoundingClientRect();
+        const pct = (e.clientX - rect.left) / rect.width;
+        if (this.audio) {
+          this.audio.currentTime = pct * this.audio.duration;
+        }
+      });
+
+      // Для canvas тоже клик
+      this.canvas.addEventListener('click', (e) => {
+        const rect = this.canvas.getBoundingClientRect();
+        const pct = (e.clientX - rect.left) / rect.width;
+        if (this.audio) {
+          this.audio.currentTime = pct * this.audio.duration;
+        }
+      });
+    }
+
+    _initAudio() {
+      try {
+        this.audio = new Audio(this.audioUrl);
+        this.audio.preload = 'metadata';
+
+        this.audio.addEventListener('loadedmetadata', () => {
+          this.duration = this.audio.duration || 0;
+          this.timeDisplay.textContent = formatTime(this.duration);
+          if (this.timeSmall) this.timeSmall.textContent = formatTime(this.duration);
+          this._generateWaveform();
+        });
+
+        this.audio.addEventListener('timeupdate', () => {
+          if (this.audio.duration) {
+            this.progress = this.audio.currentTime / this.audio.duration;
+            this.fill.style.width = (this.progress * 100) + '%';
+            const remain = this.audio.duration - this.audio.currentTime;
+            this.timeDisplay.textContent = formatTime(remain > 0 ? remain : 0);
+            if (this.timeSmall) this.timeSmall.textContent = formatTime(this.audio.currentTime);
+            this._redrawWaveform();
+          }
+        });
+
+        this.audio.addEventListener('play', () => {
+          this.isPlaying = true;
+          this.playBtn.textContent = '⏸';
+          this.playBtn.classList.add('playing');
+          if (this.onPlay) this.onPlay();
+          this._startAnimation();
+        });
+
+        this.audio.addEventListener('pause', () => {
+          this.isPlaying = false;
+          this.playBtn.textContent = '▶';
+          this.playBtn.classList.remove('playing');
+          this._stopAnimation();
+        });
+
+        this.audio.addEventListener('ended', () => {
+          this.isPlaying = false;
+          this.playBtn.textContent = '▶';
+          this.playBtn.classList.remove('playing');
+          this.progress = 1;
+          this.fill.style.width = '100%';
+          this.timeDisplay.textContent = '0:00';
+          if (this.timeSmall) this.timeSmall.textContent = formatTime(this.duration);
+          this._stopAnimation();
+          this._redrawWaveform();
+        });
+
+        this.audio.addEventListener('error', () => {
+          // Fallback: если не грузится, показываем простой плеер
+          this.playBtn.textContent = '▶';
+          this.playBtn.style.opacity = '0.5';
+        });
+      } catch (e) {
+        console.warn('VoicePlayer init error:', e);
+      }
+    }
+
+    _generateWaveform() {
+      // Создаём синтетические данные для волны
+      // Для реального анализа понадобится AudioContext, но для красоты сгенерируем
+      const count = 48;
+      const data = [];
+      // Создаём "реалистичную" форму волны с затуханием к краям
+      for (let i = 0; i < count; i++) {
+        const t = i / count;
+        const env = Math.sin(t * Math.PI) * 0.9 + 0.1;
+        const noise = 0.3 + 0.7 * Math.random();
+        data.push(env * noise);
+      }
+      this.audioData = data;
+      this._redrawWaveform();
+    }
+
+    _redrawWaveform() {
+      if (!this.canvas) return;
+      const progress = this.isPlaying ? this.progress : 0;
+      drawWaveform(this.canvas, this.audioData, this.isPlaying, progress);
+    }
+
+    _startAnimation() {
+      if (this.raf) return;
+      const loop = () => {
+        if (!this.isPlaying) {
+          this.raf = null;
+          return;
+        }
+        // Обновляем волну в реальном времени (живая анимация)
+        if (this.canvas) {
+          // Для живого эффекта перерисовываем с текущим прогрессом
+          const progress = this.audio ? this.audio.currentTime / (this.audio.duration || 1) : 0;
+          drawWaveform(this.canvas, this.audioData, true, progress);
+        }
+        this.raf = requestAnimationFrame(loop);
+      };
+      loop();
+    }
+
+    _stopAnimation() {
+      if (this.raf) {
+        cancelAnimationFrame(this.raf);
+        this.raf = null;
+      }
+    }
+
+    togglePlay() {
+      if (!this.audio) return;
+      if (this.isPlaying) {
+        this.audio.pause();
+      } else {
+        this.audio.play().catch(() => {});
+      }
+    }
+
+    destroy() {
+      this._stopAnimation();
+      if (this.audio) {
+        this.audio.pause();
+        this.audio.src = '';
+      }
+    }
+  }
+
+  // ---------- 5. ПЕРЕХВАТ ОТОБРАЖЕНИЯ ГОЛОСОВЫХ ----------
+  // Сохраняем оригинальный renderMessages
+  const origRender = window.renderMessages;
+  if (origRender) {
+    window.renderMessages = function() {
+      origRender.call(this);
+      // После рендера — заменяем голосовые на кастомные
+      enhanceVoiceMessages();
+    };
+  } else {
+    // Если renderMessages не определена (пока), подождём
+    const checkRender = setInterval(() => {
+      if (typeof window.renderMessages === 'function') {
+        clearInterval(checkRender);
+        const orig = window.renderMessages;
+        window.renderMessages = function() {
+          orig.call(this);
+          enhanceVoiceMessages();
+        };
+      }
+    }, 300);
+  }
+
+  // ---------- 6. ФУНКЦИЯ ЗАМЕНЫ ГОЛОСОВЫХ ----------
+  function enhanceVoiceMessages() {
+    document.querySelectorAll('.voice-player').forEach(el => {
+      // Проверяем, уже обработано
+      if (el.dataset.enhanced === 'true') return;
+
+      const audio = el.querySelector('audio');
+      if (!audio) return;
+
+      const src = audio.getAttribute('src') || audio.currentSrc;
+      if (!src) return;
+
+      // Определяем, исходящее ли сообщение
+      const group = el.closest('.msg-group');
+      const isOut = group ? group.classList.contains('out') : false;
+
+      // Сохраняем ссылку на плеер
+      const container = el.parentElement || el;
+      // Очищаем и создаём кастомный плеер
+      const wrapper = document.createElement('div');
+      wrapper.style.cssText = 'display:contents;';
+      container.parentElement?.insertBefore(wrapper, container);
+      wrapper.appendChild(container);
+
+      // Создаём кастомный плеер
+      const player = new VoicePlayer(src, container, isOut, () => {
+        // При воспроизведении останавливаем другие
+        document.querySelectorAll('.voice-msg-card').forEach(c => {
+          const other = c._player;
+          if (other && other !== player && other.isPlaying) {
+            other.togglePlay();
+          }
+        });
+      });
+
+      // Сохраняем ссылку для остановки других
+      container._player = player;
+      container.dataset.enhanced = 'true';
+
+      // Удаляем старый audio
+      if (audio.parentNode) audio.parentNode.removeChild(audio);
+    });
+  }
+
+  // ---------- 7. УЛУЧШЕННАЯ ЗАПИСЬ (кнопка) ----------
+  // Сохраняем оригинальные функции записи
+  const origStartRec = window.startRec;
+  const origStopRec = window.stopRec;
+
+  // Создаём таймер
+  let recTimerInterval = null;
+  let recStartTime = null;
+  let recSeconds = 0;
+
+  function updateRecTimer() {
+    if (!recStartTime) return;
+    recSeconds = Math.floor((Date.now() - recStartTime) / 1000);
+    const timer = document.getElementById('rec-timer-el');
+    if (timer) {
+      timer.textContent = formatTime(recSeconds);
+      if (recSeconds > 0 && recSeconds % 5 === 0) {
+        // Вибрация при длительной записи
+        if (navigator.vibrate) navigator.vibrate(20);
+      }
+    }
+  }
+
+  function showRecTimer() {
+    let timer = document.getElementById('rec-timer-el');
+    if (!timer) {
+      timer = document.createElement('div');
+      timer.id = 'rec-timer-el';
+      timer.className = 'rec-timer';
+      const voiceBtn = document.getElementById('voice-btn');
+      if (voiceBtn && voiceBtn.parentElement) {
+        voiceBtn.parentElement.style.position = 'relative';
+        voiceBtn.parentElement.appendChild(timer);
+      }
+    }
+    timer.classList.add('show');
+    timer.textContent = '0:00';
+  }
+
+  function hideRecTimer() {
+    const timer = document.getElementById('rec-timer-el');
+    if (timer) timer.classList.remove('show');
+    if (recTimerInterval) {
+      clearInterval(recTimerInterval);
+      recTimerInterval = null;
+    }
+    recStartTime = null;
+    recSeconds = 0;
+  }
+
+  // Переопределяем startRec
+  if (origStartRec) {
+    window.startRec = async function() {
+      const voiceBtn = document.getElementById('voice-btn');
+      if (voiceBtn) {
+        voiceBtn.classList.add('voice-btn-recording');
+        voiceBtn.textContent = '⏹';
+        voiceBtn.title = 'Остановить запись';
+      }
+      recStartTime = Date.now();
+      showRecTimer();
+      if (recTimerInterval) clearInterval(recTimerInterval);
+      recTimerInterval = setInterval(updateRecTimer, 200);
+
+      // Вызываем оригинал
+      await origStartRec.call(this);
+    };
+  }
+
+  // Переопределяем stopRec
+  if (origStopRec) {
+    window.stopRec = function() {
+      const voiceBtn = document.getElementById('voice-btn');
+      if (voiceBtn) {
+        voiceBtn.classList.remove('voice-btn-recording');
+        voiceBtn.textContent = '🎙️';
+        voiceBtn.title = 'Голосовое сообщение';
+      }
+      hideRecTimer();
+
+      // Вызываем оригинал
+      origStopRec.call(this);
+    };
+  }
+
+  // ---------- 8. ДОПОЛНИТЕЛЬНО: индикатор готовности ----------
+  // Показываем подсказку при наведении на голосовое
+  document.addEventListener('mouseover', (e) => {
+    const card = e.target.closest('.voice-msg-card');
+    if (card) {
+      card.style.cursor = 'pointer';
+    }
+  });
+
+  // Обработка завершения всех голосовых при уходе со страницы
+  window.addEventListener('beforeunload', () => {
+    document.querySelectorAll('.voice-msg-card').forEach(c => {
+      if (c._player) c._player.destroy();
+    });
+  });
+
+  console.log('🎙️ Красивый дизайн голосовых активирован!');
+
+  // ---------- 9. ПЕРЕХВАТ ДОБАВЛЕНИЯ НОВЫХ СООБЩЕНИЙ (MutationObserver) ----------
+  // Наблюдаем за добавлением новых голосовых в реальном времени
+  const wrap = document.getElementById('messages-wrap');
+  if (wrap) {
+    const mo = new MutationObserver(() => {
+      enhanceVoiceMessages();
+    });
+    mo.observe(wrap, { childList: true, subtree: true });
+  }
+
+})();
+// ====================== ПРОФИЛЬ СОБЕСЕДНИКА (как на скриншоте) ======================
+(function() {
+  if (document.getElementById('user-profile-modal')) return;
+
+  const modalHTML = `
+    <div id="user-profile-modal" class="modal-overlay" style="display:none; z-index:220; background:rgba(0,0,0,0.6);">
+      <div style="background:white; border-radius:16px; width:100%; max-width:380px; margin:40px auto; box-shadow:0 10px 40px rgba(0,0,0,0.2); overflow:hidden;">
+        <!-- Header -->
+        <div style="padding:20px 20px 0; display:flex; justify-content:space-between; align-items:center;">
+          <div id="profile-full-name" style="font-size:20px; font-weight:700;"></div>
+          <button id="close-user-profile" style="background:none; border:none; font-size:28px; color:#999; cursor:pointer; line-height:1;">×</button>
+        </div>
+        
+        <!-- Avatar -->
+        <div style="text-align:center; padding:10px 0 20px;">
+          <div id="profile-avatar-big" style="width:96px; height:96px; border-radius:50%; margin:0 auto; background:var(--accent); display:flex; align-items:center; justify-content:center; font-size:42px; box-shadow:0 4px 20px rgba(42,171,238,0.3); overflow:hidden;">
+          </div>
+        </div>
+        
+        <!-- Name + Username -->
+        <div style="text-align:center; padding:0 20px 10px;">
+          <div id="profile-name-main" style="font-size:22px; font-weight:700; margin-bottom:4px;"></div>
+          <div id="profile-username" style="color:#666; font-size:15px;"></div>
+        </div>
+        
+        <!-- Email -->
+        <div style="padding:0 20px 20px;">
+          <div style="background:#f5f5f5; border-radius:10px; padding:12px; text-align:center; font-size:14px; color:#555;" id="profile-email">
+          </div>
+        </div>
+        
+        <!-- Buttons -->
+        <div style="display:flex; gap:8px; padding:0 20px 30px;">
+          <button id="profile-msg-btn" 
+                  style="flex:1; padding:14px; border-radius:12px; background:#2AABEE; color:white; border:none; font-weight:600; font-size:15px; display:flex; align-items:center; justify-content:center; gap:8px;">
+            💬 Написать
+          </button>
+          <button id="profile-call-btn" 
+                  style="flex:1; padding:14px; border-radius:12px; background:#27AE60; color:white; border:none; font-weight:600; font-size:15px; display:flex; align-items:center; justify-content:center; gap:8px;">
+            📞 Позвонить
+          </button>
+          <button id="profile-video-btn" 
+                  style="flex:1; padding:14px; border-radius:12px; background:#2AABEE; color:white; border:none; font-weight:600; font-size:15px; display:flex; align-items:center; justify-content:center; gap:8px;">
+            📹 Видео
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.body.insertAdjacentHTML('beforeend', modalHTML);
+
+  let currentProfileUser = null;
+
+  window.openUserProfile = function(uid) {
+    if (!uid) return;
+    
+    currentProfileUser = usersCache?.get(uid) || { uid: uid, firstName: "Пользователь", username: "" };
+
+    document.getElementById('profile-full-name').textContent = getDisplayName ? getDisplayName(uid) : "Пользователь";
+    document.getElementById('profile-name-main').textContent = getDisplayName ? getDisplayName(uid) : "Пользователь";
+    document.getElementById('profile-username').textContent = currentProfileUser.username ? "@" + currentProfileUser.username : "@username";
+    document.getElementById('profile-email').textContent = currentProfileUser.email || "email@example.com";
+
+    const avatarDiv = document.getElementById('profile-avatar-big');
+    avatarDiv.innerHTML = currentProfileUser.avatar 
+      ? `<img src="${currentProfileUser.avatar}" style="width:100%;height:100%;object-fit:cover;">`
+      : (typeof avatarHtml === 'function' ? avatarHtml('😊') : '😊');
+
+    document.getElementById('user-profile-modal').style.display = 'flex';
+  };
+
+  // Закрытие
+  document.getElementById('close-user-profile').onclick = () => {
+    document.getElementById('user-profile-modal').style.display = 'none';
+  };
+
+  // Кнопки
+  document.getElementById('profile-msg-btn').onclick = () => {
+    if (currentProfileUser) {
+      document.getElementById('user-profile-modal').style.display = 'none';
+      if (typeof switchToChat === 'function') switchToChat(currentProfileUser.uid);
+    }
+  };
+
+  document.getElementById('profile-call-btn').onclick = () => {
+    if (currentProfileUser) {
+      document.getElementById('user-profile-modal').style.display = 'none';
+      if (typeof startCall === 'function') startCall(currentProfileUser.uid, false);
+    }
+  };
+
+  document.getElementById('profile-video-btn').onclick = () => {
+    if (currentProfileUser) {
+      document.getElementById('user-profile-modal').style.display = 'none';
+      if (typeof startCall === 'function') startCall(currentProfileUser.uid, true);
+    }
+  };
+
+  // Открытие по клику на шапку
+  setTimeout(() => {
+    const hdr = document.getElementById('hdr-info');
+    if (hdr) {
+      hdr.style.cursor = 'pointer';
+      hdr.onclick = function() {
+        if (activeChat && activeChat.type === 'private') {
+          openUserProfile(activeChat.id);
+        }
+      };
+    }
+  }, 1000);
+
+  console.log('✅ Новый профиль собеседника (как на скриншоте) загружен');
 })();
 </script>
 </body>
