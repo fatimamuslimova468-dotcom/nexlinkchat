@@ -3911,138 +3911,140 @@ updateLayout();
     (function() {
         'use strict';
 
-        // ---------- Элементы ----------
+        // ============================================================
+//  УЛУЧШЕННАЯ НАВИГАЦИЯ ПО КНОПКЕ "НАЗАД" (СИСТЕМНАЯ)
+//  Вставьте этот код перед закрывающим тегом </script>
+// ============================================================
+(function() {
+  'use strict';
+
+  if (!window.history || !window.history.pushState) return;
+
+  const isMobile = () => window.innerWidth <= 768;
+
+  // Сохраняем оригинальные функции, если они уже определены
+  const origOpenChat = window.openChat;
+  const origOpenSidePanel = window.openSidePanel;
+
+  // Добавление состояния в историю (только уникальные)
+  function addHistoryState(type) {
+    if (history.state && history.state.type === type) return;
+    history.pushState({ type: type }, '');
+  }
+
+  // Переопределяем открытие чата
+  window.openChat = function(chat) {
+    if (origOpenChat) origOpenChat(chat);
+    // Если мобильный и чат открыт (sidebar скрыт)
+    if (isMobile() && document.getElementById('sidebar').classList.contains('hidden-mobile')) {
+      addHistoryState('chat');
+    }
+  };
+
+  // Переопределяем открытие боковой панели (настройки, контакты)
+  window.openSidePanel = function(view) {
+    if (origOpenSidePanel) origOpenSidePanel(view);
+    if (isMobile() && view !== 'chats') {
+      const panel = document.getElementById('side-panel');
+      if (panel && panel.classList.contains('open')) {
+        addHistoryState('panel');
+      }
+    }
+  };
+
+  // Функция закрытия панели (с заменой состояния)
+  const origClosePanel = window.closePanel || function() {
+    const panel = document.getElementById('side-panel');
+    if (panel) panel.classList.remove('open');
+    document.querySelectorAll('.sf-btn').forEach(x => x.classList.remove('active'));
+    const chatsTab = document.querySelector('.sf-btn[data-view="chats"]');
+    if (chatsTab) chatsTab.classList.add('active');
+  };
+  window.closePanel = function() {
+    origClosePanel();
+    if (history.state && history.state.type === 'panel') {
+      history.replaceState(null, '', location.href);
+    }
+  };
+
+  // Обработчик системной кнопки "Назад" (событие popstate)
+  window.addEventListener('popstate', function(event) {
+    const state = event.state;
+    if (!state) return;
+
+    const panel = document.getElementById('side-panel');
+    const sidebar = document.getElementById('sidebar');
+    const chatArea = document.getElementById('chat-area');
+    const emptyState = document.getElementById('empty-state');
+
+    // 1. Если открыта панель — закрываем её
+    if (state.type === 'panel' && panel && panel.classList.contains('open')) {
+      window.closePanel();
+      history.replaceState(null, '', location.href);
+      return;
+    }
+
+    // 2. Если открыт чат на мобильном — закрываем чат
+    if (state.type === 'chat' && isMobile() && sidebar && sidebar.classList.contains('hidden-mobile')) {
+      sidebar.classList.remove('hidden-mobile');
+      const backBtn = document.getElementById('back-btn');
+      if (backBtn) backBtn.style.display = 'none';
+      if (chatArea) {
+        chatArea.classList.add('hidden');
+        chatArea.style.display = 'none';
+      }
+      if (emptyState) emptyState.classList.remove('hidden');
+      if (window.activeChat) {
+        window.activeChat = null;
+        if (typeof window.stopAllSubs === 'function') window.stopAllSubs();
+      }
+      history.replaceState(null, '', location.href);
+      return;
+    }
+
+    // 3. Если ничего не подошло — заменяем состояние (чтобы не уходить со страницы)
+    history.replaceState(null, '', location.href);
+  });
+
+  // Если чат уже открыт при загрузке (редкий случай) — добавляем состояние
+  if (isMobile() && document.getElementById('sidebar').classList.contains('hidden-mobile')) {
+    addHistoryState('chat');
+  }
+
+  // Закрытие панели через кнопку «✕» — заменяем состояние
+  const panelClose = document.getElementById('panel-close');
+  if (panelClose) {
+    panelClose.addEventListener('click', function() {
+      window.closePanel();
+    });
+  }
+
+  // Кнопка «Назад» в шапке чата — закрываем чат и заменяем состояние
+  const backBtn = document.getElementById('back-btn');
+  if (backBtn) {
+    backBtn.addEventListener('click', function() {
+      if (isMobile()) {
         const sidebar = document.getElementById('sidebar');
-        const sidePanel = document.getElementById('side-panel');
-        const backBtn = document.getElementById('back-btn');
         const chatArea = document.getElementById('chat-area');
         const emptyState = document.getElementById('empty-state');
-
-        // ---------- Проверки ----------
-        function isMobile() {
-            return window.innerWidth <= 768;
+        sidebar.classList.remove('hidden-mobile');
+        backBtn.style.display = 'none';
+        if (chatArea) {
+          chatArea.classList.add('hidden');
+          chatArea.style.display = 'none';
         }
-
-        function isChatOpen() {
-            return isMobile() &&
-                   sidebar && sidebar.classList.contains('hidden-mobile') &&
-                   chatArea && !chatArea.classList.contains('hidden');
+        if (emptyState) emptyState.classList.remove('hidden');
+        if (window.activeChat) {
+          window.activeChat = null;
+          if (typeof window.stopAllSubs === 'function') window.stopAllSubs();
         }
+        history.replaceState(null, '', location.href);
+      }
+    });
+  }
 
-        function isPanelOpen() {
-            return sidePanel && sidePanel.classList.contains('open');
-        }
-
-        // ---------- Закрытие панели ----------
-        function closePanel() {
-            if (!isPanelOpen()) return;
-            sidePanel.classList.remove('open');
-            // Сброс активной вкладки
-            document.querySelectorAll('.sf-btn').forEach(b => b.classList.remove('active'));
-            const chatsTab = document.querySelector('.sf-btn[data-view="chats"]');
-            if (chatsTab) chatsTab.classList.add('active');
-            // Убираем состояние из истории
-            history.replaceState(null, '', location.href);
-        }
-
-        // ---------- Закрытие чата ----------
-        function closeChat() {
-            if (!isChatOpen()) return;
-            sidebar.classList.remove('hidden-mobile');
-            if (backBtn) backBtn.style.display = 'none';
-            chatArea.classList.add('hidden');
-            chatArea.style.display = 'none';
-            if (emptyState) emptyState.classList.remove('hidden');
-            // Сброс активного чата
-            if (window.activeChat) {
-                window.activeChat = null;
-                if (typeof window.stopAllSubs === 'function') window.stopAllSubs();
-            }
-            history.replaceState(null, '', location.href);
-        }
-
-        // ---------- Добавление состояния в историю ----------
-        let lastPush = 0;
-        function pushState(type) {
-            // Защита от частых вызовов
-            if (Date.now() - lastPush < 300) return;
-            lastPush = Date.now();
-            if (history.state && history.state.type === type) return;
-            history.pushState({ type: type }, '');
-        }
-
-        // ---------- Основной обработчик popstate ----------
-        window.addEventListener('popstate', function(event) {
-            const state = event.state;
-            // Если нет состояния или оно без типа – позволяем браузеру уйти назад
-            if (!state || !state.type) return;
-
-            if (state.type === 'chat' && isChatOpen()) {
-                closeChat();
-                event.preventDefault(); // предотвращаем уход со страницы
-                return;
-            }
-
-            if (state.type === 'panel' && isPanelOpen()) {
-                closePanel();
-                event.preventDefault();
-                return;
-            }
-
-            // Если ничего не подошло – браузер уйдёт назад сам
-        });
-
-        // ---------- Наблюдатель за появлением классов ----------
-        const observer = new MutationObserver(function(mutations) {
-            mutations.forEach(function(mutation) {
-                if (mutation.type !== 'attributes' || mutation.attributeName !== 'class') return;
-                const target = mutation.target;
-
-                // Открылась панель
-                if (target === sidePanel && sidePanel.classList.contains('open')) {
-                    if (isMobile()) pushState('panel');
-                }
-
-                // Открылся чат (sidebar получил hidden-mobile)
-                if (target === sidebar && sidebar.classList.contains('hidden-mobile')) {
-                    if (isMobile() && chatArea && !chatArea.classList.contains('hidden')) {
-                        pushState('chat');
-                    }
-                }
-            });
-        });
-
-        if (sidebar) observer.observe(sidebar, { attributes: true, attributeFilter: ['class'] });
-        if (sidePanel) observer.observe(sidePanel, { attributes: true, attributeFilter: ['class'] });
-
-        // ---------- Если чат уже открыт при загрузке ----------
-        if (isChatOpen()) pushState('chat');
-
-        // ---------- Ручное закрытие через кнопку "Назад" в шапке ----------
-        if (backBtn) {
-            backBtn.addEventListener('click', function(e) {
-                if (isChatOpen()) {
-                    closeChat();
-                    e.preventDefault();
-                }
-            });
-        }
-
-        // ---------- При переключении на десктоп сбрасываем историю ----------
-        let lastWidth = window.innerWidth;
-        window.addEventListener('resize', function() {
-            const now = window.innerWidth;
-            if (now > 768 && lastWidth <= 768) {
-                // Если было состояние – убираем
-                if (history.state && (history.state.type === 'chat' || history.state.type === 'panel')) {
-                    history.replaceState(null, '', location.href);
-                }
-            }
-            lastWidth = now;
-        });
-
-        console.log('✅ Обработка системной кнопки "Назад" включена');
-    })();
+  console.log('✅ Навигация по системной кнопке "Назад" настроена');
+})();
 </script>
 </body>
 </html>
