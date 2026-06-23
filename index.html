@@ -3737,148 +3737,8 @@ updateLayout();
   console.log('✅ Новый профиль собеседника (как на скриншоте) загружен');
 })();
 
-    (function() {
-    'use strict';
-
-    // ----- Элементы DOM -----
-    const sidebar = document.getElementById('sidebar');
-    const sidePanel = document.getElementById('side-panel');
-    const backBtn = document.getElementById('back-btn');
-    const chatArea = document.getElementById('chat-area');
-    const emptyState = document.getElementById('empty-state');
-
-    // ----- Проверки состояния -----
-    function isPanelOpen() {
-        return sidePanel && sidePanel.classList.contains('open');
-    }
-
-    function isChatOpenMobile() {
-        if (window.innerWidth > 768) return false;
-        return sidebar && sidebar.classList.contains('hidden-mobile');
-    }
-
-    // ----- Закрыть панель (контакты/настройки) -----
-    function closePanel() {
-        if (!isPanelOpen()) return;
-        if (sidePanel) sidePanel.classList.remove('open');
-        // Снимаем активность с кнопок нижней панели
-        document.querySelectorAll('.sf-btn').forEach(x => x.classList.remove('active'));
-        const chatsTab = document.querySelector('.sf-btn[data-view="chats"]');
-        if (chatsTab) chatsTab.classList.add('active');
-        // Очищаем состояние истории
-        history.replaceState(null, '', location.href);
-    }
-
-    // ----- Закрыть чат на мобильном -----
-    function closeChatMobile() {
-        if (!isChatOpenMobile()) return;
-        if (sidebar) sidebar.classList.remove('hidden-mobile');
-        if (backBtn) backBtn.style.display = 'none';
-        if (chatArea) {
-            chatArea.classList.add('hidden');
-            chatArea.style.display = 'none';
-        }
-        if (emptyState) emptyState.classList.remove('hidden');
-        // Очищаем активный чат
-        if (window.activeChat) {
-            window.activeChat = null;
-            if (typeof window.stopAllSubs === 'function') window.stopAllSubs();
-        }
-        history.replaceState(null, '', location.href);
-    }
-
-    // ----- Добавление состояния в историю -----
-    function addHistoryState(type) {
-        const current = history.state;
-        if (current && current.type === type) return;
-        history.pushState({ type: type }, '');
-    }
-
-    // ----- Перехват открытия панели (контакты/настройки) -----
-    const origOpenSidePanel = window.openSidePanel;
-    if (typeof origOpenSidePanel === 'function') {
-        window.openSidePanel = function(view) {
-            origOpenSidePanel(view);
-            if (view !== 'chats' && window.innerWidth <= 768) {
-                if (!isPanelOpen()) {
-                    addHistoryState('panel');
-                }
-            }
-        };
-    }
-
-    // ----- Перехват открытия чата -----
-    const origOpenChat = window.openChat;
-    if (typeof origOpenChat === 'function') {
-        window.openChat = function(chat) {
-            origOpenChat(chat);
-            if (window.innerWidth <= 768 && sidebar && sidebar.classList.contains('hidden-mobile')) {
-                if (chatArea && !chatArea.classList.contains('hidden')) {
-                    addHistoryState('chat');
-                }
-            }
-        };
-    }
-
-    // ----- Закрытие панели через штатную кнопку "✕" -----
-    const panelCloseBtn = document.getElementById('panel-close');
-    if (panelCloseBtn) {
-        const origClick = panelCloseBtn.onclick;
-        panelCloseBtn.onclick = function(e) {
-            if (origClick) origClick.call(this, e);
-            closePanel();
-        };
-    }
-
-    // ----- Закрытие чата через кнопку "←" (мобильная) -----
-    if (backBtn) {
-        const origBackClick = backBtn.onclick;
-        backBtn.onclick = function(e) {
-            if (origBackClick) origBackClick.call(this, e);
-            closeChatMobile();
-        };
-    }
-
-    // ----- Обработчик системной кнопки "Назад" (popstate) -----
-    window.addEventListener('popstate', function(event) {
-        const state = event.state;
-        if (!state) return;
-
-        if (state.type === 'panel' && isPanelOpen()) {
-            closePanel();
-            history.replaceState(null, '', location.href);
-            return;
-        }
-
-        if (state.type === 'chat' && isChatOpenMobile()) {
-            closeChatMobile();
-            history.replaceState(null, '', location.href);
-            return;
-        }
-    });
-
-    // ----- Инициализация: если чат открыт при загрузке (редко) -----
-    if (isChatOpenMobile()) {
-        addHistoryState('chat');
-    }
-
-    // ----- При изменении размера окна (переход на десктоп) -----
-    let lastWidth = window.innerWidth;
-    window.addEventListener('resize', function() {
-        const now = window.innerWidth;
-        if (now > 768 && lastWidth <= 768) {
-            if (isChatOpenMobile()) {
-                history.replaceState(null, '', location.href);
-            }
-        }
-        lastWidth = now;
-    });
-
-    console.log('✅ Обработка системной кнопки "Назад" активирована');
-})();
 
 
-<style>
     /* ----- Мобильные стили: сайдбар на весь экран ----- */
     @media (max-width: 768px) {
         #sidebar {
@@ -3962,7 +3822,6 @@ updateLayout();
             display: none !important;
         }
     }
-</style>
 
     (function() {
         'use strict';
