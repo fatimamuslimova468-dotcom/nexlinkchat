@@ -3622,342 +3622,200 @@ updateLayout();
   }
 
 })();
-// ====================== ПРОФИЛЬ СОБЕСЕДНИКА (как на скриншоте) ======================
+// ================================================================
+//  ДОПОЛНИТЕЛЬНЫЕ СТИЛИ ДЛЯ ПОЛНОЭКРАННОГО СПИСКА ЧАТОВ
+//  + ОБРАБОТКА СИСТЕМНОЙ КНОПКИ "НАЗАД"
+// ================================================================
 (function() {
-  if (document.getElementById('user-profile-modal')) return;
+    'use strict';
 
-  const modalHTML = `
-    <div id="user-profile-modal" class="modal-overlay" style="display:none; z-index:220; background:rgba(0,0,0,0.6);">
-      <div style="background:white; border-radius:16px; width:100%; max-width:380px; margin:40px auto; box-shadow:0 10px 40px rgba(0,0,0,0.2); overflow:hidden;">
-        <!-- Header -->
-        <div style="padding:20px 20px 0; display:flex; justify-content:space-between; align-items:center;">
-          <div id="profile-full-name" style="font-size:20px; font-weight:700;"></div>
-          <button id="close-user-profile" style="background:none; border:none; font-size:28px; color:#999; cursor:pointer; line-height:1;">×</button>
-        </div>
-        
-        <!-- Avatar -->
-        <div style="text-align:center; padding:10px 0 20px;">
-          <div id="profile-avatar-big" style="width:96px; height:96px; border-radius:50%; margin:0 auto; background:var(--accent); display:flex; align-items:center; justify-content:center; font-size:42px; box-shadow:0 4px 20px rgba(42,171,238,0.3); overflow:hidden;">
-          </div>
-        </div>
-        
-        <!-- Name + Username -->
-        <div style="text-align:center; padding:0 20px 10px;">
-          <div id="profile-name-main" style="font-size:22px; font-weight:700; margin-bottom:4px;"></div>
-          <div id="profile-username" style="color:#666; font-size:15px;"></div>
-        </div>
-        
-        <!-- Email -->
-        <div style="padding:0 20px 20px;">
-          <div style="background:#f5f5f5; border-radius:10px; padding:12px; text-align:center; font-size:14px; color:#555;" id="profile-email">
-          </div>
-        </div>
-        
-        <!-- Buttons -->
-        <div style="display:flex; gap:8px; padding:0 20px 30px;">
-          <button id="profile-msg-btn" 
-                  style="flex:1; padding:14px; border-radius:12px; background:#2AABEE; color:white; border:none; font-weight:600; font-size:15px; display:flex; align-items:center; justify-content:center; gap:8px;">
-            💬 Написать
-          </button>
-          <button id="profile-call-btn" 
-                  style="flex:1; padding:14px; border-radius:12px; background:#27AE60; color:white; border:none; font-weight:600; font-size:15px; display:flex; align-items:center; justify-content:center; gap:8px;">
-            📞 Позвонить
-          </button>
-          <button id="profile-video-btn" 
-                  style="flex:1; padding:14px; border-radius:12px; background:#2AABEE; color:white; border:none; font-weight:600; font-size:15px; display:flex; align-items:center; justify-content:center; gap:8px;">
-            📹 Видео
-          </button>
-        </div>
-      </div>
-    </div>
-  `;
-
-  document.body.insertAdjacentHTML('beforeend', modalHTML);
-
-  let currentProfileUser = null;
-
-  window.openUserProfile = function(uid) {
-    if (!uid) return;
-    
-    currentProfileUser = usersCache?.get(uid) || { uid: uid, firstName: "Пользователь", username: "" };
-
-    document.getElementById('profile-full-name').textContent = getDisplayName ? getDisplayName(uid) : "Пользователь";
-    document.getElementById('profile-name-main').textContent = getDisplayName ? getDisplayName(uid) : "Пользователь";
-    document.getElementById('profile-username').textContent = currentProfileUser.username ? "@" + currentProfileUser.username : "@username";
-    document.getElementById('profile-email').textContent = currentProfileUser.email || "email@example.com";
-
-    const avatarDiv = document.getElementById('profile-avatar-big');
-    avatarDiv.innerHTML = currentProfileUser.avatar 
-      ? `<img src="${currentProfileUser.avatar}" style="width:100%;height:100%;object-fit:cover;">`
-      : (typeof avatarHtml === 'function' ? avatarHtml('😊') : '😊');
-
-    document.getElementById('user-profile-modal').style.display = 'flex';
-  };
-
-  // Закрытие
-  document.getElementById('close-user-profile').onclick = () => {
-    document.getElementById('user-profile-modal').style.display = 'none';
-  };
-
-  // Кнопки
-  document.getElementById('profile-msg-btn').onclick = () => {
-    if (currentProfileUser) {
-      document.getElementById('user-profile-modal').style.display = 'none';
-      if (typeof switchToChat === 'function') switchToChat(currentProfileUser.uid);
-    }
-  };
-
-  document.getElementById('profile-call-btn').onclick = () => {
-    if (currentProfileUser) {
-      document.getElementById('user-profile-modal').style.display = 'none';
-      if (typeof startCall === 'function') startCall(currentProfileUser.uid, false);
-    }
-  };
-
-  document.getElementById('profile-video-btn').onclick = () => {
-    if (currentProfileUser) {
-      document.getElementById('user-profile-modal').style.display = 'none';
-      if (typeof startCall === 'function') startCall(currentProfileUser.uid, true);
-    }
-  };
-
-  // Открытие по клику на шапку
-  setTimeout(() => {
-    const hdr = document.getElementById('hdr-info');
-    if (hdr) {
-      hdr.style.cursor = 'pointer';
-      hdr.onclick = function() {
-        if (activeChat && activeChat.type === 'private') {
-          openUserProfile(activeChat.id);
-        }
-      };
-    }
-  }, 1000);
-
-  console.log('✅ Новый профиль собеседника (как на скриншоте) загружен');
-})();
-
-
-
-    /* ----- Мобильные стили: сайдбар на весь экран ----- */
-    @media (max-width: 768px) {
-        #sidebar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            bottom: 0;
-            width: 100% !important;
-            min-width: unset !important;
-            max-width: 100% !important;
-            z-index: 20;
-            background: var(--sidebar, #ffffff);
-            transform: translateX(0);
-            transition: transform 0.25s ease;
-            border-right: none;
-            box-shadow: 0 0 20px rgba(0,0,0,0.1);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-        #sidebar.hidden-mobile {
-            transform: translateX(-100%);
-        }
-
-        /* Панель контактов/настроек поверх всего */
-        #side-panel {
-            position: fixed;
-            top: 0;
-            left: 0;
-            bottom: 0;
-            width: 100% !important;
-            z-index: 30;
-            background: var(--bg, #ffffff);
-            transform: translateX(100%);
-            transition: transform 0.25s ease;
-            border-left: none;
-            box-shadow: -4px 0 20px rgba(0,0,0,0.1);
-        }
-        #side-panel.open {
-            transform: translateX(0);
-        }
-
-        /* Основная область (чат) на весь экран */
-        #main {
-            position: relative;
-            width: 100%;
-            z-index: 10;
-        }
-
-        /* Кнопка "Назад" в шапке чата */
-        .back-btn {
-            display: flex !important;
-        }
-
-        /* Скрываем пустое состояние при открытом чате */
-        #empty-state.hidden {
-            display: none !important;
-        }
-    }
-
-    /* Для десктопа оставляем как есть */
-    @media (min-width: 769px) {
-        #sidebar {
-            width: 320px;
-            min-width: 320px;
-            position: relative;
-            transform: none !important;
-        }
-        #sidebar.hidden-mobile {
-            transform: none !important;
-        }
-        #side-panel {
-            width: 0;
-            position: relative;
-            transform: none !important;
-        }
-        #side-panel.open {
-            width: 340px;
-        }
-        .back-btn {
-            display: none !important;
-        }
-    }
-
-    (function() {
-        'use strict';
-
-        // ---------- Элементы ----------
-        const sidebar = document.getElementById('sidebar');
-        const sidePanel = document.getElementById('side-panel');
-        const backBtn = document.getElementById('back-btn');
-        const chatArea = document.getElementById('chat-area');
-        const emptyState = document.getElementById('empty-state');
-
-        // ---------- Проверки ----------
-        function isMobile() {
-            return window.innerWidth <= 768;
-        }
-
-        function isChatOpen() {
-            return isMobile() &&
-                   sidebar && sidebar.classList.contains('hidden-mobile') &&
-                   chatArea && !chatArea.classList.contains('hidden') &&
-                   chatArea.style.display !== 'none';
-        }
-
-        function isPanelOpen() {
-            return sidePanel && sidePanel.classList.contains('open');
-        }
-
-        // ---------- Закрытие панели ----------
-        function closePanel() {
-            if (!isPanelOpen()) return;
-            sidePanel.classList.remove('open');
-            // Сброс активной вкладки
-            document.querySelectorAll('.sf-btn').forEach(b => b.classList.remove('active'));
-            const chatsTab = document.querySelector('.sf-btn[data-view="chats"]');
-            if (chatsTab) chatsTab.classList.add('active');
-            // Убираем состояние из истории
-            history.replaceState(null, '', location.href);
-        }
-
-        // ---------- Закрытие чата ----------
-        function closeChat() {
-            if (!isChatOpen()) return;
-            sidebar.classList.remove('hidden-mobile');
-            if (backBtn) backBtn.style.display = 'none';
-            chatArea.classList.add('hidden');
-            chatArea.style.display = 'none';
-            if (emptyState) emptyState.classList.remove('hidden');
-            // Сброс активного чата
-            if (window.activeChat) {
-                window.activeChat = null;
-                if (typeof window.stopAllSubs === 'function') window.stopAllSubs();
+    // ----- 1. Добавляем недостающие CSS (только для мобильных) -----
+    var style = document.createElement('style');
+    style.textContent = `
+        @media (max-width: 768px) {
+            #sidebar {
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                bottom: 0 !important;
+                width: 100% !important;
+                min-width: unset !important;
+                max-width: 100% !important;
+                z-index: 20;
+                transform: translateX(0);
+                transition: transform 0.25s ease;
+                border-right: none !important;
+                box-shadow: 0 0 20px rgba(0,0,0,0.1);
             }
-            history.replaceState(null, '', location.href);
+            #sidebar.hidden-mobile {
+                transform: translateX(-100%) !important;
+            }
+
+            #side-panel {
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                bottom: 0 !important;
+                width: 100% !important;
+                z-index: 30;
+                transform: translateX(100%);
+                transition: transform 0.25s ease;
+                border-left: none !important;
+                box-shadow: -4px 0 20px rgba(0,0,0,0.1);
+            }
+            #side-panel.open {
+                transform: translateX(0) !important;
+            }
+
+            .back-btn {
+                display: flex !important;
+            }
+        }
+        @media (min-width: 769px) {
+            #sidebar {
+                position: relative !important;
+                width: 320px !important;
+                min-width: 320px !important;
+                transform: none !important;
+            }
+            #sidebar.hidden-mobile {
+                transform: none !important;
+            }
+            #side-panel {
+                position: relative !important;
+                width: 0 !important;
+                transform: none !important;
+                transition: width 0.25s ease;
+            }
+            #side-panel.open {
+                width: 340px !important;
+                transform: none !important;
+            }
+            .back-btn {
+                display: none !important;
+            }
+        }
+    `;
+    document.head.appendChild(style);
+
+    // ----- 2. Логика обработки кнопки "Назад" -----
+    var sidebar = document.getElementById('sidebar');
+    var sidePanel = document.getElementById('side-panel');
+    var backBtn = document.getElementById('back-btn');
+    var chatArea = document.getElementById('chat-area');
+    var emptyState = document.getElementById('empty-state');
+
+    function isMobile() {
+        return window.innerWidth <= 768;
+    }
+
+    function isChatOpen() {
+        return isMobile() &&
+               sidebar && sidebar.classList.contains('hidden-mobile') &&
+               chatArea && !chatArea.classList.contains('hidden') &&
+               chatArea.style.display !== 'none';
+    }
+
+    function isPanelOpen() {
+        return sidePanel && sidePanel.classList.contains('open');
+    }
+
+    function closePanel() {
+        if (!isPanelOpen()) return;
+        sidePanel.classList.remove('open');
+        document.querySelectorAll('.sf-btn').forEach(function(b) {
+            b.classList.remove('active');
+        });
+        var chatsTab = document.querySelector('.sf-btn[data-view="chats"]');
+        if (chatsTab) chatsTab.classList.add('active');
+        history.replaceState(null, '', location.href);
+    }
+
+    function closeChat() {
+        if (!isChatOpen()) return;
+        sidebar.classList.remove('hidden-mobile');
+        if (backBtn) backBtn.style.display = 'none';
+        chatArea.classList.add('hidden');
+        chatArea.style.display = 'none';
+        if (emptyState) emptyState.classList.remove('hidden');
+        if (window.activeChat) {
+            window.activeChat = null;
+            if (typeof window.stopAllSubs === 'function') window.stopAllSubs();
+        }
+        history.replaceState(null, '', location.href);
+    }
+
+    var lastPush = 0;
+    function pushState(type) {
+        if (Date.now() - lastPush < 300) return;
+        lastPush = Date.now();
+        if (history.state && history.state.type === type) return;
+        history.pushState({ type: type }, '');
+    }
+
+    // Обработчик системной кнопки "Назад"
+    window.addEventListener('popstate', function(event) {
+        var state = event.state;
+        if (!state || !state.type) return;
+
+        if (state.type === 'chat' && isChatOpen()) {
+            closeChat();
+            event.preventDefault();
+            return;
         }
 
-        // ---------- Добавление состояния в историю ----------
-        let lastPush = 0;
-        function pushState(type) {
-            if (Date.now() - lastPush < 300) return;
-            lastPush = Date.now();
-            if (history.state && history.state.type === type) return;
-            history.pushState({ type: type }, '');
+        if (state.type === 'panel' && isPanelOpen()) {
+            closePanel();
+            event.preventDefault();
+            return;
         }
+    });
 
-        // ---------- Основной обработчик popstate ----------
-        window.addEventListener('popstate', function(event) {
-            const state = event.state;
-            if (!state || !state.type) return;
+    // Наблюдатель за классами
+    var observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.type !== 'attributes' || mutation.attributeName !== 'class') return;
+            var target = mutation.target;
 
-            // Приоритет: сначала закрываем чат, потом панель
-            if (state.type === 'chat' && isChatOpen()) {
+            if (target === sidePanel && sidePanel.classList.contains('open')) {
+                if (isMobile()) pushState('panel');
+            }
+
+            if (target === sidebar && sidebar.classList.contains('hidden-mobile')) {
+                if (isMobile() && chatArea && !chatArea.classList.contains('hidden')) {
+                    pushState('chat');
+                }
+            }
+        });
+    });
+
+    if (sidebar) observer.observe(sidebar, { attributes: true, attributeFilter: ['class'] });
+    if (sidePanel) observer.observe(sidePanel, { attributes: true, attributeFilter: ['class'] });
+
+    if (isChatOpen()) pushState('chat');
+
+    if (backBtn) {
+        backBtn.addEventListener('click', function(e) {
+            if (isChatOpen()) {
                 closeChat();
-                event.preventDefault();
-                return;
+                e.preventDefault();
             }
+        });
+    }
 
-            if (state.type === 'panel' && isPanelOpen()) {
-                closePanel();
-                event.preventDefault();
-                return;
+    var lastWidth = window.innerWidth;
+    window.addEventListener('resize', function() {
+        var now = window.innerWidth;
+        if (now > 768 && lastWidth <= 768) {
+            if (history.state && (history.state.type === 'chat' || history.state.type === 'panel')) {
+                history.replaceState(null, '', location.href);
             }
-
-            // Если ничего не подошло – браузер уйдёт назад сам
-        });
-
-        // ---------- Наблюдатель за появлением классов ----------
-        const observer = new MutationObserver(function(mutations) {
-            mutations.forEach(function(mutation) {
-                if (mutation.type !== 'attributes' || mutation.attributeName !== 'class') return;
-                const target = mutation.target;
-
-                // Открылась панель (добавлен класс 'open')
-                if (target === sidePanel && sidePanel.classList.contains('open')) {
-                    if (isMobile()) pushState('panel');
-                }
-
-                // Открылся чат (sidebar получил hidden-mobile)
-                if (target === sidebar && sidebar.classList.contains('hidden-mobile')) {
-                    if (isMobile() && chatArea && !chatArea.classList.contains('hidden')) {
-                        pushState('chat');
-                    }
-                }
-            });
-        });
-
-        if (sidebar) observer.observe(sidebar, { attributes: true, attributeFilter: ['class'] });
-        if (sidePanel) observer.observe(sidePanel, { attributes: true, attributeFilter: ['class'] });
-
-        // ---------- Если чат уже открыт при загрузке ----------
-        if (isChatOpen()) pushState('chat');
-
-        // ---------- Ручное закрытие через кнопку "Назад" в шапке ----------
-        if (backBtn) {
-            backBtn.addEventListener('click', function(e) {
-                if (isChatOpen()) {
-                    closeChat();
-                    e.preventDefault();
-                }
-            });
         }
+        lastWidth = now;
+    });
 
-        // ---------- При переключении на десктоп сбрасываем историю ----------
-        let lastWidth = window.innerWidth;
-        window.addEventListener('resize', function() {
-            const now = window.innerWidth;
-            if (now > 768 && lastWidth <= 768) {
-                // Если было состояние – убираем
-                if (history.state && (history.state.type === 'chat' || history.state.type === 'panel')) {
-                    history.replaceState(null, '', location.href);
-                }
-            }
-            lastWidth = now;
-        });
-
-        console.log('✅ Полноэкранный список чатов + обработка кнопки "Назад" активированы');
-    })();
+    console.log('✅ Полноэкранный список чатов + обработка кнопки "Назад" активированы');
+})();
 </script>
 </body>
 </html>
