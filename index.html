@@ -3622,199 +3622,140 @@ updateLayout();
   }
 
 })();
-// ================================================================
-//  ДОПОЛНИТЕЛЬНЫЕ СТИЛИ ДЛЯ ПОЛНОЭКРАННОГО СПИСКА ЧАТОВ
-//  + ОБРАБОТКА СИСТЕМНОЙ КНОПКИ "НАЗАД"
-// ================================================================
+// ─── УПРАВЛЕНИЕ НАВИГАЦИЕЙ НАЗАД ──────────────────────────────
 (function() {
-    'use strict';
+  // Сохраняем оригинальную функцию openChat
+  const origOpenChat = window.openChat || openChat;
+  if (origOpenChat) {
+    openChat = async function(chat) {
+      // Вызываем оригинальный открыватель
+      await origOpenChat.call(this, chat);
+      // Если мы на мобильном устройстве и чат открыт, добавляем состояние в историю
+      if (window.innerWidth <= 768 && activeChat) {
+        history.replaceState({ chatOpen: true }, '', location.href);
+      }
+    };
+  }
 
-    // ----- 1. Добавляем недостающие CSS (только для мобильных) -----
-    var style = document.createElement('style');
-    style.textContent = `
-        @media (max-width: 768px) {
-            #sidebar {
-                position: fixed !important;
-                top: 0 !important;
-                left: 0 !important;
-                bottom: 0 !important;
-                width: 100% !important;
-                min-width: unset !important;
-                max-width: 100% !important;
-                z-index: 20;
-                transform: translateX(0);
-                transition: transform 0.25s ease;
-                border-right: none !important;
-                box-shadow: 0 0 20px rgba(0,0,0,0.1);
-            }
-            #sidebar.hidden-mobile {
-                transform: translateX(-100%) !important;
-            }
-
-            #side-panel {
-                position: fixed !important;
-                top: 0 !important;
-                left: 0 !important;
-                bottom: 0 !important;
-                width: 100% !important;
-                z-index: 30;
-                transform: translateX(100%);
-                transition: transform 0.25s ease;
-                border-left: none !important;
-                box-shadow: -4px 0 20px rgba(0,0,0,0.1);
-            }
-            #side-panel.open {
-                transform: translateX(0) !important;
-            }
-
-            .back-btn {
-                display: flex !important;
-            }
-        }
-        @media (min-width: 769px) {
-            #sidebar {
-                position: relative !important;
-                width: 320px !important;
-                min-width: 320px !important;
-                transform: none !important;
-            }
-            #sidebar.hidden-mobile {
-                transform: none !important;
-            }
-            #side-panel {
-                position: relative !important;
-                width: 0 !important;
-                transform: none !important;
-                transition: width 0.25s ease;
-            }
-            #side-panel.open {
-                width: 340px !important;
-                transform: none !important;
-            }
-            .back-btn {
-                display: none !important;
-            }
-        }
-    `;
-    document.head.appendChild(style);
-
-    // ----- 2. Логика обработки кнопки "Назад" -----
-    var sidebar = document.getElementById('sidebar');
-    var sidePanel = document.getElementById('side-panel');
-    var backBtn = document.getElementById('back-btn');
-    var chatArea = document.getElementById('chat-area');
-    var emptyState = document.getElementById('empty-state');
-
-    function isMobile() {
-        return window.innerWidth <= 768;
+  // Функция закрытия чата (возврат к списку)
+  function closeChatAndGoToList() {
+    if (!activeChat) return;
+    
+    // Останавливаем все подписки на сообщения
+    stopAllSubs();
+    
+    // Сбрасываем активный чат
+    activeChat = null;
+    
+    // Прячем область чата, показываем пустое состояние
+    const chatArea = document.getElementById('chat-area');
+    const emptyState = document.getElementById('empty-state');
+    if (chatArea) {
+      chatArea.classList.add('hidden');
+      chatArea.style.display = 'none';
     }
-
-    function isChatOpen() {
-        return isMobile() &&
-               sidebar && sidebar.classList.contains('hidden-mobile') &&
-               chatArea && !chatArea.classList.contains('hidden') &&
-               chatArea.style.display !== 'none';
+    if (emptyState) {
+      emptyState.classList.remove('hidden');
     }
-
-    function isPanelOpen() {
-        return sidePanel && sidePanel.classList.contains('open');
+    
+    // На мобильных показываем боковую панель (список чатов)
+    const sidebar = document.getElementById('sidebar');
+    if (sidebar && window.innerWidth <= 768) {
+      sidebar.classList.remove('hidden-mobile');
     }
-
-    function closePanel() {
-        if (!isPanelOpen()) return;
-        sidePanel.classList.remove('open');
-        document.querySelectorAll('.sf-btn').forEach(function(b) {
-            b.classList.remove('active');
-        });
-        var chatsTab = document.querySelector('.sf-btn[data-view="chats"]');
-        if (chatsTab) chatsTab.classList.add('active');
-        history.replaceState(null, '', location.href);
+    
+    // Скрываем кнопку "Назад" в шапке чата
+    const backBtn = document.getElementById('back-btn');
+    if (backBtn) backBtn.style.display = 'none';
+    
+    // Обновляем список чатов
+    renderChatList();
+    
+    // Заменяем состояние истории на состояние без открытого чата
+    if (window.innerWidth <= 768) {
+      history.replaceState({ chatOpen: false }, '', location.href);
     }
+  }
 
-    function closeChat() {
-        if (!isChatOpen()) return;
-        sidebar.classList.remove('hidden-mobile');
-        if (backBtn) backBtn.style.display = 'none';
-        chatArea.classList.add('hidden');
-        chatArea.style.display = 'none';
-        if (emptyState) emptyState.classList.remove('hidden');
-        if (window.activeChat) {
-            window.activeChat = null;
-            if (typeof window.stopAllSubs === 'function') window.stopAllSubs();
-        }
-        history.replaceState(null, '', location.href);
-    }
-
-    var lastPush = 0;
-    function pushState(type) {
-        if (Date.now() - lastPush < 300) return;
-        lastPush = Date.now();
-        if (history.state && history.state.type === type) return;
-        history.pushState({ type: type }, '');
-    }
-
-    // Обработчик системной кнопки "Назад"
-    window.addEventListener('popstate', function(event) {
-        var state = event.state;
-        if (!state || !state.type) return;
-
-        if (state.type === 'chat' && isChatOpen()) {
-            closeChat();
-            event.preventDefault();
-            return;
-        }
-
-        if (state.type === 'panel' && isPanelOpen()) {
-            closePanel();
-            event.preventDefault();
-            return;
-        }
+  // Обработчик клика по кнопке "←" в шапке чата
+  const backBtn = document.getElementById('back-btn');
+  if (backBtn) {
+    backBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      closeChatAndGoToList();
     });
+  }
 
-    // Наблюдатель за классами
-    var observer = new MutationObserver(function(mutations) {
-        mutations.forEach(function(mutation) {
-            if (mutation.type !== 'attributes' || mutation.attributeName !== 'class') return;
-            var target = mutation.target;
-
-            if (target === sidePanel && sidePanel.classList.contains('open')) {
-                if (isMobile()) pushState('panel');
-            }
-
-            if (target === sidebar && sidebar.classList.contains('hidden-mobile')) {
-                if (isMobile() && chatArea && !chatArea.classList.contains('hidden')) {
-                    pushState('chat');
-                }
-            }
-        });
-    });
-
-    if (sidebar) observer.observe(sidebar, { attributes: true, attributeFilter: ['class'] });
-    if (sidePanel) observer.observe(sidePanel, { attributes: true, attributeFilter: ['class'] });
-
-    if (isChatOpen()) pushState('chat');
-
-    if (backBtn) {
-        backBtn.addEventListener('click', function(e) {
-            if (isChatOpen()) {
-                closeChat();
-                e.preventDefault();
-            }
-        });
+  // Обработчик системной кнопки "Назад" (popstate)
+  window.addEventListener('popstate', function(event) {
+    // Если состояние говорит, что чат открыт, и чат действительно существует
+    if (event.state && event.state.chatOpen && activeChat) {
+      // Закрываем чат и возвращаемся в список
+      closeChatAndGoToList();
+      // После закрытия состояние уже заменено, поэтому дополнительных действий не нужно
     }
+    // Если состояние не содержит chatOpen, позволяем браузеру выполнить обычный переход назад
+  });
 
-    var lastWidth = window.innerWidth;
-    window.addEventListener('resize', function() {
-        var now = window.innerWidth;
-        if (now > 768 && lastWidth <= 768) {
-            if (history.state && (history.state.type === 'chat' || history.state.type === 'panel')) {
-                history.replaceState(null, '', location.href);
-            }
-        }
-        lastWidth = now;
+  // При загрузке страницы, если чат был открыт (например, после перезагрузки),
+  // устанавливаем корректное состояние
+  if (activeChat && window.innerWidth <= 768) {
+    history.replaceState({ chatOpen: true }, '', location.href);
+  }
+})();
+(function() {
+  // Создаём поле поиска
+  let searchBar = document.createElement('div');
+  searchBar.id = 'msg-search-bar';
+  searchBar.style.cssText = 'padding:8px 12px;background:var(--bg-secondary);border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:center;';
+  let input = document.createElement('input');
+  input.type = 'text';
+  input.placeholder = '🔍 Поиск...';
+  input.style.cssText = 'flex:1;background:transparent;border:none;font-size:14px;outline:none;';
+  let closeBtn = document.createElement('button');
+  closeBtn.textContent = '✕';
+  closeBtn.style.cssText = 'background:none;border:none;font-size:18px;cursor:pointer;';
+  searchBar.appendChild(input);
+  searchBar.appendChild(closeBtn);
+
+  // Вставляем в начало сообщений
+  const wrap = document.getElementById('messages-wrap');
+  if (wrap) wrap.prepend(searchBar);
+
+  // Функция поиска по DOM
+  function searchDOM(query) {
+    const allBubbles = wrap.querySelectorAll('.bubble');
+    let found = 0;
+    allBubbles.forEach(bubble => {
+      const text = bubble.textContent.toLowerCase();
+      if (query && text.includes(query)) {
+        bubble.style.backgroundColor = 'yellow';
+        found++;
+      } else {
+        bubble.style.backgroundColor = '';
+      }
     });
+    // Можно показать количество найденных
+    let info = document.getElementById('search-info');
+    if (!info) {
+      info = document.createElement('div');
+      info.id = 'search-info';
+      info.style.cssText = 'font-size:12px;color:var(--text-hint);margin-left:8px;';
+      searchBar.appendChild(info);
+    }
+    info.textContent = found ? `Найдено: ${found}` : 'Ничего не найдено';
+  }
 
-    console.log('✅ Полноэкранный список чатов + обработка кнопки "Назад" активированы');
+  input.addEventListener('input', function() {
+    const q = this.value.trim().toLowerCase();
+    searchDOM(q);
+  });
+
+  closeBtn.addEventListener('click', function() {
+    searchBar.remove();
+    // Сброс подсветки
+    wrap.querySelectorAll('.bubble').forEach(b => b.style.backgroundColor = '');
+  });
 })();
 </script>
 </body>
