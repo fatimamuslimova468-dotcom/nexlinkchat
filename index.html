@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -4802,8 +4803,64 @@ function showMsgContextMenu(e, msg, bubble) {
 
     console.log('✅ Защита каналов включена: теперь только админы могут писать');
 })();
-</script>
-</body>
-</html>
+// ================================================================
+//  ПОДНЯТИЕ ПОЛЯ ВВОДА С КЛАВИАТУРОЙ (мобильные устройства)
+// ================================================================
+(function() {
+    'use strict';
 
- 
+    var inputBar = document.getElementById('input-bar');
+    var messagesWrap = document.getElementById('messages-wrap');
+    var msgInput = document.getElementById('msg-input');
+    var chatArea = document.getElementById('chat-area');
+
+    // Флаг, чтобы не дублировать прокрутку
+    var isKeyboardOpen = false;
+
+    function scrollToBottomSmooth() {
+        if (!messagesWrap) return;
+        messagesWrap.scrollTop = messagesWrap.scrollHeight;
+    }
+
+    // Основная функция: поднять input-bar в поле зрения
+    function adjustForKeyboard() {
+        if (!inputBar || !messagesWrap) return;
+        // Если чат не открыт — не делаем ничего
+        if (chatArea && chatArea.classList.contains('hidden')) return;
+
+        // Прокручиваем контейнер сообщений так, чтобы поле ввода было видно
+        // Для этого прокручиваем вниз, но с учётом высоты клавиатуры
+        // Используем небольшой таймаут, чтобы браузер успел пересчитать размеры
+        clearTimeout(window._keyboardTimer);
+        window._keyboardTimer = setTimeout(function() {
+            scrollToBottomSmooth();
+            // Дополнительно: если inputBar не внизу, попробуем скролл
+            // Убедимся, что inputBar виден
+            if (inputBar) {
+                var rect = inputBar.getBoundingClientRect();
+                var bottom = rect.bottom;
+                var viewportHeight = window.innerHeight;
+                if (bottom > viewportHeight) {
+                    // Поле ввода ниже видимой области — прокручиваем ещё
+                    var diff = bottom - viewportHeight + 10;
+                    messagesWrap.scrollTop += diff;
+                }
+            }
+        }, 150);
+    }
+
+    // Обработчик фокуса на поле ввода
+    function onInputFocus() {
+        isKeyboardOpen = true;
+        adjustForKeyboard();
+        // Также подписываемся на изменение размера окна, т.к. клавиатура может изменить высоту
+        window.addEventListener('resize', onResize);
+    }
+
+    function onInputBlur() {
+        isKeyboardOpen = false;
+        window.removeEventListener('resize', onResize);
+        // Возвращаем прокрутку вниз (на случай если клавиатура скрылась)
+        setTimeout(scrollToBottomSmooth, 300);
+    }
+
