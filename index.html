@@ -4802,159 +4802,56 @@ function showMsgContextMenu(e, msg, bubble) {
 
     console.log('✅ Защита каналов включена: теперь только админы могут писать');
 })();
-// ================================================================
-//  ПОДНЯТИЕ ПОЛЯ ВВОДА С КЛАВИАТУРОЙ (мобильные устройства)
-// ================================================================
+// ===== ИСПРАВЛЕНИЕ: ПРОКРУТКА К ПОЛЮ ВВОДА ПРИ КЛАВИАТУРЕ =====
 (function() {
-    'use strict';
+    const input = document.getElementById('msg-input');
+    const inputBar = document.getElementById('input-bar');
+    const messagesWrap = document.getElementById('messages-wrap');
+    if (!input || !inputBar) return;
 
-    var inputBar = document.getElementById('input-bar');
-    var messagesWrap = document.getElementById('messages-wrap');
-    var msgInput = document.getElementById('msg-input');
-    var chatArea = document.getElementById('chat-area');
-
-    // Флаг, чтобы не дублировать прокрутку
-    var isKeyboardOpen = false;
-
-    function scrollToBottomSmooth() {
-        if (!messagesWrap) return;
-        messagesWrap.scrollTop = messagesWrap.scrollHeight;
+    // Функция прокрутки к полю ввода
+    function scrollToInput() {
+        // Получаем позицию поля ввода относительно документа
+        const rect = inputBar.getBoundingClientRect();
+        const scrollY = window.scrollY || window.pageYOffset;
+        const targetY = rect.top + scrollY - 60; // 60px отступ сверху
+        window.scrollTo({ top: targetY, behavior: 'smooth' });
     }
 
-    // Основная функция: поднять input-bar в поле зрения
-    function adjustForKeyboard() {
-        if (!inputBar || !messagesWrap) return;
-        // Если чат не открыт — не делаем ничего
-        if (chatArea && chatArea.classList.contains('hidden')) return;
-
-        // Прокручиваем контейнер сообщений так, чтобы поле ввода было видно
-        // Для этого прокручиваем вниз, но с учётом высоты клавиатуры
-        // Используем небольшой таймаут, чтобы браузер успел пересчитать размеры
-        clearTimeout(window._keyboardTimer);
-        window._keyboardTimer = setTimeout(function() {
-            scrollToBottomSmooth();
-            // Дополнительно: если inputBar не внизу, попробуем скролл
-            // Убедимся, что inputBar виден
-            if (inputBar) {
-                var rect = inputBar.getBoundingClientRect();
-                var bottom = rect.bottom;
-                var viewportHeight = window.innerHeight;
-                if (bottom > viewportHeight) {
-                    // Поле ввода ниже видимой области — прокручиваем ещё
-                    var diff = bottom - viewportHeight + 10;
-                    messagesWrap.scrollTop += diff;
-                }
-            }
-        }, 150);
-    }
-
-    // Обработчик фокуса на поле ввода
-    function onInputFocus() {
-        isKeyboardOpen = true;
-        adjustForKeyboard();
-        // Также подписываемся на изменение размера окна, т.к. клавиатура может изменить высоту
-        window.addEventListener('resize', onResize);
-    }
-
-    function onInputBlur() {
-        isKeyboardOpen = false;
-        window.removeEventListener('resize', onResize);
-        // Возвращаем прокрутку вниз (на случай если клавиатура скрылась)
-        setTimeout(scrollToBottomSmooth, 300);
-    }
-
-    function onResize() {
-        if (isKeyboardOpen) {
-            adjustForKeyboard();
-        }
-    }
-
-    // Также перехватываем изменения размера окна, когда клавиатура открыта
-    // Используем визуальное представление (visualViewport) для точности, если доступно
-    if (window.visualViewport) {
-        window.visualViewport.addEventListener('resize', function() {
-            if (isKeyboardOpen) {
-                adjustForKeyboard();
-            } else {
-                // Если клавиатура закрыта, но размер изменился (например, поворот), просто прокрутим вниз
-                scrollToBottomSmooth();
-            }
-        });
-    }
-
-    // Привязываем события
-    if (msgInput) {
-        msgInput.addEventListener('focus', onInputFocus);
-        msgInput.addEventListener('blur', onInputBlur);
-    }
-
-    // Также при клике на кнопку отправки или другие действия, которые могут закрыть клавиатуру,
-    // фокус снимется и сработает blur.
-
-    // Дополнительно: при открытии чата прокручиваем вниз
-    var origOpenChat = window.openChat;
-    if (typeof origOpenChat === 'function') {
-        window.openChat = function(chat) {
-            origOpenChat(chat);
-            setTimeout(scrollToBottomSmooth, 400);
-        };
-    }
-
-    // Если уже есть активный чат, прокручиваем
-    setTimeout(scrollToBottomSmooth, 500);
-
-    // Также при изменении размеров контента (добавление сообщений) прокручиваем
-    // Для этого перехватываем renderMessages или используем MutationObserver
-    var origRenderMessages = window.renderMessages;
-    if (typeof origRenderMessages === 'function') {
-        window.renderMessages = function() {
-            origRenderMessages();
-            // Если клавиатура открыта, подстраиваем, иначе просто вниз
-            if (isKeyboardOpen) {
-                adjustForKeyboard();
-            } else {
-                scrollToBottomSmooth();
-            }
-        };
-    }
-
-    // Наблюдаем за изменениями в messages-wrap (добавление новых сообщений)
-    if (messagesWrap) {
-        var observer = new MutationObserver(function() {
-            if (isKeyboardOpen) {
-                adjustForKeyboard();
-            } else {
-                scrollToBottomSmooth();
-            }
-        });
-        observer.observe(messagesWrap, { childList: true, subtree: true });
-    }
-
-    // Сброс при сворачивании клавиатуры (обработка события focusout)
-    document.addEventListener('focusout', function(e) {
-        // Если фокус потерян не на поле ввода, но клавиатура была открыта – возможно, закрыли
-        if (e.target !== msgInput && isKeyboardOpen) {
-            // Через небольшую задержку проверим, не осталось ли активных полей ввода
-            setTimeout(function() {
-                var active = document.activeElement;
-                if (active && active.tagName === 'TEXTAREA') {
-                    // Если фокус на другом текстовом поле, не трогаем
-                    return;
-                }
-                // Иначе считаем, что клавиатура закрылась
-                isKeyboardOpen = false;
-                window.removeEventListener('resize', onResize);
-                scrollToBottomSmooth();
-            }, 300);
-        }
+    // При фокусе на поле ввода
+    input.addEventListener('focus', function() {
+        setTimeout(scrollToInput, 300);
     });
 
-    console.log('✅ Поднятие поля ввода с клавиатурой активировано');
+    // При клике на поле ввода (дополнительно)
+    input.addEventListener('click', function() {
+        setTimeout(scrollToInput, 300);
+    });
+
+    // При изменении размера окна (клавиатура появляется/исчезает)
+    let lastHeight = window.innerHeight;
+    window.addEventListener('resize', function() {
+        const newHeight = window.innerHeight;
+        if (newHeight < lastHeight && document.activeElement === input) {
+            setTimeout(scrollToInput, 200);
+        }
+        lastHeight = newHeight;
+    });
+
+    // Дополнительно: при открытии чата или загрузке страницы прокручиваем вниз
+    // (уже есть scrollToBottom, но для уверенности добавим)
+    const origOpenChat = window.openChat;
+    if (origOpenChat) {
+        window.openChat = function(chat) {
+            origOpenChat(chat);
+            setTimeout(() => {
+                if (messagesWrap) messagesWrap.scrollTop = messagesWrap.scrollHeight;
+            }, 200);
+        };
+    }
+
+    console.log('✅ Прокрутка к полю ввода при клавиатуре настроена');
 })();
 </script>
 </body>
 </html>
-
- 
-
-
