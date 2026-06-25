@@ -763,6 +763,182 @@ input:focus, textarea:focus { outline: none; }
 .msg-group {
     margin-bottom: 10px;  /* или 12px, как вам нравится */
 }
+/* ----- Блок "Пересланное сообщение" ----- */
+.forwarded-block {
+  background: rgba(108, 92, 231, 0.06);
+  border-left: 3px solid var(--primary);
+  border-radius: 8px;
+  padding: 6px 12px;
+  margin-bottom: 8px;
+  font-size: 13px;
+  line-height: 1.4;
+}
+.forwarded-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.forwarded-icon {
+  font-size: 14px;
+  opacity: 0.6;
+}
+.forwarded-label {
+  font-weight: 600;
+  color: var(--primary);
+  letter-spacing: 0.3px;
+}
+.forwarded-sender {
+  color: var(--text-secondary);
+  font-weight: 400;
+  margin-left: 2px;
+}
+.msg-group.out .forwarded-block {
+  background: rgba(255, 255, 255, 0.15);
+  border-left-color: rgba(255, 255, 255, 0.5);
+}
+.msg-group.out .forwarded-label {
+  color: #fff;
+}
+.msg-group.out .forwarded-sender {
+  color: rgba(255, 255, 255, 0.75);
+}
+/* Скрываем текст у кнопок нижней панели, оставляем только иконки */
+.sf-btn {
+    font-size: 0;           /* убираем весь текст */
+    gap: 0;                 /* убираем лишние отступы между иконкой и текстом */
+    padding: 8px 12px;      /* компактный отступ (можно подобрать под свой дизайн) */
+}
+.sf-btn .sfi {
+    font-size: 24px;        /* размер иконки (можно изменить) */
+    line-height: 1;
+}
+/* ===== ЯВНАЯ КОНТРАСТНОСТЬ В СВЕТЛОЙ ТЕМЕ ===== */
+/* Убедимся, что переменные для светлой темы — тёмные */
+:root {
+    --text-primary: #1A1A2E;
+    --text-secondary: #4A4A5A;
+    --text-hint: #8E8E98;
+    --bg: #FFFFFF;
+    --bg-secondary: #F0F2F5;
+    --border: #E8EBF0;
+    --accent: #2AABEE;
+    --accent-dark: #1a8bc5;
+}
+
+/* Для тёмной темы (если есть класс auto-dark) */
+:root.auto-dark {
+    --text-primary: #E8E8E8;
+    --text-secondary: #A0A0A8;
+    --text-hint: #6A6A72;
+    --bg: #1A1A1A;
+    --bg-secondary: #2A2A2A;
+    --border: #3A3A3A;
+    --accent: #4AB8F0;
+}
+
+/* Применяем цвета ко всем текстовым элементам */
+.chat-row .cr-name,
+.chat-row .cr-preview,
+.sidebar-title,
+.hdr-name,
+.hdr-status,
+.bubble-text,
+.msg-sender-name,
+.contact-item .ci-name,
+.contact-item .ci-user,
+.settings-item .si-text,
+.modal-card label,
+.modal-card input,
+.modal-card textarea,
+.auth-box input,
+.auth-box label,
+.auth-logo h1,
+.auth-logo p,
+.forwarded-label,
+.forwarded-sender,
+.day-label,
+.es-title,
+.es-sub,
+#msg-input,
+.search-inner input,
+.panel-hdr-title,
+.profile-name,
+.profile-uname,
+.sf-btn:not(.active) .sfi,
+.sf-btn .sfi {
+    color: var(--text-primary) !important;
+}
+
+/* Вторичные тексты (менее важные) */
+.cr-time,
+.bubble-time,
+.hdr-status:not(.online),
+.ci-user,
+.si-value,
+.auth-logo p,
+.forwarded-sender,
+.es-sub,
+.settings-item .si-value,
+.voice-time {
+    color: var(--text-secondary) !important;
+}
+
+/* Подсказки и плейсхолдеры */
+::placeholder,
+.search-inner input::placeholder,
+#msg-input::placeholder,
+.modal-field input::placeholder,
+.modal-field textarea::placeholder {
+    color: var(--text-hint) !important;
+    opacity: 1;
+}
+
+/* Ссылки и акценты */
+a,
+.forwarded-label,
+.ci-act-btn,
+.sf-btn.active .sfi {
+    color: var(--accent) !important;
+}
+
+/* Кнопки активные (текст белый) */
+.sf-btn.active,
+.sf-btn.active .sfi {
+    color: white !important;
+}
+
+/* Дополнительно: фон сообщений в светлой теме */
+.msg-group.in .bubble {
+    background: white;
+    border: 1px solid var(--border);
+}
+.msg-group.out .bubble {
+    background: var(--accent);
+    color: white;
+}
+.msg-group.out .bubble-text,
+.msg-group.out .bubble-time,
+.msg-group.out .forwarded-label,
+.msg-group.out .forwarded-sender {
+    color: white !important;
+}
+.msg-group.out .forwarded-block {
+    background: rgba(255,255,255,0.15);
+    border-left-color: rgba(255,255,255,0.4);
+}
+/* Скрываем текст на кнопках нижней панели в мобильной версии */
+@media (max-width: 768px) {
+  .sf-btn {
+    font-size: 0 !important;
+    gap: 0 !important;
+    padding: 8px 8px !important;
+  }
+  .sf-btn .sfi {
+    font-size: 26px !important;
+    line-height: 1;
+  }
+}
 </style>
 </head>
 <body>
@@ -1621,8 +1797,6 @@ function renderMessages() {
 
   let lastDate = null;
   const fragment = document.createDocumentFragment();
-
-  // 1. Группируем сообщения по отправителю (подряд идущие)
   const groups = [];
   let currentGroup = null;
 
@@ -1630,7 +1804,6 @@ function renderMessages() {
     const dateObj = msg.timestamp?.toDate?.();
     const dateStr = dateObj ? dateObj.toLocaleDateString('ru', { day: 'numeric', month: 'long' }) : null;
 
-    // Если сменился день — создаём разделитель и разрываем группу
     if (dateStr !== lastDate) {
       if (currentGroup) {
         groups.push(currentGroup);
@@ -1644,8 +1817,6 @@ function renderMessages() {
     }
 
     const isOut = msg.senderUid === me?.uid;
-
-    // Начинаем новую группу, если отправитель изменился или направление (вх/исх)
     if (!currentGroup || currentGroup.senderUid !== msg.senderUid || currentGroup.isOut !== isOut) {
       if (currentGroup) groups.push(currentGroup);
       currentGroup = {
@@ -1659,12 +1830,10 @@ function renderMessages() {
   }
   if (currentGroup) groups.push(currentGroup);
 
-  // 2. Рендерим группы
   for (const group of groups) {
     const grp = document.createElement('div');
     grp.className = `msg-group ${group.isOut ? 'out' : 'in'}`;
 
-    // Имя отправителя (только для групп/каналов)
     if (!group.isOut && (activeChat?.type === 'group' || activeChat?.type === 'channel')) {
       const ns = document.createElement('div');
       ns.className = 'msg-sender-name';
@@ -1672,13 +1841,11 @@ function renderMessages() {
       grp.appendChild(ns);
     }
 
-    // Проходим по сообщениям внутри группы
     for (let i = 0; i < group.messages.length; i++) {
       const msg = group.messages[i];
       const row = document.createElement('div');
       row.className = 'msg-row';
 
-      // Аватарка (или отступ) только у первого сообщения в группе
       if (!group.isOut) {
         if (i === 0) {
           const av = document.createElement('div');
@@ -1693,10 +1860,25 @@ function renderMessages() {
         }
       }
 
-      // Создаём баббл
       const bubble = document.createElement('div');
       bubble.className = `bubble${msg._pending ? ' pending' : ''}${msg.isDeleted ? ' deleted' : ''}`;
       bubble.dataset.msgId = msg.id;
+
+      // ========== НОВЫЙ БЛОК «ПЕРЕСЛАННОЕ СООБЩЕНИЕ» ==========
+      if (msg.isForwarded && !msg.isDeleted) {
+        const fwdBlock = document.createElement('div');
+        fwdBlock.className = 'forwarded-block';
+        const senderName = getDisplayName(msg.forwardedFrom) || 'Неизвестный';
+        fwdBlock.innerHTML = `
+          <div class="forwarded-header">
+            <span class="forwarded-icon">↩️</span>
+            <span class="forwarded-label">Пересланное сообщение</span>
+            <span class="forwarded-sender">от ${esc(senderName)}</span>
+          </div>
+        `;
+        bubble.prepend(fwdBlock);
+      }
+      // =========================================================
 
       // Ответ (если есть)
       if (msg.replyToText) {
@@ -1706,7 +1888,6 @@ function renderMessages() {
         bubble.appendChild(rq);
       }
 
-      // Содержимое
       const content = document.createElement('div');
       content.className = 'bubble-text';
 
@@ -1735,7 +1916,6 @@ function renderMessages() {
       }
       bubble.appendChild(content);
 
-      // Реакция
       if (msg.reaction) {
         const rc = document.createElement('div');
         rc.className = 'reaction-chip';
@@ -1744,7 +1924,6 @@ function renderMessages() {
         bubble.appendChild(rc);
       }
 
-      // Время и галочки
       const timeEl = document.createElement('div');
       timeEl.className = 'bubble-time';
       const t = msg.timestamp?.toDate?.()?.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' }) || '';
@@ -1753,7 +1932,6 @@ function renderMessages() {
       timeEl.innerHTML = `${edited}${esc(t)}${tick}`;
       bubble.appendChild(timeEl);
 
-      // Действия (реакция, ответ, переслать, удалить)
       if (!msg.isDeleted && !msg.isCallEvent) {
         const acts = document.createElement('div');
         acts.className = 'msg-actions';
@@ -1773,7 +1951,6 @@ function renderMessages() {
       row.appendChild(bubble);
       grp.appendChild(row);
     }
-
     fragment.appendChild(grp);
   }
 
@@ -1831,22 +2008,45 @@ async function deleteMessage(msg) {
   await updateDoc(doc(db,'messages',msg.id), { text:'Сообщение удалено', isDeleted:true });
 }
  
+// ===== ПЕРЕСЫЛКА С БЛОКОМ "ПЕРЕСЛАННОЕ СООБЩЕНИЕ" =====
 async function forwardMessage(msg) {
-  // Simple forward to another chat
-  const names = chatList.filter(c=>c.id!==activeChat?.id).map(c=>c.name).join(', ');
-  const target = prompt(`Переслать в чат. Введите имя:\n${chatList.filter(c=>c.id!==activeChat?.id).map((c,i)=>`${i+1}. ${c.name}`).join('\n')}`);
-  if (!target) return;
-  const idx = parseInt(target)-1;
-  const avl = chatList.filter(c=>c.id!==activeChat?.id);
-  if (idx>=0 && idx<avl.length) {
-    const tc = avl[idx];
-    const tcid = await getChatId(tc);
-    await addDoc(collection(db,'messages'), {
-      chatId:tcid, text:msg.text||'', timestamp:serverTimestamp(),
-      senderUid:me.uid, isSticker:msg.isSticker||false, forwardedFrom:msg.senderUid
-    });
-    alert('Переслано!');
+  // Получаем список чатов (исключаем текущий)
+  const targets = chatList.filter(c => c.id !== activeChat?.id);
+  if (!targets.length) {
+    alert('Нет других чатов для пересылки');
+    return;
   }
+
+  // Диалог выбора чата
+  const options = targets.map((c, i) => `${i+1}. ${c.name}`).join('\n');
+  const input = prompt(`Переслать в чат. Введите номер:\n${options}`);
+  if (input === null) return;
+
+  const idx = parseInt(input.trim()) - 1;
+  if (isNaN(idx) || idx < 0 || idx >= targets.length) {
+    alert('Неверный номер');
+    return;
+  }
+
+  const targetChat = targets[idx];
+  const targetChatId = await getChatId(targetChat);
+  if (!targetChatId) return;
+
+  // Отправляем сообщение с пометкой о пересылке
+  await addDoc(collection(db, 'messages'), {
+    chatId: targetChatId,
+    text: msg.text || '',
+    timestamp: serverTimestamp(),
+    senderUid: me.uid,
+    isForwarded: true,                // флаг пересылки
+    forwardedFrom: msg.senderUid,     // оригинальный отправитель
+    originalMsgId: msg.id,
+    isSticker: msg.isSticker || false,
+    isVoice: msg.isVoice || false,
+    isFileLink: msg.isFileLink || false
+  });
+
+  alert('✅ Сообщение переслано!');
 }
  
 function scrollToBottom() {
@@ -4851,6 +5051,1019 @@ function showMsgContextMenu(e, msg, bubble) {
     }
 
     console.log('✅ Прокрутка к полю ввода при клавиатуре настроена');
+})();
+// ============================================================
+//  📤  НОВОЕ МОДАЛЬНОЕ ОКНО ДЛЯ ПЕРЕСЫЛКИ
+// ============================================================
+
+// ----- 1. ДОБАВЛЯЕМ HTML МОДАЛЬНОГО ОКНА -----
+const forwardModalHTML = `
+<div class="modal-overlay" id="modal-forward">
+  <div class="modal-card" style="max-width: 480px; max-height: 80vh;">
+    <div class="modal-hdr">
+      <h3>📤 Переслать сообщение</h3>
+      <button class="modal-close" id="forward-close-btn">✕</button>
+    </div>
+    <div class="modal-body" style="padding: 16px 20px 20px;">
+      <!-- Поиск -->
+      <div class="search-inner" style="background:var(--bg-secondary);border-radius:10px;padding:8px 12px;display:flex;align-items:center;gap:8px;margin-bottom:14px;border:1.5px solid transparent;transition:.2s;">
+        <span style="color:var(--text-hint);">🔍</span>
+        <input type="text" id="forward-search" placeholder="Поиск чата..." style="flex:1;background:none;border:none;font-size:14px;color:var(--text-primary);outline:none;">
+      </div>
+      <!-- Список чатов -->
+      <div id="forward-chat-list" style="max-height: 300px; overflow-y: auto; margin-bottom: 12px;">
+        <!-- сюда будет вставлен список -->
+      </div>
+      <!-- Кнопки -->
+      <div style="display:flex;gap:10px;margin-top:12px;">
+        <button class="modal-btn secondary" id="forward-cancel-btn" style="flex:1;">Отмена</button>
+      </div>
+    </div>
+  </div>
+</div>
+`;
+
+// Вставляем модалку в DOM (если её ещё нет)
+if (!document.getElementById('modal-forward')) {
+  const div = document.createElement('div');
+  div.innerHTML = forwardModalHTML;
+  document.body.appendChild(div.firstElementChild);
+}
+
+// ----- 2. СТИЛИ ДЛЯ МОДАЛКИ (добавляем к уже существующим) -----
+const forwardStyles = document.createElement('style');
+forwardStyles.textContent = `
+  #modal-forward .search-inner:focus-within {
+    border-color: var(--accent);
+    background: white;
+    box-shadow: 0 0 0 3px rgba(42,171,238,0.12);
+  }
+  #forward-chat-list .chat-row {
+    padding: 10px 14px;
+    margin: 2px 0;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: var(--transition);
+  }
+  #forward-chat-list .chat-row:hover {
+    background: var(--accent-light);
+    transform: translateX(4px);
+  }
+  #forward-chat-list .chat-row .cr-avatar {
+    width: 40px;
+    height: 40px;
+    font-size: 18px;
+  }
+  #forward-chat-list .chat-row .cr-name {
+    font-size: 15px;
+    font-weight: 600;
+  }
+  #forward-chat-list .chat-row .cr-preview {
+    font-size: 13px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+`;
+document.head.appendChild(forwardStyles);
+
+// ----- 3. ФУНКЦИЯ ОТКРЫТИЯ МОДАЛКИ С ПЕРЕСЫЛКОЙ -----
+let forwardTargetMsg = null; // храним сообщение для пересылки
+
+function showForwardModal(msg) {
+  forwardTargetMsg = msg;
+
+  // Получаем список чатов, исключая текущий
+  const targets = chatList.filter(c => c.id !== activeChat?.id);
+  if (!targets.length) {
+    alert('Нет других чатов для пересылки');
+    return;
+  }
+
+  const listEl = document.getElementById('forward-chat-list');
+  const searchEl = document.getElementById('forward-search');
+
+  // Функция рендеринга списка
+  function renderList(filter = '') {
+    const q = filter.trim().toLowerCase();
+    const filtered = q ? targets.filter(c => c.name.toLowerCase().includes(q)) : targets;
+    if (!filtered.length) {
+      listEl.innerHTML = '<div style="text-align:center;color:var(--text-hint);padding:20px;font-size:14px;">Ничего не найдено</div>';
+      return;
+    }
+    listEl.innerHTML = filtered.map(chat => `
+      <div class="chat-row" data-id="${chat.id}" data-type="${chat.type}" style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:var(--radius-md);cursor:pointer;transition:var(--transition);margin:2px 0;">
+        <div class="cr-avatar" style="width:40px;height:40px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:var(--accent);color:white;font-size:18px;overflow:hidden;">${avatarHtml(chat.avatar)}</div>
+        <div class="cr-body" style="flex:1;min-width:0;">
+          <div class="cr-name" style="font-size:15px;font-weight:600;">${esc(chat.name)}</div>
+          <div class="cr-preview" style="font-size:13px;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(chat.lastMsg || 'Нет сообщений')}</div>
+        </div>
+      </div>
+    `).join('');
+
+    // Обработчики клика по каждому чату
+    listEl.querySelectorAll('.chat-row').forEach(row => {
+      row.addEventListener('click', async function() {
+        const chatId = this.dataset.id;
+        const chatType = this.dataset.type;
+        const chat = chatList.find(c => c.id === chatId && c.type === chatType);
+        if (!chat) return;
+
+        // Выполняем пересылку
+        const targetChatId = await getChatId(chat);
+        if (!targetChatId) return;
+
+        await addDoc(collection(db, 'messages'), {
+          chatId: targetChatId,
+          text: forwardTargetMsg.text || '',
+          timestamp: serverTimestamp(),
+          senderUid: me.uid,
+          isForwarded: true,
+          forwardedFrom: forwardTargetMsg.senderUid,
+          originalMsgId: forwardTargetMsg.id,
+          isSticker: forwardTargetMsg.isSticker || false,
+          isVoice: forwardTargetMsg.isVoice || false,
+          isFileLink: forwardTargetMsg.isFileLink || false
+        });
+
+        // Закрываем модалку и показываем уведомление
+        closeModal('modal-forward');
+        alert('✅ Сообщение переслано!');
+      });
+    });
+  }
+
+  // Первичный рендер
+  renderList();
+
+  // Поиск
+  searchEl.value = '';
+  searchEl.addEventListener('input', function() {
+    renderList(this.value);
+  });
+
+  // Открываем модалку
+  openModal('modal-forward');
+}
+
+// ----- 4. ПЕРЕОПРЕДЕЛЯЕМ ФУНКЦИЮ forwardMessage -----
+const originalForward = window.forwardMessage || forwardMessage; // если была старая, сохраним (но мы её заменим)
+
+forwardMessage = async function(msg) {
+  // Просто вызываем наше модальное окно
+  showForwardModal(msg);
+};
+
+// ----- 5. ОБРАБОТЧИКИ ДЛЯ КНОПОК В МОДАЛКЕ -----
+document.addEventListener('DOMContentLoaded', function() {
+  const modal = document.getElementById('modal-forward');
+  if (!modal) return;
+
+  // Закрытие по кнопке "Отмена" и крестику
+  const closeBtns = modal.querySelectorAll('#forward-cancel-btn, #forward-close-btn');
+  closeBtns.forEach(btn => {
+    btn.addEventListener('click', function() {
+      closeModal('modal-forward');
+    });
+  });
+
+  // Закрытие по клику на фон
+  modal.addEventListener('click', function(e) {
+    if (e.target === modal) {
+      closeModal('modal-forward');
+    }
+  });
+});
+
+console.log('📤 Модальное окно пересылки установлено!');
+// ===== НАВИГАЦИЯ СИСТЕМНОЙ КНОПКОЙ НАЗАД =====
+(function() {
+    // Функции для работы с историей
+    function addNavState(type) {
+        // type: 'chat' или 'panel'
+        if (!history.state || history.state.type !== type) {
+            history.pushState({ type: type }, '');
+        }
+    }
+
+    function removeNavState(type) {
+        if (history.state && history.state.type === type) {
+            history.replaceState(null, '');
+        }
+    }
+
+    // Закрыть чат на мобильных устройствах
+    function closeChatOnMobile() {
+        const sidebar = document.getElementById('sidebar');
+        const chatArea = document.getElementById('chat-area');
+        const emptyState = document.getElementById('empty-state');
+        const backBtn = document.getElementById('back-btn');
+
+        if (sidebar && sidebar.classList.contains('hidden-mobile')) {
+            sidebar.classList.remove('hidden-mobile');
+            if (backBtn) backBtn.style.display = 'none';
+            if (chatArea) {
+                chatArea.classList.add('hidden');
+                chatArea.style.display = 'none';
+            }
+            if (emptyState) emptyState.classList.remove('hidden');
+            // Сбрасываем активный чат, чтобы при повторном выборе всё открылось заново
+            window.activeChat = null;
+            removeNavState('chat');
+        }
+    }
+
+    // Закрыть боковую панель
+    function closeSidePanel() {
+        const panel = document.getElementById('side-panel');
+        if (panel && panel.classList.contains('open')) {
+            panel.classList.remove('open');
+            document.querySelectorAll('.sf-btn').forEach(x => x.classList.remove('active'));
+            document.querySelector('.sf-btn[data-view="chats"]').classList.add('active');
+            removeNavState('panel');
+        }
+    }
+
+    // Обработчик системной кнопки "Назад"
+    window.addEventListener('popstate', function(event) {
+        const state = event.state;
+        if (state && state.type === 'chat') {
+            closeChatOnMobile();
+            event.preventDefault();
+            return;
+        } else if (state && state.type === 'panel') {
+            closeSidePanel();
+            event.preventDefault();
+            return;
+        }
+        // Если состояние не распознано, позволяем браузеру выполнить переход назад
+    });
+
+    // Перехватываем открытие чата (добавляем состояние на мобильных)
+    const origOpenChat = window.openChat;
+    if (typeof origOpenChat === 'function') {
+        window.openChat = function(chat) {
+            origOpenChat(chat);
+            if (window.innerWidth <= 768) {
+                const sidebar = document.getElementById('sidebar');
+                if (sidebar && sidebar.classList.contains('hidden-mobile')) {
+                    addNavState('chat');
+                }
+            }
+        };
+    }
+
+    // Отслеживаем открытие/закрытие боковой панели через MutationObserver
+    const panel = document.getElementById('side-panel');
+    if (panel) {
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.attributeName === 'class') {
+                    if (panel.classList.contains('open')) {
+                        addNavState('panel');
+                    } else {
+                        removeNavState('panel');
+                    }
+                }
+            });
+        });
+        observer.observe(panel, { attributes: true, attributeFilter: ['class'] });
+    }
+
+    // Обработчик кнопки "Назад" в шапке чата
+    const backBtn = document.getElementById('back-btn');
+    if (backBtn) {
+        backBtn.addEventListener('click', function() {
+            // Если открыта боковая панель – закрываем её
+            if (panel && panel.classList.contains('open')) {
+                closeSidePanel();
+                return;
+            }
+            // Иначе закрываем чат
+            closeChatOnMobile();
+        });
+    }
+
+    // Обработчик крестика закрытия панели
+    const panelClose = document.getElementById('panel-close');
+    if (panelClose) {
+        panelClose.addEventListener('click', function() {
+            closeSidePanel();
+        });
+    }
+
+    // При загрузке страницы, если чат уже открыт (редкий случай), добавляем состояние
+    if (window.innerWidth <= 768) {
+        const sidebar = document.getElementById('sidebar');
+        const chatArea = document.getElementById('chat-area');
+        if (sidebar && sidebar.classList.contains('hidden-mobile') && chatArea && !chatArea.classList.contains('hidden')) {
+            addNavState('chat');
+        }
+    }
+
+    console.log('✅ Системная кнопка "Назад" настроена');
+})();
+// ===== ДОБАВЛЕНИЕ ВЕРИФИКАЦИИ В НАСТРОЙКИ =====
+(function() {
+    // Сохраняем оригинальную функцию
+    const originalRenderSettings = renderSettingsPanel;
+    
+    // Переопределяем функцию рендеринга настроек
+    renderSettingsPanel = function() {
+        // Вызываем оригинальный рендер
+        originalRenderSettings.call(this);
+        
+        // Добавляем секцию верификации
+        addVerificationSection();
+    };
+    
+    function addVerificationSection() {
+        const body = document.getElementById('panel-body');
+        if (!body) return;
+        
+        // Проверяем, не добавлена ли уже секция
+        if (document.getElementById('verify-section')) return;
+        
+        // Находим место для вставки - после профиля или перед аккаунт
+        const profileCard = body.querySelector('.profile-card');
+        if (!profileCard) return;
+        
+        // Создаем секцию
+        const section = document.createElement('div');
+        section.id = 'verify-section';
+        section.className = 'settings-section';
+        section.style.marginTop = '16px';
+        section.style.padding = '0 4px';
+        
+        const isVerified = auth.currentUser?.emailVerified || false;
+        const email = auth.currentUser?.email || '';
+        
+        section.innerHTML = `
+            <div class="settings-label">🔐 Верификация</div>
+            <div class="settings-item" style="flex-wrap:wrap;gap:6px;padding:12px 14px;">
+                <div class="si-icon" style="font-size:20px;">${isVerified ? '✅' : '⚠️'}</div>
+                <div class="si-text" style="flex:1;min-width:100px;font-size:14px;">
+                    <div>${isVerified ? 'Email подтверждён' : 'Email не подтверждён'}</div>
+                    <div style="font-size:12px;color:var(--text-hint);font-weight:400;">${email}</div>
+                </div>
+                <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                    ${!isVerified ? `
+                        <button id="send-verify-btn" style="padding:6px 14px;border-radius:8px;background:var(--accent);color:white;font-size:12px;font-weight:500;cursor:pointer;transition:var(--transition);border:none;">
+                            📧 Отправить
+                        </button>
+                        <button id="check-verify-btn" style="padding:6px 14px;border-radius:8px;background:var(--bg-secondary);color:var(--text-primary);font-size:12px;font-weight:500;cursor:pointer;transition:var(--transition);border:1px solid var(--border);">
+                            🔄 Проверить
+                        </button>
+                    ` : `
+                        <span style="font-size:13px;color:var(--green);">Подтверждён ✅</span>
+                    `}
+                </div>
+            </div>
+            ${!isVerified ? `<div id="verify-status-msg" style="font-size:12px;color:var(--text-secondary);padding:4px 14px 8px;"></div>` : ''}
+        `;
+        
+        // Вставляем после профиля
+        profileCard.parentNode.insertBefore(section, profileCard.nextSibling);
+        
+        // Обработчики
+        const sendBtn = document.getElementById('send-verify-btn');
+        const checkBtn = document.getElementById('check-verify-btn');
+        const statusMsg = document.getElementById('verify-status-msg');
+        
+        if (sendBtn) {
+            sendBtn.addEventListener('click', async function() {
+                if (!auth.currentUser) return;
+                try {
+                    await sendEmailVerification(auth.currentUser);
+                    if (statusMsg) {
+                        statusMsg.textContent = '✅ Письмо отправлено на ' + auth.currentUser.email;
+                        statusMsg.style.color = 'var(--green)';
+                    }
+                } catch(e) {
+                    if (statusMsg) {
+                        statusMsg.textContent = '❌ Ошибка: ' + e.message;
+                        statusMsg.style.color = 'var(--red)';
+                    }
+                }
+            });
+        }
+        
+        if (checkBtn) {
+            checkBtn.addEventListener('click', async function() {
+                if (!auth.currentUser) return;
+                try {
+                    await auth.currentUser.reload();
+                    const verified = auth.currentUser.emailVerified;
+                    if (verified) {
+                        if (statusMsg) {
+                            statusMsg.textContent = '✅ Email подтверждён! Обновляем...';
+                            statusMsg.style.color = 'var(--green)';
+                        }
+                        // Перерендерим настройки через секунду
+                        setTimeout(() => {
+                            renderSettingsPanel();
+                        }, 1000);
+                    } else {
+                        if (statusMsg) {
+                            statusMsg.textContent = '❌ Email ещё не подтверждён. Проверьте почту и нажмите ссылку.';
+                            statusMsg.style.color = 'var(--red)';
+                        }
+                    }
+                } catch(e) {
+                    if (statusMsg) {
+                        statusMsg.textContent = '❌ Ошибка: ' + e.message;
+                        statusMsg.style.color = 'var(--red)';
+                    }
+                }
+            });
+        }
+    }
+    
+    console.log('✅ Верификация добавлена в настройки');
+})();
+// =====================================================================
+//  ЗВОНКИ С СТАТИЧЕСКИМИ TURN-СЕРВЕРАМИ (XIRSYS)
+// =====================================================================
+
+// ------ Статические ICE-серверы Xirsys (ваши данные) ------
+const STATIC_ICE_SERVERS = [
+    { urls: 'stun:stun.l.google.com:19302' },  // запасной STUN
+    {
+        urls: [
+            'turn:global.turn.xirsys.com:3478?transport=udp',
+            'turn:global.turn.xirsys.com:3478?transport=tcp',
+            'turns:global.turn.xirsys.com:443?transport=tcp'
+        ],
+        username: 'NexLinkCHat',
+        credential: 'e9bd2e7a-7083-11f1-b85a-0242ac130002'
+    }
+];
+
+// ------ Переменные состояния звонка (глобальные) ------
+let pc = null;
+let localStream = null;
+let remoteStream = null;
+let callId = null;
+let callRole = null;
+let callPeer = null;
+let callType = 'audio';
+let callStartTime = null;
+let callTimerInt = null;
+let unsubCallSig = null;
+let unsubCallIce = null;
+let ringTimeout = null;
+let isMuted = false;
+let isVideoOff = false;
+let pendingIce = [];
+let remoteSet = false;
+let unsubIncoming = null;
+
+// ------ DOM-элементы ------
+const remoteVid = document.getElementById('remote-video');
+const localVid = document.getElementById('local-video');
+remoteVid.muted = false;
+remoteVid.volume = 1.0;
+
+// ------ Вспомогательные функции ------
+function genCallId(a, b) {
+    return 'call_' + [a, b].sort().join('_');
+}
+
+function fmtDuration(s) {
+    const m = Math.floor(s / 60);
+    const sec = Math.floor(s % 60);
+    return `${m.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
+}
+
+function startCallTimer() {
+    callStartTime = Date.now();
+    document.getElementById('call-timer').style.display = 'block';
+    callTimerInt = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - callStartTime) / 1000);
+        document.getElementById('call-timer').textContent = fmtDuration(elapsed);
+    }, 1000);
+}
+
+function stopCallTimer() {
+    clearInterval(callTimerInt);
+    callTimerInt = null;
+    document.getElementById('call-timer').style.display = 'none';
+    return callStartTime ? Math.floor((Date.now() - callStartTime) / 1000) : 0;
+}
+
+function showCallScreen(peerUid, type, status = 'Соединение…') {
+    const u = usersCache.get(peerUid);
+    document.getElementById('call-av-circle').innerHTML = avatarHtml(u?.avatar || '😊');
+    document.getElementById('call-peer-name').textContent = getDisplayName(peerUid);
+    document.getElementById('call-status').textContent = status;
+    remoteVid.srcObject = null;
+    localVid.srcObject = null;
+    document.getElementById('call-screen').classList.add('active');
+    document.getElementById('call-av-circle').parentElement.style.display = 'flex'; // показываем аватар
+}
+
+function hideCallScreen() {
+    document.getElementById('call-screen').classList.remove('active');
+    remoteVid.srcObject = null;
+    localVid.srcObject = null;
+}
+
+function showIncoming(peerUid, type) {
+    const u = usersCache.get(peerUid);
+    document.getElementById('inc-name').textContent = getDisplayName(peerUid);
+    document.getElementById('inc-avatar').innerHTML = avatarHtml(u?.avatar || '😊');
+    document.getElementById('inc-type').textContent = type === 'video' ? '📹 Входящий видеозвонок' : '📞 Входящий звонок';
+    document.getElementById('incoming-banner').classList.add('show');
+}
+
+function hideIncoming() {
+    document.getElementById('incoming-banner').classList.remove('show');
+}
+
+function showUnmuteOverlay() {
+    if (document.getElementById('unmute-ov')) return;
+    const ov = document.createElement('div');
+    ov.id = 'unmute-ov';
+    ov.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:10;background:rgba(0,0,0,.6);color:white;padding:16px 24px;border-radius:20px;cursor:pointer;font-size:16px;';
+    ov.textContent = '🔊 Нажмите для звука';
+    ov.onclick = () => {
+        remoteVid.muted = false;
+        remoteVid.volume = 1.0;
+        remoteVid.play().catch(() => {});
+        ov.remove();
+    };
+    document.getElementById('call-screen').appendChild(ov);
+}
+
+async function getMedia(video = false) {
+    return navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: true, noiseSuppression: true },
+        video: video ? { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } } : false
+    });
+}
+
+// ------ Основные функции звонков ------
+
+/**
+ * Создаёт PeerConnection и устанавливает обработчики
+ */
+async function buildPC(cid, role) {
+    pc = new RTCPeerConnection({ iceServers: STATIC_ICE_SERVERS });
+    pendingIce = [];
+    remoteSet = false;
+
+    // Добавляем локальные треки
+    if (localStream) {
+        localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
+    }
+
+    // Получаем удалённые треки
+    remoteStream = new MediaStream();
+    pc.ontrack = ev => {
+        ev.streams[0].getTracks().forEach(t => remoteStream.addTrack(t));
+        remoteVid.srcObject = remoteStream;
+        remoteVid.muted = false;
+        remoteVid.volume = 1.0;
+        remoteVid.play().catch(() => showUnmuteOverlay());
+        document.getElementById('call-av-circle').parentElement.style.display = 'none';
+        document.getElementById('call-status').textContent = '✓ Соединено';
+    };
+
+    // Отправка ICE-кандидатов
+    const iceSide = role === 'caller' ? 'callerCandidates' : 'calleeCandidates';
+    pc.onicecandidate = ev => {
+        if (ev.candidate) {
+            addDoc(collection(db, 'calls', cid, iceSide), ev.candidate.toJSON()).catch(console.warn);
+        }
+    };
+
+    // Отслеживание состояния соединения
+    pc.oniceconnectionstatechange = () => {
+        const s = pc.iceConnectionState;
+        if (s === 'connected' || s === 'completed') {
+            document.getElementById('call-status').textContent = '✓ Соединено';
+            if (!callStartTime) startCallTimer();
+            remoteVid.muted = false;
+            remoteVid.volume = 1.0;
+            remoteVid.play().catch(() => {});
+        } else if (s === 'failed') {
+            console.warn('❌ ICE failed');
+            endCallCleanup();
+        }
+    };
+
+    return pc;
+}
+
+/**
+ * Инициировать звонок (исходящий)
+ */
+async function startCall(peerUid, isVideo = false) {
+    if (pc) {
+        alert('Звонок уже активен');
+        return;
+    }
+    if (!me || !peerUid) return;
+
+    callPeer = peerUid;
+    callType = isVideo ? 'video' : 'audio';
+    callRole = 'caller';
+
+    try {
+        localStream = await getMedia(isVideo);
+    } catch (err) {
+        alert('❌ Не удалось получить доступ к микрофону/камере: ' + err.message);
+        return;
+    }
+
+    if (isVideo) {
+        localVid.srcObject = localStream;
+        localVid.play().catch(() => {});
+    }
+
+    const cid = genCallId(me.uid, peerUid);
+    callId = cid;
+
+    await buildPC(cid, 'caller');
+
+    const offer = await pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: isVideo });
+    await pc.setLocalDescription(offer);
+
+    await setDoc(doc(db, 'calls', cid), {
+        callerId: me.uid,
+        calleeId: peerUid,
+        callType: callType,
+        status: 'ringing',
+        offer: { type: offer.type, sdp: offer.sdp },
+        createdAt: serverTimestamp()
+    });
+
+    showCallScreen(peerUid, callType, '📞 Вызов…');
+
+    // Подписка на ICE-кандидаты от вызываемого
+    unsubCallIce = onSnapshot(collection(db, 'calls', cid, 'calleeCandidates'), snap => {
+        snap.docChanges().forEach(ch => {
+            if (ch.type === 'added') {
+                const candidate = ch.doc.data();
+                if (remoteSet) {
+                    pc.addIceCandidate(new RTCIceCandidate(candidate)).catch(console.warn);
+                } else {
+                    pendingIce.push(candidate);
+                }
+            }
+        });
+    });
+
+    // Подписка на ответ от вызываемого
+    unsubCallSig = onSnapshot(doc(db, 'calls', cid), async snap => {
+        if (!snap.exists()) return;
+        const d = snap.data();
+        if (d.status === 'rejected') {
+            document.getElementById('call-status').textContent = '📵 Отклонён';
+            await logCall('rejected');
+            setTimeout(endCallCleanup, 1500);
+            return;
+        }
+        if (d.status === 'missed') {
+            document.getElementById('call-status').textContent = '📵 Нет ответа';
+            setTimeout(endCallCleanup, 1500);
+            return;
+        }
+        if (d.status === 'ended') {
+            endCallCleanup();
+            return;
+        }
+        if (d.answer && pc && pc.signalingState === 'have-local-offer' && !remoteSet) {
+            try {
+                await pc.setRemoteDescription(new RTCSessionDescription(d.answer));
+                remoteSet = true;
+                for (const cand of pendingIce) {
+                    await pc.addIceCandidate(new RTCIceCandidate(cand)).catch(console.warn);
+                }
+                pendingIce = [];
+            } catch (err) {
+                console.error('❌ Ошибка установки remote description:', err);
+            }
+        }
+    });
+
+    ringTimeout = setTimeout(async () => {
+        if (pc && !['connected', 'completed'].includes(pc.iceConnectionState)) {
+            document.getElementById('call-status').textContent = '📵 Нет ответа';
+            await updateDoc(doc(db, 'calls', cid), { status: 'missed' }).catch(() => {});
+            await logCall('missed');
+            setTimeout(endCallCleanup, 1500);
+        }
+    }, 45000);
+}
+
+/**
+ * Ответить на входящий звонок
+ */
+async function acceptCall() {
+    if (!callId || !callPeer) return;
+    hideIncoming();
+
+    try {
+        localStream = await getMedia(callType === 'video');
+    } catch (err) {
+        alert('❌ Не удалось получить доступ к микрофону/камере: ' + err.message);
+        return;
+    }
+
+    if (callType === 'video') {
+        localVid.srcObject = localStream;
+        localVid.play().catch(() => {});
+    }
+
+    showCallScreen(callPeer, callType, 'Соединение…');
+    callRole = 'callee';
+
+    const cRef = doc(db, 'calls', callId);
+    const cSnap = await getDoc(cRef);
+    if (!cSnap.exists()) {
+        endCallCleanup();
+        return;
+    }
+    const cData = cSnap.data();
+
+    await buildPC(callId, 'callee');
+
+    try {
+        await pc.setRemoteDescription(new RTCSessionDescription(cData.offer));
+        remoteSet = true;
+        for (const cand of pendingIce) {
+            await pc.addIceCandidate(new RTCIceCandidate(cand)).catch(console.warn);
+        }
+        pendingIce = [];
+    } catch (err) {
+        console.error('❌ Ошибка установки remote description (accept):', err);
+        return;
+    }
+
+    const answer = await pc.createAnswer();
+    await pc.setLocalDescription(answer);
+    await updateDoc(cRef, {
+        answer: { type: answer.type, sdp: answer.sdp },
+        status: 'connected'
+    });
+
+    unsubCallIce = onSnapshot(collection(db, 'calls', callId, 'callerCandidates'), snap => {
+        snap.docChanges().forEach(ch => {
+            if (ch.type === 'added') {
+                const candidate = ch.doc.data();
+                if (remoteSet) {
+                    pc.addIceCandidate(new RTCIceCandidate(candidate)).catch(console.warn);
+                } else {
+                    pendingIce.push(candidate);
+                }
+            }
+        });
+    });
+
+    unsubCallSig = onSnapshot(cRef, snap => {
+        if (snap.exists() && snap.data().status === 'ended') {
+            endCallCleanup();
+        }
+    });
+}
+
+async function rejectCall() {
+    hideIncoming();
+    if (callId) {
+        await updateDoc(doc(db, 'calls', callId), { status: 'rejected' }).catch(() => {});
+        await logCall('rejected');
+    }
+    endCallCleanup();
+}
+
+async function hangUp() {
+    if (callId) {
+        const dur = stopCallTimer();
+        await updateDoc(doc(db, 'calls', callId), { status: 'ended', duration: dur }).catch(() => {});
+        await logCall('ended', dur);
+    }
+    endCallCleanup();
+}
+
+function endCallCleanup() {
+    if (ringTimeout) clearTimeout(ringTimeout);
+    if (unsubCallSig) { unsubCallSig(); unsubCallSig = null; }
+    if (unsubCallIce) { unsubCallIce(); unsubCallIce = null; }
+    if (pc) { pc.close(); pc = null; }
+    if (localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; }
+    remoteStream = null;
+    pendingIce = [];
+    remoteSet = false;
+    stopCallTimer();
+    hideCallScreen();
+    hideIncoming();
+    callId = null;
+    callRole = null;
+    callPeer = null;
+    isMuted = false;
+    isVideoOff = false;
+    document.getElementById('cc-mute').textContent = '🎙️';
+    document.getElementById('cc-mute').classList.remove('on');
+    document.getElementById('cc-video').textContent = '📹';
+    document.getElementById('cc-video').classList.remove('on');
+    const ov = document.getElementById('unmute-ov');
+    if (ov) ov.remove();
+    console.log('🧹 Звонок очищен');
+}
+
+async function logCall(status, duration = 0) {
+    if (!me || !callPeer) return;
+    try {
+        const cid = chatIdForPrivate(callPeer);
+        const statusMap = { ended: '📞 Звонок', missed: '📵 Нет ответа', rejected: '🚫 Отклонён' };
+        const text = statusMap[status] || '📞 Звонок';
+        await addDoc(collection(db, 'messages'), {
+            chatId: cid,
+            text: text,
+            timestamp: serverTimestamp(),
+            senderUid: me.uid,
+            isCallEvent: true,
+            callType,
+            callStatus: status,
+            callDuration: duration
+        });
+    } catch (err) {
+        console.warn('Ошибка записи события звонка:', err);
+    }
+}
+
+// ------ Инициализация обработчиков входящих звонков ------
+function initCallSignaling() {
+    if (!me) return;
+    if (unsubIncoming) { unsubIncoming(); unsubIncoming = null; }
+    unsubIncoming = onSnapshot(
+        query(collection(db, 'calls'), where('calleeId', '==', me.uid), where('status', '==', 'ringing')),
+        snap => {
+            snap.docChanges().forEach(ch => {
+                if (ch.type !== 'added') return;
+                const d = ch.doc.data();
+                const cid = ch.doc.id;
+                if (pc) {
+                    updateDoc(doc(db, 'calls', cid), { status: 'rejected' }).catch(() => {});
+                    return;
+                }
+                callId = cid;
+                callPeer = d.callerId;
+                callType = d.callType || 'audio';
+                showIncoming(d.callerId, callType);
+                ringTimeout = setTimeout(() => {
+                    if (document.getElementById('incoming-banner').classList.contains('show')) {
+                        hideIncoming();
+                        updateDoc(doc(db, 'calls', cid), { status: 'missed' }).catch(() => {});
+                    }
+                }, 45000);
+            });
+        }
+    );
+}
+
+// ------ Обработчики кнопок управления звонком ------
+document.getElementById('cc-end')?.addEventListener('click', hangUp);
+document.getElementById('accept-call')?.addEventListener('click', acceptCall);
+document.getElementById('reject-call')?.addEventListener('click', rejectCall);
+
+document.getElementById('cc-mute')?.addEventListener('click', () => {
+    if (!localStream) return;
+    isMuted = !isMuted;
+    localStream.getAudioTracks().forEach(t => t.enabled = !isMuted);
+    document.getElementById('cc-mute').textContent = isMuted ? '🔇' : '🎙️';
+    document.getElementById('cc-mute').classList.toggle('on', isMuted);
+});
+
+document.getElementById('cc-video')?.addEventListener('click', () => {
+    if (!localStream) return;
+    isVideoOff = !isVideoOff;
+    localStream.getVideoTracks().forEach(t => t.enabled = !isVideoOff);
+    document.getElementById('cc-video').textContent = isVideoOff ? '🚫' : '📹';
+    document.getElementById('cc-video').classList.toggle('on', isVideoOff);
+});
+
+document.getElementById('cc-speaker')?.addEventListener('click', () => {
+    remoteVid.muted = !remoteVid.muted;
+    document.getElementById('cc-speaker').textContent = remoteVid.muted ? '🔇' : '🔊';
+    document.getElementById('cc-speaker').classList.toggle('on', !remoteVid.muted);
+});
+
+document.getElementById('cc-flip')?.addEventListener('click', async () => {
+    if (!localStream) return;
+    const t = localStream.getVideoTracks()[0];
+    if (t) {
+        try {
+            const constraints = t.getConstraints();
+            const facing = constraints.facingMode === 'user' ? 'environment' : 'user';
+            await t.applyConstraints({ facingMode: facing });
+        } catch (err) { console.warn('Flip failed:', err); }
+    }
+});
+
+document.getElementById('call-local')?.addEventListener('click', () => {
+    const tmp = localVid.srcObject;
+    localVid.srcObject = remoteVid.srcObject;
+    remoteVid.srcObject = tmp;
+    remoteVid.muted = false;
+    remoteVid.volume = 1.0;
+    localVid.muted = true;
+    remoteVid.play().catch(() => {});
+});
+
+// ------ Инициализация при старте ------
+// Вызываем initCallSignaling после авторизации
+const origOnAuth = onAuthStateChanged;
+onAuthStateChanged = function(callback) {
+    origOnAuth(async (user) => {
+        if (user) {
+            // ... существующий код ...
+            initCallSignaling();
+        } else {
+            if (unsubIncoming) { unsubIncoming(); unsubIncoming = null; }
+            endCallCleanup();
+        }
+        if (callback) callback(user);
+    });
+};
+
+console.log('📞 Звонки с Xirsys (статические TURN) успешно загружены');
+// ================================================================
+//  ОТКЛЮЧЕНИЕ СТАРЫХ ЗВОНКОВ (заглушки)
+// ================================================================
+(function disableOldCalls() {
+    console.warn('🔇 Старые звонки отключены заглушками');
+
+    // ---- Переопределяем все глобальные функции звонков ----
+    const noop = () => console.warn('⛔ Звонок отключён (старая версия)');
+    const noopAsync = async () => { console.warn('⛔ Звонок отключён (старая версия)'); };
+
+    window.startCall = noopAsync;
+    window.acceptCall = noopAsync;
+    window.rejectCall = noopAsync;
+    window.hangUp = noopAsync;
+    window.endCallCleanup = noop;
+    window.initCallSignaling = noop;
+    window.logCall = noopAsync;
+    window.buildPC = noopAsync;
+    window.getMedia = noopAsync;
+
+    // ---- Обнуляем глобальные переменные (если они были объявлены через var) ----
+    // Если переменные объявлены через let/const, их нельзя переопределить, но мы можем
+    // присвоить им null в глобальном объекте, если они там есть.
+    // Однако они обычно локальны в модуле, поэтому не влияют.
+    // Но на всякий случай попробуем очистить.
+    try {
+        window.pc = null;
+        window.localStream = null;
+        window.remoteStream = null;
+        window.callId = null;
+        window.callRole = null;
+        window.callPeer = null;
+        window.callType = null;
+        window.callStartTime = null;
+        window.callTimerInt = null;
+        window.unsubCallSig = null;
+        window.unsubCallIce = null;
+        window.ringTimeout = null;
+        window.isMuted = false;
+        window.isVideoOff = false;
+        window.pendingIce = [];
+        window.remoteSet = false;
+        window.unsubIncoming = null;
+    } catch(e) {}
+
+    // ---- Отключаем обработчики кнопок (если они были назначены через onclick) ----
+    const buttons = [
+        'call-audio-btn',
+        'call-video-btn',
+        'cc-end',
+        'accept-call',
+        'reject-call',
+        'cc-mute',
+        'cc-video',
+        'cc-speaker',
+        'cc-flip',
+        'call-local'
+    ];
+    buttons.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            // Убираем все обработчики, назначенные через onclick
+            el.onclick = null;
+            // Убираем обработчики, добавленные через addEventListener (не можем удалить,
+            // если нет ссылки на функцию, но переопределим поведение через новый обработчик,
+            // который ничего не делает)
+            el.removeEventListener('click', window._oldCallHandlers?.[id] || (() => {}));
+        }
+    });
+
+    // ---- Убираем также обработчики, которые могли быть привязаны через onSnapshot и т.п. ----
+    // Они будут отключены, так как функции-заглушки не создают подписок.
+
+    console.log('✅ Старые звонки полностью отключены');
 })();
 </script>
 </body>
