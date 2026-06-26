@@ -5002,56 +5002,6 @@ function showMsgContextMenu(e, msg, bubble) {
 
     console.log('✅ Защита каналов включена: теперь только админы могут писать');
 })();
-// ===== ИСПРАВЛЕНИЕ: ПРОКРУТКА К ПОЛЮ ВВОДА ПРИ КЛАВИАТУРЕ =====
-(function() {
-    const input = document.getElementById('msg-input');
-    const inputBar = document.getElementById('input-bar');
-    const messagesWrap = document.getElementById('messages-wrap');
-    if (!input || !inputBar) return;
-
-    // Функция прокрутки к полю ввода
-    function scrollToInput() {
-        // Получаем позицию поля ввода относительно документа
-        const rect = inputBar.getBoundingClientRect();
-        const scrollY = window.scrollY || window.pageYOffset;
-        const targetY = rect.top + scrollY - 60; // 60px отступ сверху
-        window.scrollTo({ top: targetY, behavior: 'smooth' });
-    }
-
-    // При фокусе на поле ввода
-    input.addEventListener('focus', function() {
-        setTimeout(scrollToInput, 300);
-    });
-
-    // При клике на поле ввода (дополнительно)
-    input.addEventListener('click', function() {
-        setTimeout(scrollToInput, 300);
-    });
-
-    // При изменении размера окна (клавиатура появляется/исчезает)
-    let lastHeight = window.innerHeight;
-    window.addEventListener('resize', function() {
-        const newHeight = window.innerHeight;
-        if (newHeight < lastHeight && document.activeElement === input) {
-            setTimeout(scrollToInput, 200);
-        }
-        lastHeight = newHeight;
-    });
-
-    // Дополнительно: при открытии чата или загрузке страницы прокручиваем вниз
-    // (уже есть scrollToBottom, но для уверенности добавим)
-    const origOpenChat = window.openChat;
-    if (origOpenChat) {
-        window.openChat = function(chat) {
-            origOpenChat(chat);
-            setTimeout(() => {
-                if (messagesWrap) messagesWrap.scrollTop = messagesWrap.scrollHeight;
-            }, 200);
-        };
-    }
-
-    console.log('✅ Прокрутка к полю ввода при клавиатуре настроена');
-})();
 // ============================================================
 //  📤  НОВОЕ МОДАЛЬНОЕ ОКНО ДЛЯ ПЕРЕСЫЛКИ
 // ============================================================
@@ -5482,64 +5432,129 @@ console.log('📤 Модальное окно пересылки установ�
     
     console.log('✅ Верификация добавлена в настройки');
 })();
-	// ===== УЛУЧШЕННАЯ ПРОКРУТКА К ПОЛЮ ВВОДА ПРИ КЛАВИАТУРЕ =====
+	// ============================================================
+//  🌊  КРАСИВАЯ ЗАСТАВКА С ВОДОЙ И ПОДНИМАЮЩИМСЯ ТЕКСТОМ
+// ============================================================
 (function() {
-    const input = document.getElementById('msg-input');
-    const inputBar = document.getElementById('input-bar');
-    const messagesWrap = document.getElementById('messages-wrap');
-    if (!input || !inputBar) return;
+    const splash = document.getElementById('splash');
+    if (!splash) return;
 
-    // Основная функция прокрутки
-    function scrollToInput() {
-        // 1. Сначала прокручиваем сообщения в самый низ, чтобы освободить место
-        if (messagesWrap) {
-            messagesWrap.scrollTop = messagesWrap.scrollHeight;
+    // Очищаем splash и настраиваем фон
+    splash.innerHTML = '';
+    splash.style.cssText = `
+        position: fixed; inset: 0; z-index: 9999;
+        background: linear-gradient(180deg, #0b3d5e, #1a6b8a);
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        overflow: hidden;
+        transition: opacity 1s ease, visibility 1s ease;
+    `;
+
+    // Создаём canvas
+    const canvas = document.createElement('canvas');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    canvas.style.cssText = 'position: absolute; top: 0; left: 0; width: 100%; height: 100%;';
+    splash.appendChild(canvas);
+
+    const ctx = canvas.getContext('2d');
+
+    // Параметры волн
+    const waves = [
+        { amplitude: 30, frequency: 0.02, speed: 0.8, color: 'rgba(255,255,255,0.15)', offset: 0 },
+        { amplitude: 20, frequency: 0.025, speed: 1.2, color: 'rgba(255,255,255,0.20)', offset: 50 },
+        { amplitude: 15, frequency: 0.03, speed: 1.6, color: 'rgba(255,255,255,0.25)', offset: 100 }
+    ];
+
+    let time = 0;
+    let textY = canvas.height * 0.7; // начальная позиция (снизу)
+
+    // Рисуем кадр
+    function draw() {
+        const w = canvas.width;
+        const h = canvas.height;
+
+        // Заливка фона
+        const gradient = ctx.createLinearGradient(0, 0, 0, h);
+        gradient.addColorStop(0, '#0b3d5e');
+        gradient.addColorStop(0.6, '#1a6b8a');
+        gradient.addColorStop(1, '#2a8fad');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, w, h);
+
+        // Рисуем волны
+        for (let wv of waves) {
+            ctx.beginPath();
+            ctx.moveTo(0, h);
+            for (let x = 0; x <= w; x += 2) {
+                const y = h * 0.5 + wv.amplitude * Math.sin(wv.frequency * x + time * wv.speed + wv.offset);
+                ctx.lineTo(x, y);
+            }
+            ctx.lineTo(w, h);
+            ctx.closePath();
+            ctx.fillStyle = wv.color;
+            ctx.fill();
         }
 
-        // 2. Прокручиваем страницу так, чтобы поле ввода оказалось в центре видимой области
-        const rect = inputBar.getBoundingClientRect();
-        const targetY = rect.top + window.scrollY - window.innerHeight / 2 + rect.height / 2;
-        window.scrollTo({
-            top: Math.max(0, targetY),
-            behavior: 'smooth'
-        });
+        // Текст "NexLink" (поднимается)
+        const text = 'NexLink';
+        const fontSize = Math.min(w * 0.12, 72);
+        ctx.font = `bold ${fontSize}px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+
+        // Тень для объёма
+        ctx.shadowColor = 'rgba(0,0,0,0.3)';
+        ctx.shadowBlur = 20;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 4;
+
+        // Градиент для текста
+        const gradText = ctx.createLinearGradient(w/2 - 100, textY - 50, w/2 + 100, textY + 50);
+        gradText.addColorStop(0, '#ffffff');
+        gradText.addColorStop(0.5, '#f0f8ff');
+        gradText.addColorStop(1, '#cce7ff');
+        ctx.fillStyle = gradText;
+
+        // Плавное поднятие текста
+        const targetY = h * 0.4;
+        textY += (targetY - textY) * 0.02;
+        ctx.fillText(text, w/2, textY);
+
+        // Подзаголовок
+        const sub = 'Мессенджер нового поколения';
+        const subSize = Math.min(w * 0.035, 18);
+        ctx.font = `${subSize}px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif`;
+        ctx.fillStyle = 'rgba(255,255,255,0.7)';
+        ctx.shadowBlur = 5;
+        ctx.shadowColor = 'rgba(0,0,0,0.2)';
+        ctx.fillText(sub, w/2, textY + fontSize * 0.7 + 10);
+
+        // Сбрасываем тень
+        ctx.shadowBlur = 0;
+
+        time += 0.016; // ~60 fps
+        requestAnimationFrame(draw);
     }
 
-    // При фокусе на поле ввода
-    input.addEventListener('focus', function() {
-        // Делаем несколько попыток с задержкой, так как клавиатура появляется не мгновенно
-        for (let i = 0; i < 4; i++) {
-            setTimeout(scrollToInput, 200 + i * 150);
-        }
+    draw();
+
+    // Обновляем размер canvas при изменении окна
+    window.addEventListener('resize', () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
     });
 
-    // При клике на поле ввода (дополнительная страховка)
-    input.addEventListener('click', function() {
-        if (document.activeElement === input) {
-            setTimeout(scrollToInput, 300);
+    // Следим за добавлением класса .gone (скрытие заставки)
+    const observer = new MutationObserver(() => {
+        if (splash.classList.contains('gone')) {
+            splash.style.opacity = '0';
+            splash.style.visibility = 'hidden';
+            setTimeout(() => {
+                splash.style.display = 'none';
+            }, 1000);
         }
     });
-
-    // При изменении размеров окна (клавиатура появляется/исчезает)
-    let lastHeight = window.innerHeight;
-    window.addEventListener('resize', function() {
-        const newHeight = window.innerHeight;
-        if (newHeight < lastHeight && document.activeElement === input) {
-            setTimeout(scrollToInput, 300);
-        }
-        lastHeight = newHeight;
-    });
-
-    // Также прокручиваем при открытии чата (чтобы поле ввода было видно сразу)
-    const origOpenChat = window.openChat;
-    if (typeof origOpenChat === 'function') {
-        window.openChat = function(chat) {
-            origOpenChat(chat);
-            setTimeout(scrollToInput, 500);
-        };
-    }
-
-    console.log('✅ Улучшенная прокрутка к полю ввода при клавиатуре включена');
+    observer.observe(splash, { attributes: true, attributeFilter: ['class'] });
 })();
 </script>
 </body>
