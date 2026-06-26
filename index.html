@@ -939,6 +939,32 @@ a,
     line-height: 1;
   }
 }
+.chat-divider {
+  padding: 8px 16px 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-hint);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+}
+.chat-row.system .cr-preview {
+  color: var(--text-hint);
+  font-style: italic;
+}
+.chat-row {
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+}
+.chat-row:last-child {
+  border-bottom: none;
+}
+.cr-time {
+  font-size: 12px;
+  color: var(--text-hint);
+  flex-shrink: 0;
+  margin-left: 8px;
 </style>
 </head>
 <body>
@@ -1548,89 +1574,136 @@ async function refreshCaches() { await Promise.all([refreshUsersCache(), refresh
 // ─── CHAT LIST ────────────────────────────────────────────────────────────────
 async function buildChatList() {
   if (!me) return;
-  let items = [{ id:'self', name:'Избранное', avatar:'📁', lastMsg:'', type:'self' }];
- 
-  // Rooms
+  let items = [];
+  const seen = new Set();
+
+  // ---- 1. Избранное (self) ----
+  items.push({ id: 'self', name: 'Избранное', avatar: '📁', lastMsg: 'Сохраните что-нибудь', lastMsgTime: '', type: 'self' });
+  seen.add('self_self');
+
+  // ---- 2. Комнаты (группы, каналы) ----
   roomsCache.forEach(r => {
     if (r.members?.includes(me.uid)) {
-      items.push({ id:r.id, name:r.name, avatar:r.avatar||'👥', lastMsg:'', type:r.type, roomData:r });
+      const key = `room_${r.id}`;
+      if (!seen.has(key)) {
+        items.push({ id: r.id, name: r.name, avatar: r.avatar || '👥', lastMsg: '', lastMsgTime: '', type: r.type, roomData: r });
+        seen.add(key);
+      }
     }
   });
- 
-  // Bots
-  const bs = await getDocs(query(collection(db,'bots'), where('ownerUid','==',me.uid)));
-  bs.forEach(d => items.push({ id:d.id, name:d.data().name, avatar:d.data().avatar||'🤖', lastMsg:'', type:'bot', botData:d.data() }));
- 
-  // Private chats
-  const sentSnap = await getDocs(query(collection(db,'messages'), where('senderUid','==',me.uid)));
-  const peerSet = new Set();
-  sentSnap.forEach(d => {
-    const cid = d.data().chatId;
-    if (cid?.startsWith('chat_')) {
-      const parts = cid.split('_');
-      const other = parts[1]===me.uid ? parts[2] : parts[1];
-      if (other && other !== me.uid) peerSet.add(other);
+
+  // ---- 3. Боты ----
+  const bs = await getDocs(query(collection(db, 'bots'), where('ownerUid', '==', me.uid)));
+  bs.forEach(d => {
+    const key = `bot_${d.id}`;
+    if (!seen.has(key)) {
+      items.push({ id: d.id, name: d.data().name, avatar: d.data().avatar || '🤖', lastMsg: '', lastMsgTime: '', type: 'bot', botData: d.data() });
+      seen.add(key);
     }
   });
-  const allSnap = await getDocs(query(collection(db,'messages'), where('chatId','>=',`chat_${me.uid}`), where('chatId','<=',`chat_${me.uid}\uf8ff`)));
-  allSnap.forEach(d => {
+
+  // ---- 4. Приватные чаты (из сообщений) ----
+  const chatIds = new Set();
+  const snap = await getDocs(query(collection(db, 'messages'), where('chatId', '>=', 'chat_'), where('chatId', '<=', 'chat_\uf8ff')));
+  snap.forEach(d => {
     const cid = d.data().chatId;
     if (cid?.startsWith('chat_')) {
       const parts = cid.split('_');
       const other = parts.find(p => p !== me.uid && p !== 'chat');
-      if (other) peerSet.add(other);
+      if (other && other !== me.uid) chatIds.add(other);
     }
-	items.sort((a, b) => {
-  const ta = a.lastMsgTime || 0;
-  const tb = b.lastMsgTime || 0;
-  return tb - ta; // по убыванию (новые сверху)
-});
   });
-  for (const uid of peerSet) {
-    const u = usersCache.get(uid);
-    if (u) items.push({ id:uid, name:getDisplayName(uid), avatar:u.avatar, lastMsg:'', type:'private' });
+
+  for (const uid of chatIds) {
+    const key = `private_${uid}`;
+    if (!seen.has(key)) {
+      const u = usersCache.get(uid);
+      if (u) {
+        items.push({ id: uid, name: getDisplayName(uid), avatar: u.avatar, lastMsg: '', lastMsgTime: '', type: 'private' });
+        seen.add(key);
+      }
+    }
   }
- 
-  // Load last messages
+
+  // ---- 5. Загружаем последнее сообщение и время для каждого чата ----
   await Promise.all(items.map(async item => {
     const cid = await getChatId(item);
     if (!cid) return;
-    const s = await getDocs(query(collection(db,'messages'), where('chatId','==',cid), orderBy('timestamp','desc'), limit(1)));
+    const q = query(collection(db, 'messages'), where('chatId', '==', cid), orderBy('timestamp', 'desc'), limit(1));
+    const s = await getDocs(q);
     if (!s.empty) {
-      let t = s.docs[0].data().text || '';
-      if (t.startsWith('[sticker]')) t = '🎨 Стикер';
-      else if (t.startsWith('[voice]')) t = '🎙️ Голосовое';
-      else if (t.startsWith('[call:')) t = '📞 Звонок';
-      item.lastMsg = t;
+      const data = s.docs[0].data();
+      const text = data.text || '';
+      let preview = text;
+      if (text.startsWith('[sticker]')) preview = '🎨 Стикер';
+      else if (text.startsWith('[voice]')) preview = '🎙️ Голосовое';
+      else if (text.startsWith('[call:')) preview = '📞 Звонок';
+      item.lastMsg = preview;
+      if (data.timestamp) {
+        const date = data.timestamp.toDate?.();
+        if (date) {
+          item.lastMsgTime = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+      }
     }
   }));
- 
+
+  // ---- 6. Сортировка: сначала Избранное, потом по времени (новые сверху) ----
+  items.sort((a, b) => {
+    if (a.type === 'self') return -1;
+    if (b.type === 'self') return 1;
+    const ta = a.lastMsgTime ? new Date(`1970-01-01T${a.lastMsgTime}:00`) : 0;
+    const tb = b.lastMsgTime ? new Date(`1970-01-01T${b.lastMsgTime}:00`) : 0;
+    return tb - ta;
+  });
+
   chatList = items;
   renderChatList();
 }
  
-function renderChatList(filter='') {
-  const f = filter.toLowerCase();
+// Переопределяем renderChatList для точного соответствия скриншоту
+function renderChatList(filter = '') {
+  const f = filter.toLowerCase().trim();
   const visible = f ? chatList.filter(c => c.name.toLowerCase().includes(f)) : chatList;
-  const el = $('chat-list');
-  el.innerHTML = visible.map(chat => {
+  const el = document.getElementById('chat-list');
+  if (!el) return;
+
+  let html = '';
+  let hasFavorites = false;
+  let lastDate = '';
+
+  for (const chat of visible) {
+    // ---- Разделитель "Избранное" ----
+    if (chat.type === 'self' && !hasFavorites) {
+      html += `<div class="chat-divider">Избранное</div>`;
+      hasFavorites = true;
+    }
+
+    // ---- Если есть дата, можно добавить разделитель по дням (опционально) ----
+    // Но на первом фото даты нет, поэтому пропускаем.
+
     const isActive = activeChat?.id === chat.id && activeChat?.type === chat.type;
-    let badge = '';
-    if (chat.type==='group') badge = '<span style="font-size:11px;background:#e8f4fd;color:var(--accent);padding:1px 6px;border-radius:6px;margin-left:6px;">группа</span>';
-    else if (chat.type==='channel') badge = '<span style="font-size:11px;background:#fff3e0;color:#e67e22;padding:1px 6px;border-radius:6px;margin-left:6px;">канал</span>';
-    else if (chat.type==='bot') badge = '<span style="font-size:11px;background:#e8f5e9;color:#27ae60;padding:1px 6px;border-radius:6px;margin-left:6px;">бот</span>';
-    return `<div class="chat-row ${isActive?'active':''}" data-id="${esc(chat.id)}" data-type="${esc(chat.type)}">
-      <div class="cr-avatar">${avatarHtml(chat.avatar)}</div>
-      <div class="cr-body">
-        <div class="cr-top">
-          <div class="cr-name">${esc(chat.name)}${badge}</div>
-        </div>
-        <div class="cr-bottom">
-          <div class="cr-preview">${esc(chat.lastMsg||'Нет сообщений')}</div>
+    const systemClass = (chat.id === 'self' || chat.name.includes('Коды')) ? 'system' : '';
+
+    html += `
+      <div class="chat-row ${isActive ? 'active' : ''} ${systemClass}" 
+           data-id="${esc(chat.id)}" data-type="${esc(chat.type)}">
+        <div class="cr-avatar">${avatarHtml(chat.avatar)}</div>
+        <div class="cr-body">
+          <div class="cr-top">
+            <div class="cr-name">${esc(chat.name)}</div>
+            <div class="cr-time">${esc(chat.lastMsgTime || '')}</div>
+          </div>
+          <div class="cr-bottom">
+            <div class="cr-preview">${esc(chat.lastMsg || 'Нет сообщений')}</div>
+          </div>
         </div>
       </div>
-    </div>`;
-  }).join('');
+    `;
+  }
+
+  el.innerHTML = html;
+
   el.querySelectorAll('.chat-row').forEach(row => {
     row.onclick = () => {
       const chat = chatList.find(c => c.id === row.dataset.id && c.type === row.dataset.type);
@@ -4084,124 +4157,6 @@ function showMsgContextMenu(e, msg, bubble) {
     };
     setTimeout(() => document.addEventListener('click', closeHandler), 0);
 }
-// ===== ЛЕТНИЙ ФОН ДЛЯ ЗАГРУЗКИ =====
-(function() {
-    const splash = document.getElementById('splash');
-    if (!splash) return;
-
-    // Очищаем splash, но оставляем класс .gone для логики
-    splash.innerHTML = '';
-    splash.style.cssText = `
-        position: fixed; inset: 0; z-index: 9999;
-        background: linear-gradient(180deg, #87CEEB 0%, #E0F7FA 100%);
-        display: flex; flex-direction: column; align-items: center; justify-content: center;
-        overflow: hidden;
-        transition: opacity 0.5s ease, visibility 0.5s ease;
-    `;
-
-    // ---- 1. Фоновые элементы ----
-    // Солнце
-    const sun = document.createElement('div');
-    sun.style.cssText = `
-        position: absolute; top: 10%; right: 10%;
-        width: 100px; height: 100px;
-        background: radial-gradient(circle, #FFD54F, #FF8F00);
-        border-radius: 50%;
-        box-shadow: 0 0 60px rgba(255, 215, 0, 0.5);
-        animation: sunGlow 4s ease-in-out infinite;
-    `;
-    splash.appendChild(sun);
-
-    // Облака (3 шт.)
-    const cloudSVG = (left, top, delay, scale = 1) => `
-        <div style="
-            position: absolute; left: ${left}%; top: ${top}%;
-            font-size: ${60 * scale}px;
-            opacity: 0.7;
-            animation: cloudFloat ${15 + delay}s linear infinite;
-            transform: scale(${scale});
-            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.05));
-        ">☁️</div>
-    `;
-    const clouds = [
-        { left: -10, top: 15, delay: 0, scale: 1.2 },
-        { left: 30, top: 5, delay: 5, scale: 0.9 },
-        { left: 60, top: 25, delay: 10, scale: 1.4 },
-        { left: 80, top: 8, delay: 3, scale: 1.0 },
-    ];
-    clouds.forEach(c => {
-        const div = document.createElement('div');
-        div.innerHTML = cloudSVG(c.left, c.top, c.delay, c.scale);
-        splash.appendChild(div.firstElementChild);
-    });
-
-    // Волны внизу (две линии)
-    const waveStyle = (color, bottom, delay) => `
-        position: absolute; bottom: ${bottom}%; left: -10%;
-        width: 120%; height: 40px;
-        background: ${color};
-        border-radius: 50% 50% 0 0 / 100% 100% 0 0;
-        opacity: 0.3;
-        animation: waveMove ${8 + delay}s ease-in-out infinite alternate;
-    `;
-    const wave1 = document.createElement('div');
-    wave1.style.cssText = waveStyle('rgba(255,255,255,0.4)', 5, 0);
-    splash.appendChild(wave1);
-    const wave2 = document.createElement('div');
-    wave2.style.cssText = waveStyle('rgba(255,255,255,0.25)', 0, 2);
-    splash.appendChild(wave2);
-
-    // ---- 2. Центральный контент ----
-    const content = document.createElement('div');
-    content.style.cssText = `
-        position: relative; z-index: 2;
-        text-align: center;
-        color: white;
-        text-shadow: 0 4px 20px rgba(0,0,0,0.1);
-    `;
-    content.innerHTML = `
-        <div style="font-size: 72px; font-weight: 800; display: flex; align-items: center; gap: 12px; justify-content: center;">
-            <span style="animation: sunSpin 8s linear infinite;">☀️</span>
-            <span>NexLink</span>
-        </div>
-        <div style="font-size: 20px; font-weight: 500; margin-top: 8px; opacity: 0.9;">
-            🌻 Летний чат с друзьями 🌻
-        </div>
-        <div style="margin-top: 40px; font-size: 30px; animation: float 3s ease-in-out infinite;">
-            🏖️
-        </div>
-    `;
-    splash.appendChild(content);
-
-    // ---- 3. Анимации ----
-    const style = document.createElement('style');
-    style.textContent = `
-        @keyframes sunGlow {
-            0%, 100% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.1); opacity: 0.8; }
-        }
-        @keyframes cloudFloat {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(120vw); }
-        }
-        @keyframes waveMove {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(10%); }
-        }
-        @keyframes sunSpin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        @keyframes float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-20px); }
-        }
-    `;
-    document.head.appendChild(style);
-
-    // Оставляем логику скрытия — она будет работать через добавление класса .gone
-    // (глобальный код уже добавляет этот класс)
-})();
 // ===== ПОИСК ПО СООБЩЕНИЯМ =====
 (function() {
     const searchBtn = document.getElementById('search-msg-btn');
@@ -5187,133 +5142,6 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 console.log('📤 Модальное окно пересылки установлено!');
-// ===== НАВИГАЦИЯ СИСТЕМНОЙ КНОПКОЙ НАЗАД =====
-(function() {
-    // Функции для работы с историей
-    function addNavState(type) {
-        // type: 'chat' или 'panel'
-        if (!history.state || history.state.type !== type) {
-            history.pushState({ type: type }, '');
-        }
-    }
-
-    function removeNavState(type) {
-        if (history.state && history.state.type === type) {
-            history.replaceState(null, '');
-        }
-    }
-
-    // Закрыть чат на мобильных устройствах
-    function closeChatOnMobile() {
-        const sidebar = document.getElementById('sidebar');
-        const chatArea = document.getElementById('chat-area');
-        const emptyState = document.getElementById('empty-state');
-        const backBtn = document.getElementById('back-btn');
-
-        if (sidebar && sidebar.classList.contains('hidden-mobile')) {
-            sidebar.classList.remove('hidden-mobile');
-            if (backBtn) backBtn.style.display = 'none';
-            if (chatArea) {
-                chatArea.classList.add('hidden');
-                chatArea.style.display = 'none';
-            }
-            if (emptyState) emptyState.classList.remove('hidden');
-            // Сбрасываем активный чат, чтобы при повторном выборе всё открылось заново
-            window.activeChat = null;
-            removeNavState('chat');
-        }
-    }
-
-    // Закрыть боковую панель
-    function closeSidePanel() {
-        const panel = document.getElementById('side-panel');
-        if (panel && panel.classList.contains('open')) {
-            panel.classList.remove('open');
-            document.querySelectorAll('.sf-btn').forEach(x => x.classList.remove('active'));
-            document.querySelector('.sf-btn[data-view="chats"]').classList.add('active');
-            removeNavState('panel');
-        }
-    }
-
-    // Обработчик системной кнопки "Назад"
-    window.addEventListener('popstate', function(event) {
-        const state = event.state;
-        if (state && state.type === 'chat') {
-            closeChatOnMobile();
-            event.preventDefault();
-            return;
-        } else if (state && state.type === 'panel') {
-            closeSidePanel();
-            event.preventDefault();
-            return;
-        }
-        // Если состояние не распознано, позволяем браузеру выполнить переход назад
-    });
-
-    // Перехватываем открытие чата (добавляем состояние на мобильных)
-    const origOpenChat = window.openChat;
-    if (typeof origOpenChat === 'function') {
-        window.openChat = function(chat) {
-            origOpenChat(chat);
-            if (window.innerWidth <= 768) {
-                const sidebar = document.getElementById('sidebar');
-                if (sidebar && sidebar.classList.contains('hidden-mobile')) {
-                    addNavState('chat');
-                }
-            }
-        };
-    }
-
-    // Отслеживаем открытие/закрытие боковой панели через MutationObserver
-    const panel = document.getElementById('side-panel');
-    if (panel) {
-        const observer = new MutationObserver(function(mutations) {
-            mutations.forEach(function(mutation) {
-                if (mutation.attributeName === 'class') {
-                    if (panel.classList.contains('open')) {
-                        addNavState('panel');
-                    } else {
-                        removeNavState('panel');
-                    }
-                }
-            });
-        });
-        observer.observe(panel, { attributes: true, attributeFilter: ['class'] });
-    }
-
-    // Обработчик кнопки "Назад" в шапке чата
-    const backBtn = document.getElementById('back-btn');
-    if (backBtn) {
-        backBtn.addEventListener('click', function() {
-            // Если открыта боковая панель – закрываем её
-            if (panel && panel.classList.contains('open')) {
-                closeSidePanel();
-                return;
-            }
-            // Иначе закрываем чат
-            closeChatOnMobile();
-        });
-    }
-
-    // Обработчик крестика закрытия панели
-    const panelClose = document.getElementById('panel-close');
-    if (panelClose) {
-        panelClose.addEventListener('click', function() {
-            closeSidePanel();
-        });
-    }
-
-    // При загрузке страницы, если чат уже открыт (редкий случай), добавляем состояние
-    if (window.innerWidth <= 768) {
-        const sidebar = document.getElementById('sidebar');
-        const chatArea = document.getElementById('chat-area');
-        if (sidebar && sidebar.classList.contains('hidden-mobile') && chatArea && !chatArea.classList.contains('hidden')) {
-            addNavState('chat');
-        }
-    }
-
-    console.log('✅ Системная кнопка "Назад" настроена');
-})();
 // ===== ДОБАВЛЕНИЕ ВЕРИФИКАЦИИ В НАСТРОЙКИ =====
 (function() {
     // Сохраняем оригинальную функцию
@@ -5432,24 +5260,25 @@ console.log('📤 Модальное окно пересылки установ�
     
     console.log('✅ Верификация добавлена в настройки');
 })();
-	// ============================================================
-//  🌊  КРАСИВАЯ ЗАСТАВКА С ВОДОЙ И ПОДНИМАЮЩИМСЯ ТЕКСТОМ
+// ============================================================
+//  🌊  СТИЛЬНАЯ ЗАСТАВКА: ВОДА + ПОДЪЁМ ТЕКСТА
 // ============================================================
 (function() {
     const splash = document.getElementById('splash');
     if (!splash) return;
 
-    // Очищаем splash и настраиваем фон
+    // Очищаем и задаём фон
     splash.innerHTML = '';
     splash.style.cssText = `
         position: fixed; inset: 0; z-index: 9999;
-        background: linear-gradient(180deg, #0b3d5e, #1a6b8a);
-        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        background: #0b1e2f;
+        display: flex; align-items: center; justify-content: center;
         overflow: hidden;
-        transition: opacity 1s ease, visibility 1s ease;
+        transition: opacity 1.2s ease, visibility 1.2s ease;
+        opacity: 1; visibility: visible;
     `;
 
-    // Создаём canvas
+    // Canvas
     const canvas = document.createElement('canvas');
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
@@ -5457,36 +5286,37 @@ console.log('📤 Модальное окно пересылки установ�
     splash.appendChild(canvas);
 
     const ctx = canvas.getContext('2d');
+    let w = canvas.width, h = canvas.height;
 
-    // Параметры волн
+    // Параметры волн (плавные, как рябь на воде)
     const waves = [
-        { amplitude: 30, frequency: 0.02, speed: 0.8, color: 'rgba(255,255,255,0.15)', offset: 0 },
-        { amplitude: 20, frequency: 0.025, speed: 1.2, color: 'rgba(255,255,255,0.20)', offset: 50 },
-        { amplitude: 15, frequency: 0.03, speed: 1.6, color: 'rgba(255,255,255,0.25)', offset: 100 }
+        { amp: 12, freq: 0.018, speed: 0.6, phase: 0, color: 'rgba(255,255,255,0.06)' },
+        { amp: 18, freq: 0.022, speed: 0.9, phase: 1.2, color: 'rgba(255,255,255,0.10)' },
+        { amp: 8,  freq: 0.030, speed: 1.4, phase: 2.8, color: 'rgba(255,255,255,0.15)' }
     ];
 
     let time = 0;
-    let textY = canvas.height * 0.7; // начальная позиция (снизу)
+    let textY = h * 0.75;           // начальная позиция – ниже центра
+    const targetY = h * 0.42;        // финальная позиция
 
-    // Рисуем кадр
     function draw() {
-        const w = canvas.width;
-        const h = canvas.height;
+        w = canvas.width;
+        h = canvas.height;
 
-        // Заливка фона
-        const gradient = ctx.createLinearGradient(0, 0, 0, h);
-        gradient.addColorStop(0, '#0b3d5e');
-        gradient.addColorStop(0.6, '#1a6b8a');
-        gradient.addColorStop(1, '#2a8fad');
-        ctx.fillStyle = gradient;
+        // Градиент фона (глубина)
+        const grad = ctx.createLinearGradient(0, 0, 0, h);
+        grad.addColorStop(0, '#0b1e2f');
+        grad.addColorStop(0.5, '#1a4a6e');
+        grad.addColorStop(1, '#2c7a9e');
+        ctx.fillStyle = grad;
         ctx.fillRect(0, 0, w, h);
 
-        // Рисуем волны
+        // Рисуем волны (верхняя часть – светлая, нижняя – прозрачная)
         for (let wv of waves) {
             ctx.beginPath();
             ctx.moveTo(0, h);
             for (let x = 0; x <= w; x += 2) {
-                const y = h * 0.5 + wv.amplitude * Math.sin(wv.frequency * x + time * wv.speed + wv.offset);
+                const y = h * 0.5 + wv.amp * Math.sin(wv.freq * x + time * wv.speed + wv.phase);
                 ctx.lineTo(x, y);
             }
             ctx.lineTo(w, h);
@@ -5495,66 +5325,1361 @@ console.log('📤 Модальное окно пересылки установ�
             ctx.fill();
         }
 
-        // Текст "NexLink" (поднимается)
+        // ----- ТЕКСТ С ОТРАЖЕНИЕМ -----
         const text = 'NexLink';
-        const fontSize = Math.min(w * 0.12, 72);
-        ctx.font = `bold ${fontSize}px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif`;
+        const fontSize = Math.min(w * 0.13, 80);
+        ctx.font = `700 ${fontSize}px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
 
-        // Тень для объёма
-        ctx.shadowColor = 'rgba(0,0,0,0.3)';
-        ctx.shadowBlur = 20;
-        ctx.shadowOffsetX = 0;
-        ctx.shadowOffsetY = 4;
+        // Поднимаем текст плавно (с замедлением)
+        textY += (targetY - textY) * 0.025;
 
-        // Градиент для текста
-        const gradText = ctx.createLinearGradient(w/2 - 100, textY - 50, w/2 + 100, textY + 50);
-        gradText.addColorStop(0, '#ffffff');
-        gradText.addColorStop(0.5, '#f0f8ff');
-        gradText.addColorStop(1, '#cce7ff');
-        ctx.fillStyle = gradText;
+        // ---- ОТРАЖЕНИЕ (перевёрнутое, полупрозрачное) ----
+        ctx.save();
+        ctx.globalAlpha = 0.25;
+        ctx.translate(w/2, textY + fontSize * 1.1);
+        ctx.scale(1, -1);
+        ctx.fillStyle = '#ffffff';
+        ctx.shadowColor = 'rgba(0,0,0,0)';
+        ctx.shadowBlur = 0;
+        ctx.fillText(text, 0, 0);
+        ctx.restore();
 
-        // Плавное поднятие текста
-        const targetY = h * 0.4;
-        textY += (targetY - textY) * 0.02;
+        // ---- ОСНОВНОЙ ТЕКСТ (белый с лёгким свечением) ----
+        ctx.shadowColor = 'rgba(100,200,255,0.4)';
+        ctx.shadowBlur = 25;
+        ctx.fillStyle = '#ffffff';
         ctx.fillText(text, w/2, textY);
 
-        // Подзаголовок
+        // ---- ПОДЗАГОЛОВОК (появляется после подъёма) ----
         const sub = 'Мессенджер нового поколения';
-        const subSize = Math.min(w * 0.035, 18);
-        ctx.font = `${subSize}px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif`;
-        ctx.fillStyle = 'rgba(255,255,255,0.7)';
-        ctx.shadowBlur = 5;
-        ctx.shadowColor = 'rgba(0,0,0,0.2)';
-        ctx.fillText(sub, w/2, textY + fontSize * 0.7 + 10);
+        const subSize = Math.min(w * 0.032, 18);
+        ctx.font = `400 ${subSize}px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif`;
+        ctx.fillStyle = `rgba(255,255,255,${Math.min(1, (textY - targetY) / 40 + 0.2)})`;
+        ctx.shadowBlur = 8;
+        ctx.shadowColor = 'rgba(0,0,0,0.3)';
+        ctx.fillText(sub, w/2, textY + fontSize * 0.8 + 8);
 
-        // Сбрасываем тень
+        // ---- ЧАСТИЦЫ (пузырьки) ----
         ctx.shadowBlur = 0;
+        for (let i = 0; i < 30; i++) {
+            const x = (Math.sin(i * 2.3 + time * 0.2) * 0.5 + 0.5) * w;
+            const y = (Math.cos(i * 1.7 + time * 0.15) * 0.5 + 0.5) * h * 0.6 + h * 0.2;
+            const r = 1.5 + Math.sin(i + time) * 0.8;
+            ctx.beginPath();
+            ctx.arc(x, y, r, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(255,255,255,${0.08 + 0.06 * Math.sin(i + time)})`;
+            ctx.fill();
+        }
 
-        time += 0.016; // ~60 fps
+        time += 0.016;
         requestAnimationFrame(draw);
     }
 
     draw();
 
-    // Обновляем размер canvas при изменении окна
+    // Ресайз
     window.addEventListener('resize', () => {
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
     });
 
-    // Следим за добавлением класса .gone (скрытие заставки)
+    // Скрытие при появлении класса .gone
     const observer = new MutationObserver(() => {
         if (splash.classList.contains('gone')) {
             splash.style.opacity = '0';
             splash.style.visibility = 'hidden';
-            setTimeout(() => {
-                splash.style.display = 'none';
-            }, 1000);
+            setTimeout(() => splash.style.display = 'none', 1200);
         }
     });
     observer.observe(splash, { attributes: true, attributeFilter: ['class'] });
+})();
+// ============================================================
+//  🥂  СТЕКЛЯННАЯ ЗАСТАВКА С ПРОГРЕСС-БАРОМ
+// ============================================================
+(function() {
+    const splash = document.getElementById('splash');
+    if (!splash) return;
+
+    // Очищаем и настраиваем фон
+    splash.innerHTML = '';
+    splash.style.cssText = `
+        position: fixed; inset: 0; z-index: 9999;
+        background: linear-gradient(135deg, #0b1a2e 0%, #1b3a5c 40%, #2d5f7e 100%);
+        display: flex; align-items: center; justify-content: center;
+        overflow: hidden;
+        transition: opacity 1.2s ease, visibility 1.2s ease;
+        opacity: 1; visibility: visible;
+    `;
+
+    // Создаём стеклянный блок
+    const glass = document.createElement('div');
+    glass.style.cssText = `
+        background: rgba(255, 255, 255, 0.06);
+        backdrop-filter: blur(24px) saturate(180%);
+        -webkit-backdrop-filter: blur(24px) saturate(180%);
+        border-radius: 48px;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        box-shadow: 0 30px 80px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        padding: 50px 60px 40px;
+        max-width: 500px;
+        width: 90%;
+        text-align: center;
+        transform: translateY(0);
+        animation: glassFloat 6s ease-in-out infinite;
+    `;
+
+    // Внутреннее содержимое
+    glass.innerHTML = `
+        <div style="
+            font-size: 72px;
+            font-weight: 800;
+            color: #fff;
+            letter-spacing: -2px;
+            text-shadow: 0 4px 30px rgba(0,0,0,0.3);
+            transform: translateY(60px);
+            opacity: 0;
+            animation: textRise 1.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+            animation-delay: 0.3s;
+        ">NexLink</div>
+
+        <div style="
+            font-size: 18px;
+            font-weight: 400;
+            color: rgba(255, 255, 255, 0.7);
+            margin-top: 12px;
+            letter-spacing: 0.5px;
+            transform: translateY(40px);
+            opacity: 0;
+            animation: textRise 1.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+            animation-delay: 0.6s;
+        ">Мессенджер нового поколения</div>
+
+        <div style="margin-top: 40px;">
+            <div style="
+                width: 100%;
+                height: 4px;
+                background: rgba(255,255,255,0.15);
+                border-radius: 4px;
+                overflow: hidden;
+                position: relative;
+            ">
+                <div id="progress-fill" style="
+                    width: 0%;
+                    height: 100%;
+                    background: linear-gradient(90deg, #6dd5fa, #ffffff);
+                    border-radius: 4px;
+                    transition: width 0.3s ease;
+                "></div>
+            </div>
+            <div style="
+                margin-top: 12px;
+                font-size: 14px;
+                color: rgba(255,255,255,0.6);
+                font-weight: 500;
+                letter-spacing: 0.5px;
+            ">
+                Загрузка <span id="progress-percent">0</span>%
+            </div>
+        </div>
+    `;
+
+    splash.appendChild(glass);
+
+    // Добавляем CSS-анимации через style
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes textRise {
+            0% { transform: translateY(60px); opacity: 0; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+        @keyframes glassFloat {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-12px); }
+        }
+    `;
+    document.head.appendChild(style);
+
+    // --- Логика прогресс-бара ---
+    let progress = 0;
+    const fill = document.getElementById('progress-fill');
+    const percentSpan = document.getElementById('progress-percent');
+    const duration = 2500; // 2.5 секунды до 100%
+    const interval = 30; // обновление каждые 30ms
+    const step = 100 / (duration / interval);
+
+    const timer = setInterval(() => {
+        progress = Math.min(progress + step, 100);
+        fill.style.width = progress + '%';
+        percentSpan.textContent = Math.round(progress);
+        if (progress >= 100) {
+            clearInterval(timer);
+            // Можно добавить дополнительное действие, но заставка скроется по готовности приложения
+        }
+    }, interval);
+
+    // Скрытие при появлении класса .gone
+    const observer = new MutationObserver(() => {
+        if (splash.classList.contains('gone')) {
+            splash.style.opacity = '0';
+            splash.style.visibility = 'hidden';
+            setTimeout(() => splash.style.display = 'none', 1300);
+            clearInterval(timer); // останавливаем, если не завершился
+        }
+    });
+    observer.observe(splash, { attributes: true, attributeFilter: ['class'] });
+})();
+// ============================================================
+//  ✨  ДОПОЛНИТЕЛЬНЫЕ JS-УЛУЧШЕНИЯ
+// ============================================================
+(function() {
+    // Анимация появления новых сообщений
+    const wrap = document.getElementById('messages-wrap');
+    if (wrap) {
+        const observer = new MutationObserver(() => {
+            document.querySelectorAll('.msg-row:not(.animated)').forEach(el => {
+                el.classList.add('animated');
+                el.style.animation = 'msgSlide 0.3s ease-out';
+            });
+        });
+        observer.observe(wrap, { childList: true, subtree: true });
+    }
+
+    // Эффект нажатия на кнопки
+    document.querySelectorAll('.send-btn, .sf-btn, .ha-btn, .hdr-btn, .modal-btn').forEach(btn => {
+        btn.addEventListener('mousedown', function() {
+            this.style.transform = 'scale(0.94)';
+        });
+        btn.addEventListener('mouseup', function() {
+            this.style.transform = '';
+        });
+        btn.addEventListener('mouseleave', function() {
+            this.style.transform = '';
+        });
+    });
+
+    // Улучшенный скролл в чате (автопрокрутка только при новых сообщениях)
+    let userScrolled = false;
+    if (wrap) {
+        wrap.addEventListener('scroll', () => {
+            const isAtBottom = wrap.scrollHeight - wrap.scrollTop - wrap.clientHeight < 20;
+            userScrolled = !isAtBottom;
+        });
+        // Переопределяем scrollToBottom, чтобы учитывать флаг
+        const origScroll = window.scrollToBottom;
+        window.scrollToBottom = function() {
+            if (!userScrolled && wrap) {
+                wrap.scrollTop = wrap.scrollHeight;
+            }
+        };
+    }
+})();
+// ============================================================
+//  👑  СИСТЕМА РОЛЕЙ В ГРУППАХ (АДМИНЫ, МОДЕРАТОРЫ, БАН)
+// ============================================================
+(function() {
+    // ---- Проверка прав ----
+    function getGroupRole(roomData, uid) {
+        if (!roomData || !uid) return null;
+        if (roomData.banned?.includes(uid)) return 'banned';
+        if (roomData.admins?.includes(uid)) return 'admin';
+        if (roomData.moderators?.includes(uid)) return 'moderator';
+        if (roomData.members?.includes(uid)) return 'member';
+        return null;
+    }
+
+    window.getGroupRole = getGroupRole;
+
+    function canBan(roomData, uid) {
+        const role = getGroupRole(roomData, uid);
+        return role === 'admin' || role === 'moderator';
+    }
+
+    function canPromote(roomData, uid) {
+        return getGroupRole(roomData, uid) === 'admin';
+    }
+
+    // ---- Перехват открытия комнаты ----
+    const origOpenChat = window.openChat;
+    if (origOpenChat) {
+        window.openChat = function(chat) {
+            // Если это группа - проверяем не забанен ли пользователь
+            if (chat.type === 'group' && chat.roomData) {
+                const role = getGroupRole(chat.roomData, me?.uid);
+                if (role === 'banned') {
+                    alert('⛔ Вы забанены в этой группе');
+                    return;
+                }
+            }
+            origOpenChat(chat);
+        };
+    }
+
+    // ---- Модалка с информацией о группе (переопределяем) ----
+    const origRoomInfo = document.getElementById('room-info-btn')?.onclick;
+    document.getElementById('room-info-btn')?.addEventListener('click', async function() {
+        const roomData = activeChat?.roomData;
+        if (!roomData || activeChat?.type !== 'group') {
+            // Если это канал или другое - используем старую логику
+            if (origRoomInfo) origRoomInfo.call(this);
+            return;
+        }
+
+        const myRole = getGroupRole(roomData, me?.uid);
+        if (!myRole || myRole === 'banned') {
+            alert('У вас нет доступа');
+            return;
+        }
+
+        // Создаём модалку
+        const modal = document.getElementById('modal-room-info');
+        const body = modal.querySelector('.modal-body');
+        const title = document.getElementById('room-info-title');
+        title.textContent = `👥 ${roomData.name}`;
+
+        // Собираем всех участников
+        let membersHtml = '';
+        const allMembers = [...(roomData.members || [])];
+        const isAdmin = myRole === 'admin';
+
+        for (const uid of allMembers) {
+            const user = usersCache.get(uid);
+            const role = getGroupRole(roomData, uid);
+            const roleLabel = role === 'admin' ? '👑 Админ' :
+                              role === 'moderator' ? '🛡️ Модератор' :
+                              role === 'banned' ? '🚫 Забанен' : '👤 Участник';
+            const isMe = uid === me?.uid;
+
+            membersHtml += `
+                <div class="group-member" data-uid="${uid}" style="
+                    display: flex; align-items: center; gap: 10px;
+                    padding: 6px 10px; border-radius: 10px;
+                    background: ${isMe ? 'var(--accent-light)' : 'transparent'};
+                    margin-bottom: 3px;
+                ">
+                    <div style="width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;background:var(--bg-secondary);overflow:hidden;flex-shrink:0;">
+                        ${avatarHtml(user?.avatar)}
+                    </div>
+                    <div style="flex:1;min-width:0;">
+                        <div style="font-weight:600;font-size:14px;">
+                            ${esc(getDisplayName(uid))} ${isMe ? '(Вы)' : ''}
+                        </div>
+                        <div style="font-size:12px;color:var(--text-secondary);">${roleLabel}</div>
+                    </div>
+                    ${isAdmin && !isMe && role !== 'admin' ? `
+                        <div style="display:flex;gap:4px;flex-wrap:wrap;">
+                            ${role === 'moderator' ? `
+                                <button class="group-action promote-admin" data-uid="${uid}" style="padding:2px 8px;border-radius:4px;background:#3498db;color:white;border:none;font-size:10px;cursor:pointer;">👑 Админ</button>
+                            ` : ''}
+                            ${role === 'member' ? `
+                                <button class="group-action promote-moderator" data-uid="${uid}" style="padding:2px 8px;border-radius:4px;background:#2ecc71;color:white;border:none;font-size:10px;cursor:pointer;">🛡️ Модератор</button>
+                            ` : ''}
+                            ${role !== 'banned' ? `
+                                <button class="group-action ban-user" data-uid="${uid}" style="padding:2px 8px;border-radius:4px;background:#e74c3c;color:white;border:none;font-size:10px;cursor:pointer;">🚫 Бан</button>
+                            ` : `
+                                <button class="group-action unban-user" data-uid="${uid}" style="padding:2px 8px;border-radius:4px;background:#2ecc71;color:white;border:none;font-size:10px;cursor:pointer;">✅ Разбан</button>
+                            `}
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }
+
+        body.innerHTML = `
+            <div style="max-height:300px;overflow-y:auto;margin-bottom:10px;">
+                ${membersHtml}
+            </div>
+            ${isAdmin ? `
+                <div style="display:flex;gap:8px;flex-wrap:wrap;border-top:1px solid var(--border);padding-top:10px;">
+                    <button class="modal-btn" id="group-add-member" style="flex:1;padding:8px;font-size:13px;background:var(--accent);">➕ Добавить</button>
+                    <button class="modal-btn danger" id="group-delete" style="flex:1;padding:8px;font-size:13px;background:var(--red);">🗑️ Удалить группу</button>
+                </div>
+            ` : `
+                <button class="modal-btn danger" id="group-leave" style="width:100%;padding:8px;font-size:13px;background:var(--red);">🚪 Покинуть группу</button>
+            `}
+            <div id="group-action-msg" style="margin-top:6px;font-size:13px;"></div>
+        `;
+
+        // ---- Обработчики кнопок ----
+        // Добавить участника
+        const addBtn = document.getElementById('group-add-member');
+        if (addBtn) {
+            addBtn.onclick = async () => {
+                const uid = prompt('Введите UID пользователя:');
+                if (!uid?.trim()) return;
+                const msg = document.getElementById('group-action-msg');
+                try {
+                    await updateDoc(doc(db, 'rooms', roomData.id), {
+                        members: arrayUnion(uid.trim())
+                    });
+                    msg.textContent = '✅ Пользователь добавлен';
+                    msg.style.color = 'var(--green)';
+                    setTimeout(() => openGroupInfo(roomData.id), 500);
+                } catch(e) {
+                    msg.textContent = '❌ Ошибка: ' + e.message;
+                    msg.style.color = 'var(--red)';
+                }
+            };
+        }
+
+        // Удалить группу
+        const deleteBtn = document.getElementById('group-delete');
+        if (deleteBtn) {
+            deleteBtn.onclick = async () => {
+                if (!confirm(`Удалить группу "${roomData.name}"? Это действие необратимо.`)) return;
+                try {
+                    await deleteDoc(doc(db, 'rooms', roomData.id));
+                    closeModal('modal-room-info');
+                    activeChat = null;
+                    document.getElementById('chat-area').classList.add('hidden');
+                    document.getElementById('empty-state').classList.remove('hidden');
+                    await refreshRoomsCache();
+                    await buildChatList();
+                } catch(e) {
+                    alert('Ошибка: ' + e.message);
+                }
+            };
+        }
+
+        // Покинуть группу
+        const leaveBtn = document.getElementById('group-leave');
+        if (leaveBtn) {
+            leaveBtn.onclick = async () => {
+                if (!confirm(`Покинуть группу "${roomData.name}"?`)) return;
+                try {
+                    await updateDoc(doc(db, 'rooms', roomData.id), {
+                        members: arrayRemove(me.uid),
+                        admins: arrayRemove(me.uid),
+                        moderators: arrayRemove(me.uid)
+                    });
+                    closeModal('modal-room-info');
+                    activeChat = null;
+                    document.getElementById('chat-area').classList.add('hidden');
+                    document.getElementById('empty-state').classList.remove('hidden');
+                    await refreshRoomsCache();
+                    await buildChatList();
+                } catch(e) {
+                    alert('Ошибка: ' + e.message);
+                }
+            };
+        }
+
+        // ---- Действия с участниками (делегирование) ----
+        body.querySelectorAll('.group-action').forEach(btn => {
+            btn.onclick = async function(e) {
+                e.stopPropagation();
+                const action = this.classList.contains('promote-admin') ? 'promote-admin' :
+                              this.classList.contains('promote-moderator') ? 'promote-moderator' :
+                              this.classList.contains('ban-user') ? 'ban' :
+                              this.classList.contains('unban-user') ? 'unban' : null;
+                const targetUid = this.dataset.uid;
+                const msg = document.getElementById('group-action-msg');
+
+                if (!action || !targetUid) return;
+
+                try {
+                    switch(action) {
+                        case 'promote-admin':
+                            await updateDoc(doc(db, 'rooms', roomData.id), {
+                                admins: arrayUnion(targetUid),
+                                moderators: arrayRemove(targetUid)
+                            });
+                            msg.textContent = '✅ Назначен администратором';
+                            break;
+                        case 'promote-moderator':
+                            await updateDoc(doc(db, 'rooms', roomData.id), {
+                                moderators: arrayUnion(targetUid)
+                            });
+                            msg.textContent = '✅ Назначен модератором';
+                            break;
+                        case 'ban':
+                            if (!confirm(`Забанить ${getDisplayName(targetUid)}?`)) return;
+                            await updateDoc(doc(db, 'rooms', roomData.id), {
+                                banned: arrayUnion(targetUid),
+                                members: arrayRemove(targetUid),
+                                admins: arrayRemove(targetUid),
+                                moderators: arrayRemove(targetUid)
+                            });
+                            msg.textContent = '✅ Пользователь забанен';
+                            break;
+                        case 'unban':
+                            await updateDoc(doc(db, 'rooms', roomData.id), {
+                                banned: arrayRemove(targetUid),
+                                members: arrayUnion(targetUid)
+                            });
+                            msg.textContent = '✅ Пользователь разбанен';
+                            break;
+                    }
+                    msg.style.color = 'var(--green)';
+                    setTimeout(() => {
+                        openGroupInfo(roomData.id);
+                    }, 500);
+                } catch(e) {
+                    msg.textContent = '❌ Ошибка: ' + e.message;
+                    msg.style.color = 'var(--red)';
+                }
+            };
+        });
+
+        openModal('modal-room-info');
+    });
+
+    // ---- Перехват отправки сообщений в группе (проверка бана) ----
+    const origSendMessage = window.sendMessage;
+    if (origSendMessage) {
+        window.sendMessage = async function() {
+            if (activeChat?.type === 'group' && activeChat?.roomData) {
+                const role = getGroupRole(activeChat.roomData, me?.uid);
+                if (role === 'banned') {
+                    alert('⛔ Вы забанены в этой группе');
+                    return;
+                }
+            }
+            return origSendMessage.call(this);
+        };
+    }
+
+    // ---- Добавляем кнопку "Информация о группе" в шапку чата ----
+    const roomInfoBtn = document.getElementById('room-info-btn');
+    if (roomInfoBtn) {
+        roomInfoBtn.style.display = '';
+        roomInfoBtn.title = 'Информация о группе';
+    }
+
+    // ---- Обновляем создание групп (добавляем поля) ----
+    const origCreateGroup = document.getElementById('create-grp-btn')?.onclick;
+    if (origCreateGroup) {
+        document.getElementById('create-grp-btn').onclick = async function() {
+            const name = document.getElementById('grp-name').value.trim();
+            const un = document.getElementById('grp-uname').value.trim();
+            if (!name || !un) return alert('Заполните все поля');
+            if (!un.startsWith('@')) return alert('Юзернейм должен начинаться с @');
+
+            try {
+                const existing = await getDocs(query(collection(db, 'rooms'), where('username', '==', un)));
+                if (!existing.empty) return alert('Юзернейм занят');
+
+                const r = await addDoc(collection(db, 'rooms'), {
+                    name,
+                    type: 'group',
+                    username: un,
+                    avatar: grpAvatar || '👥',
+                    members: [me.uid],
+                    admins: [me.uid],
+                    moderators: [],
+                    banned: [],
+                    createdBy: me.uid,
+                    createdAt: serverTimestamp()
+                });
+
+                closeModal('modal-create-group');
+                await refreshRoomsCache();
+                await buildChatList();
+                const rd = roomsCache.get(r.id);
+                openChat({ id: r.id, name, avatar: grpAvatar || '👥', type: 'group', roomData: rd });
+            } catch(e) {
+                alert('Ошибка: ' + e.message);
+            }
+        };
+    }
+
+    console.log('✅ Система ролей в группах (админы, модераторы, бан) добавлена');
+})();
+// ============================================================
+//  🔐  E2EE ШИФРОВАНИЕ + СЕКРЕТНЫЕ ЧАТЫ (исправленная версия)
+// ============================================================
+(function() {
+    // ---- 1. КРИПТОГРАФИЯ (Web Crypto API) ----
+    const CRYPTO_ALGO = { name: 'ECDH', namedCurve: 'P-256' };
+    const AES_ALGO = { name: 'AES-GCM', length: 256 };
+
+    function arrayBufferToBase64(buffer) {
+        const bytes = new Uint8Array(buffer);
+        let binary = '';
+        for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+        return btoa(binary);
+    }
+    function base64ToArrayBuffer(base64) {
+        const binary = atob(base64);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+        return bytes.buffer;
+    }
+
+    async function generateCryptoKeys() {
+        const keyPair = await crypto.subtle.generateKey(CRYPTO_ALGO, true, ['deriveKey', 'deriveBits']);
+        const publicKeyRaw = await crypto.subtle.exportKey('raw', keyPair.publicKey);
+        const privateKeyRaw = await crypto.subtle.exportKey('pkcs8', keyPair.privateKey);
+        return { publicKey: arrayBufferToBase64(publicKeyRaw), privateKey: arrayBufferToBase64(privateKeyRaw) };
+    }
+
+    async function importPublicKey(base64) {
+        return crypto.subtle.importKey('raw', base64ToArrayBuffer(base64), CRYPTO_ALGO, true, []);
+    }
+    async function importPrivateKey(base64) {
+        return crypto.subtle.importKey('pkcs8', base64ToArrayBuffer(base64), CRYPTO_ALGO, true, ['deriveKey', 'deriveBits']);
+    }
+
+    async function deriveSharedSecret(myPrivateKeyBase64, peerPublicKeyBase64) {
+        const privateKey = await importPrivateKey(myPrivateKeyBase64);
+        const publicKey = await importPublicKey(peerPublicKeyBase64);
+        const sharedSecret = await crypto.subtle.deriveKey(
+            { name: 'ECDH', public: publicKey },
+            privateKey,
+            { name: 'AES-GCM', length: 256 },
+            true,
+            ['encrypt', 'decrypt']
+        );
+        return crypto.subtle.exportKey('raw', sharedSecret);
+    }
+
+    async function deriveAESKey(sharedSecretBuffer, saltBuffer) {
+        const baseKey = await crypto.subtle.importKey('raw', sharedSecretBuffer, 'HKDF', false, ['deriveKey']);
+        return crypto.subtle.deriveKey(
+            { name: 'HKDF', hash: 'SHA-256', salt: saltBuffer, info: new TextEncoder().encode('NexLink-E2EE') },
+            baseKey,
+            AES_ALGO,
+            false,
+            ['encrypt', 'decrypt']
+        );
+    }
+
+    async function encryptMessage(message, myPrivateKeyBase64, peerPublicKeyBase64) {
+        const sharedSecretRaw = await deriveSharedSecret(myPrivateKeyBase64, peerPublicKeyBase64);
+        const salt = crypto.getRandomValues(new Uint8Array(16));
+        const iv = crypto.getRandomValues(new Uint8Array(12));
+        const aesKey = await deriveAESKey(sharedSecretRaw, salt);
+        const encoded = new TextEncoder().encode(message);
+        const ciphertext = await crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv }, aesKey, encoded);
+        return { ciphertext: arrayBufferToBase64(ciphertext), salt: arrayBufferToBase64(salt), iv: arrayBufferToBase64(iv) };
+    }
+
+    async function decryptMessage(encryptedData, myPrivateKeyBase64, senderPublicKeyBase64) {
+        const { ciphertext, salt, iv } = encryptedData;
+        const sharedSecretRaw = await deriveSharedSecret(myPrivateKeyBase64, senderPublicKeyBase64);
+        const aesKey = await deriveAESKey(sharedSecretRaw, base64ToArrayBuffer(salt));
+        const decrypted = await crypto.subtle.decrypt(
+            { name: 'AES-GCM', iv: base64ToArrayBuffer(iv) },
+            aesKey,
+            base64ToArrayBuffer(ciphertext)
+        );
+        return new TextDecoder().decode(decrypted);
+    }
+
+    // ---- 2. ИНИЦИАЛИЗАЦИЯ КЛЮЧЕЙ ДЛЯ ПОЛЬЗОВАТЕЛЯ ----
+    async function initUserKeys(uid) {
+        const userDoc = await getDoc(doc(db, 'users', uid));
+        const userData = userDoc.exists() ? userDoc.data() : {};
+        if (!userData.publicKey) {
+            const keys = await generateCryptoKeys();
+            await updateDoc(doc(db, 'users', uid), { publicKey: keys.publicKey });
+            localStorage.setItem(`nx_private_${uid}`, keys.privateKey);
+            console.log('✅ Сгенерированы ключи шифрования');
+            return keys;
+        }
+        let privateKey = localStorage.getItem(`nx_private_${uid}`);
+        if (!privateKey) {
+            const keys = await generateCryptoKeys();
+            await updateDoc(doc(db, 'users', uid), { publicKey: keys.publicKey });
+            localStorage.setItem(`nx_private_${uid}`, keys.privateKey);
+            console.log('⚠️ Приватный ключ отсутствовал, сгенерированы новые');
+            return keys;
+        }
+        return { publicKey: userData.publicKey, privateKey };
+    }
+
+    // ---- 3. ПЕРЕХВАТ ОТПРАВКИ СООБЩЕНИЙ (шифрование для private и secret) ----
+    const origSendMessage = window.sendMessage || sendMessage;
+    window.sendMessage = async function() {
+        const text = document.getElementById('msg-input').value.trim();
+        if (!text || !me || !activeChat) return;
+        const chatId = await getActiveChatId();
+        if (!chatId) return;
+
+        let finalText = text;
+        const isEncryptedChat = (activeChat.type === 'private' || activeChat.type === 'secret');
+
+        if (isEncryptedChat) {
+            const peerUid = activeChat.id;
+            const peerProfile = await getDoc(doc(db, 'users', peerUid));
+            const peerData = peerProfile.exists() ? peerProfile.data() : {};
+            if (!peerData.publicKey) {
+                alert('🔐 У собеседника нет ключа шифрования. Сообщение будет отправлено открытым текстом.');
+            } else {
+                const myPrivateKey = localStorage.getItem(`nx_private_${me.uid}`);
+                if (!myPrivateKey) {
+                    alert('🔐 Ваш приватный ключ не найден.');
+                    return;
+                }
+                try {
+                    const encrypted = await encryptMessage(text, myPrivateKey, peerData.publicKey);
+                    finalText = JSON.stringify(encrypted);
+                } catch(e) {
+                    alert('Ошибка шифрования: ' + e.message);
+                    return;
+                }
+            }
+        }
+
+        const msgData = {
+            chatId,
+            text: finalText,
+            timestamp: serverTimestamp(),
+            senderUid: me.uid,
+            isSticker: false,
+            isVoice: false,
+            isEncrypted: isEncryptedChat
+        };
+
+        // ---- Секретный чат: добавляем TTL ----
+        if (activeChat.type === 'secret') {
+            const secretData = activeChat.secretData || {};
+            const ttl = secretData.ttl || 30; // по умолчанию 30 секунд
+            msgData.expiresAt = new Date(Date.now() + ttl * 1000); // время удаления
+        }
+
+        if (replyToMsg) {
+            msgData.replyToId = replyToMsg.id;
+            msgData.replyToText = replyToMsg.text;
+            msgData.replyToSender = replyToMsg.senderUid;
+            replyToMsg = null;
+            document.getElementById('reply-bar').classList.remove('show');
+        }
+
+        document.getElementById('msg-input').value = '';
+        autoResizeInput();
+        await addDoc(collection(db, 'messages'), msgData);
+        clearTyping();
+    };
+
+    // ---- 4. РАСШИФРОВКА ПРИ ОТОБРАЖЕНИИ ----
+    const origRenderMessages = window.renderMessages || renderMessages;
+    window.renderMessages = function() {
+        if (typeof origRenderMessages === 'function') {
+            origRenderMessages.call(this);
+        }
+        // После рендера расшифровываем
+        decryptMessagesInDOM();
+        // Удаляем истекшие сообщения в секретных чатах
+        removeExpiredMessages();
+    };
+
+    async function decryptMessagesInDOM() {
+        const wrap = document.getElementById('messages-wrap');
+        if (!wrap) return;
+        const encryptedBubbles = wrap.querySelectorAll('.bubble-text[data-encrypted="true"]');
+        for (const el of encryptedBubbles) {
+            if (el.dataset.decrypted === 'true') continue;
+            const bubble = el.closest('.bubble');
+            const msgId = bubble?.dataset.msgId;
+            if (!msgId) continue;
+            const msg = allMessages.find(m => m.id === msgId);
+            if (!msg || !msg.isEncrypted || msg.isDeleted) continue;
+            try {
+                const encryptedData = JSON.parse(msg.text);
+                const senderUid = msg.senderUid;
+                const senderProfile = await getDoc(doc(db, 'users', senderUid));
+                const senderData = senderProfile.exists() ? senderProfile.data() : {};
+                if (!senderData.publicKey) {
+                    el.textContent = '🔒 Нет ключа отправителя';
+                    el.dataset.decrypted = 'true';
+                    continue;
+                }
+                const myPrivateKey = localStorage.getItem(`nx_private_${me.uid}`);
+                if (!myPrivateKey) {
+                    el.textContent = '🔒 Нет приватного ключа';
+                    el.dataset.decrypted = 'true';
+                    continue;
+                }
+                const decrypted = await decryptMessage(encryptedData, myPrivateKey, senderData.publicKey);
+                el.textContent = decrypted;
+                el.dataset.decrypted = 'true';
+                // если это стикер или голосовое - обрабатываем
+                if (decrypted.startsWith('[sticker]')) {
+                    el.innerHTML = `<img src="${esc(decrypted.slice(9))}" class="sticker-img" loading="lazy">`;
+                } else if (decrypted.startsWith('[voice]')) {
+                    el.innerHTML = `<div class="voice-player"><span>🎙️</span><audio controls src="${esc(decrypted.slice(7))}" style="flex:1;height:30px;"></audio></div>`;
+                }
+            } catch(e) {
+                el.textContent = '🔒 Ошибка расшифровки';
+                el.dataset.decrypted = 'true';
+                console.warn('Decryption error:', e);
+            }
+        }
+    }
+
+    // ---- 5. УДАЛЕНИЕ ИСТЕКШИХ СООБЩЕНИЙ В СЕКРЕТНЫХ ЧАТАХ ----
+    async function removeExpiredMessages() {
+        const now = new Date();
+        const expired = allMessages.filter(m => m.expiresAt && new Date(m.expiresAt) < now && !m.isDeleted);
+        for (const msg of expired) {
+            try {
+                await updateDoc(doc(db, 'messages', msg.id), { isDeleted: true, text: 'Сообщение удалено' });
+            } catch(e) {
+                console.warn('Не удалось удалить сообщение:', e);
+            }
+        }
+        if (expired.length > 0) {
+            // Обновляем локальный массив и перерисовываем
+            allMessages = allMessages.filter(m => !m.isDeleted || !m.expiresAt);
+            renderMessages();
+        }
+    }
+
+    // ---- 6. СОЗДАНИЕ СЕКРЕТНОГО ЧАТА (из профиля пользователя) ----
+    async function createSecretChat(peerUid, ttl = 30) {
+        if (!me) return;
+        // Проверяем, есть ли уже секретный чат с этим пользователем
+        const existing = chatList.find(c => c.type === 'secret' && c.id === peerUid);
+        if (existing) {
+            openChat(existing);
+            return;
+        }
+        // Создаём запись в комнатах (или просто используем чат-ид)
+        const chatId = `secret_${[me.uid, peerUid].sort().join('_')}`;
+        // Сохраняем информацию о секретном чате в Firestore (в отдельной коллекции или в users)
+        await setDoc(doc(db, 'secret_chats', chatId), {
+            participants: [me.uid, peerUid],
+            ttl: ttl,
+            createdAt: serverTimestamp()
+        });
+        // Добавляем в список чатов
+        const peer = usersCache.get(peerUid);
+        const newChat = {
+            id: peerUid,
+            name: `🔐 ${peer ? getDisplayName(peerUid) : peerUid}`,
+            avatar: peer?.avatar || '🔐',
+            type: 'secret',
+            secretData: { ttl },
+            lastMsg: 'Секретный чат',
+            lastMsgTime: ''
+        };
+        chatList.push(newChat);
+        renderChatList();
+        openChat(newChat);
+    }
+
+    // ---- 7. ДОБАВЛЯЕМ КНОПКУ "СЕКРЕТНЫЙ ЧАТ" В ПРОФИЛЕ ПОЛЬЗОВАТЕЛЯ ----
+    const origOpenUserView = window.openUserView;
+    window.openUserView = function(uid) {
+        if (typeof origOpenUserView === 'function') {
+            origOpenUserView(uid);
+        }
+        // Добавляем кнопку в модалку
+        const modal = document.getElementById('modal-user-view');
+        const body = modal?.querySelector('.modal-body');
+        if (!body) return;
+        // Ищем контейнер с кнопками (может быть div с классом или просто последние кнопки)
+        let actionsDiv = body.querySelector('.profile-actions');
+        if (!actionsDiv) {
+            // Если нет profile-actions, ищем div с display:flex и кнопками
+            actionsDiv = body.querySelector('div[style*="display:flex"]');
+        }
+        if (!actionsDiv) return;
+        // Создаём кнопку
+        const secretBtn = document.createElement('button');
+        secretBtn.className = 'modal-btn';
+        secretBtn.style.cssText = 'flex:1;min-width:100px;background:#8e44ad;margin-top:6px;';
+        secretBtn.innerHTML = '🔐 Секретный чат';
+        secretBtn.onclick = () => {
+            closeModal('modal-user-view');
+            const ttl = prompt('Введите время жизни сообщений (в секундах):', '30');
+            if (ttl !== null) {
+                const ttlNum = parseInt(ttl) || 30;
+                createSecretChat(uid, ttlNum);
+            }
+        };
+        actionsDiv.appendChild(secretBtn);
+    };
+
+    // ---- 8. ИНИЦИАЛИЗАЦИЯ КЛЮЧЕЙ ПРИ ВХОДЕ (добавляем обработчик) ----
+    // Используем существующий onAuthStateChanged, не переопределяя его
+    // Просто добавляем дополнительный обработчик
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            await initUserKeys(user.uid);
+        }
+    });
+
+    // ---- 9. ПЕРИОДИЧЕСКАЯ ПРОВЕРКА ИСТЕКШИХ СООБЩЕНИЙ ----
+    setInterval(() => {
+        if (activeChat?.type === 'secret') {
+            removeExpiredMessages();
+        }
+    }, 5000);
+
+    // ---- 10. ДОБАВЛЯЕМ СТИЛИ ДЛЯ СЕКРЕТНЫХ ЧАТОВ ----
+    const style = document.createElement('style');
+    style.textContent = `
+        .chat-row.secret .cr-avatar {
+            border: 2px solid #8e44ad;
+        }
+        .chat-row.secret .cr-name::after {
+            content: ' 🔐';
+            font-size: 14px;
+        }
+        .bubble.secret {
+            border-left: 3px solid #8e44ad;
+        }
+    `;
+    document.head.appendChild(style);
+
+    // ---- 11. МОДИФИЦИРУЕМ renderChatList ДЛЯ ОТОБРАЖЕНИЯ СЕКРЕТНЫХ ЧАТОВ ----
+    const origRenderChatList = window.renderChatList;
+    if (origRenderChatList) {
+        window.renderChatList = function(filter) {
+            if (typeof origRenderChatList === 'function') {
+                origRenderChatList(filter);
+            }
+            // Добавляем класс secret для соответствующих чатов
+            document.querySelectorAll('.chat-row').forEach(row => {
+                const type = row.dataset.type;
+                if (type === 'secret') {
+                    row.classList.add('secret');
+                }
+            });
+        };
+    }
+
+    // ---- 12. ОБНОВЛЯЕМ buildChatList ДЛЯ ЗАГРУЗКИ СЕКРЕТНЫХ ЧАТОВ ----
+    const origBuildChatList = window.buildChatList;
+    if (origBuildChatList) {
+        window.buildChatList = async function() {
+            if (typeof origBuildChatList === 'function') {
+                await origBuildChatList.call(this);
+            }
+            // Загружаем секретные чаты из коллекции secret_chats
+            if (!me) return;
+            const snap = await getDocs(query(collection(db, 'secret_chats'), where('participants', 'array-contains', me.uid)));
+            snap.forEach(doc => {
+                const data = doc.data();
+                const otherUid = data.participants.find(uid => uid !== me.uid);
+                if (!otherUid) return;
+                const peer = usersCache.get(otherUid);
+                const existing = chatList.find(c => c.id === otherUid && c.type === 'secret');
+                if (!existing) {
+                    chatList.push({
+                        id: otherUid,
+                        name: `🔐 ${peer ? getDisplayName(otherUid) : otherUid}`,
+                        avatar: peer?.avatar || '🔐',
+                        type: 'secret',
+                        secretData: { ttl: data.ttl || 30 },
+                        lastMsg: 'Секретный чат',
+                        lastMsgTime: ''
+                    });
+                }
+            });
+            // Пересортировать и перерендерить
+            chatList.sort((a, b) => {
+                if (a.type === 'self') return -1;
+                if (b.type === 'self') return 1;
+                const ta = a.lastMsgTime ? new Date(`1970-01-01T${a.lastMsgTime}:00`) : 0;
+                const tb = b.lastMsgTime ? new Date(`1970-01-01T${b.lastMsgTime}:00`) : 0;
+                return tb - ta;
+            });
+            renderChatList();
+        };
+    }
+
+    // ---- 13. ПЕРЕХВАТ ОТКРЫТИЯ ЧАТА ДЛЯ СЕКРЕТНЫХ ----
+    const origOpenChat = window.openChat;
+    if (origOpenChat) {
+        window.openChat = function(chat) {
+            if (chat.type === 'secret') {
+                // Проверяем, не истекли ли сообщения
+                removeExpiredMessages();
+            }
+            if (typeof origOpenChat === 'function') {
+                origOpenChat(chat);
+            }
+        };
+    }
+
+    console.log('🔐 E2EE + Секретные чаты активированы!');
+})();
+// ============================================================
+//  🖊️  УЛУЧШЕННЫЙ ИНДИКАТОР НАБОРА ТЕКСТА + ОЧИСТКА ЧАТА
+// ============================================================
+(function() {
+    // ---- 1. УЛУЧШЕННЫЙ ИНДИКАТОР НАБОРА ТЕКСТА ----
+    // Сохраняем оригинальный обработчик typing
+    const origTypingHandler = window.typingHandler || null;
+
+    // Создаём более заметный индикатор с аватаром и анимацией
+    function enhancedTypingIndicator(typers) {
+        const hdrStatus = document.getElementById('hdr-status');
+        if (!hdrStatus) return;
+
+        if (!typers || typers.length === 0) {
+            // Восстанавливаем нормальный статус
+            hdrStatus.textContent = hdrStatus.dataset.normalText || '';
+            hdrStatus.className = 'hdr-status';
+            hdrStatus.style.color = '';
+            hdrStatus.style.fontWeight = '';
+            return;
+        }
+
+        // Берём первого печатающего
+        const firstUid = typers[0];
+        const user = usersCache.get(firstUid);
+        const name = user ? getDisplayName(firstUid).split(' ')[0] : 'Кто-то';
+        const avatar = user?.avatar || '😊';
+
+        // Сохраняем обычный текст, если ещё не сохранён
+        if (!hdrStatus.dataset.normalText) {
+            hdrStatus.dataset.normalText = hdrStatus.textContent;
+        }
+
+        // Показываем аватар + имя + анимированные точки
+        hdrStatus.innerHTML = `
+            <span style="display:inline-flex;align-items:center;gap:8px;">
+                <span style="font-size:20px;">${avatarHtml(avatar, '24px')}</span>
+                <span style="font-weight:600;color:var(--accent);">${esc(name)}</span>
+                <span class="typing-dots" style="display:inline-flex;gap:4px;align-items:center;">
+                    <span style="width:6px;height:6px;background:var(--accent);border-radius:50%;animation:typingBounce 1.4s infinite ease-in-out both;animation-delay:0s;"></span>
+                    <span style="width:6px;height:6px;background:var(--accent);border-radius:50%;animation:typingBounce 1.4s infinite ease-in-out both;animation-delay:0.2s;"></span>
+                    <span style="width:6px;height:6px;background:var(--accent);border-radius:50%;animation:typingBounce 1.4s infinite ease-in-out both;animation-delay:0.4s;"></span>
+                </span>
+            </span>
+        `;
+        hdrStatus.className = 'hdr-status online';
+        hdrStatus.style.color = 'var(--accent)';
+        hdrStatus.style.fontWeight = '500';
+    }
+
+    // Добавляем CSS-анимацию для точек
+    const styleTyping = document.createElement('style');
+    styleTyping.textContent = `
+        @keyframes typingBounce {
+            0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+            40% { transform: scale(1); opacity: 1; }
+        }
+        .typing-dots span {
+            animation: typingBounce 1.4s infinite ease-in-out both;
+        }
+        .typing-dots span:nth-child(1) { animation-delay: 0s; }
+        .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+    `;
+    document.head.appendChild(styleTyping);
+
+    // Переопределяем обработку typing через перехват onSnapshot
+    // Сохраняем оригинальный вызов, но модифицируем поведение
+    const origLoadMessages = window.loadMessages;
+    if (origLoadMessages) {
+        window.loadMessages = async function(signal) {
+            // Вызываем оригинал, но потом добавим свой обработчик
+            // Так как loadMessages уже подписывается на typing, мы можем переопределить его поведение
+            // Лучше добавить отдельный слушатель, но чтобы не было дублирования, переопределим обработку вручную
+            // Мы можем отключить старый unsubTyping и добавить свой
+            // Для простоты переопределим функцию, которая вызывается при получении typing-данных
+            // Но текущий код использует unsubTyping = onSnapshot(doc(db,'typing',...)) внутри loadMessages.
+            // Мы можем обернуть loadMessages и добавить свой обработчик после.
+            // Однако проще всего переопределить функцию, которая вызывается при обновлении typing.
+            // Мы можем перехватить момент создания подписки, но это сложно.
+            // Проще всего добавить отдельный слушатель на документ typing для активного чата и синхронизировать статус.
+            // Мы сделаем это в отдельной функции, которая будет следить за typing.
+
+            // Вызываем оригинальный loadMessages
+            await origLoadMessages.call(this, signal);
+            // После загрузки чата добавляем свой слушатель на typing, если его нет
+            // Но чтобы не дублировать, проверим, есть ли уже наш обработчик.
+            if (window._typingListener) {
+                window._typingListener();
+                window._typingListener = null;
+            }
+
+            // Создаём свой слушатель, который будет переопределять отображение
+            const chatId = await getActiveChatId();
+            if (!chatId) return;
+
+            // Отписываемся от предыдущего
+            if (window._typingUnsub) {
+                window._typingUnsub();
+                window._typingUnsub = null;
+            }
+
+            // Слушаем изменения в typing-документе
+            window._typingUnsub = onSnapshot(doc(db, 'typing', `typing_${chatId}`), (snap) => {
+                if (!snap.exists()) {
+                    enhancedTypingIndicator([]);
+                    return;
+                }
+                const data = snap.data();
+                const typers = Object.keys(data).filter(k => k !== me.uid && k !== 'updatedAt');
+                if (typers.length > 0) {
+                    enhancedTypingIndicator(typers);
+                } else {
+                    enhancedTypingIndicator([]);
+                }
+            });
+
+            // Очищаем при смене чата
+            window._typingListener = () => {
+                if (window._typingUnsub) {
+                    window._typingUnsub();
+                    window._typingUnsub = null;
+                }
+                enhancedTypingIndicator([]);
+            };
+        };
+    }
+
+    // ---- 2. ОЧИСТКА ЧАТА (удаление всех сообщений) ----
+    function clearChat(chat) {
+        if (!chat) return;
+        if (!confirm(`Очистить все сообщения в чате "${chat.name}"? Это действие необратимо.`)) return;
+
+        (async () => {
+            const chatId = await getChatId(chat);
+            if (!chatId) {
+                alert('Не удалось определить ID чата');
+                return;
+            }
+            try {
+                // Получаем все сообщения чата
+                const snap = await getDocs(query(collection(db, 'messages'), where('chatId', '==', chatId)));
+                if (snap.empty) {
+                    alert('В чате нет сообщений для удаления');
+                    return;
+                }
+                // Удаляем пакетно (batched writes)
+                const batch = writeBatch(db);
+                snap.forEach(doc => batch.delete(doc.ref));
+                await batch.commit();
+                alert('✅ Чат очищен');
+                // Обновляем отображение
+                allMessages = [];
+                renderMessages();
+                // Обновляем список чатов (чтобы убрать превью)
+                await buildChatList();
+            } catch (e) {
+                alert('Ошибка при очистке чата: ' + e.message);
+            }
+        })();
+    }
+
+    // ---- 3. ДОБАВЛЯЕМ КНОПКУ "ОЧИСТИТЬ ЧАТ" В КОНТЕКСТНОЕ МЕНЮ ЧАТА ----
+    const origShowChatContextMenu = window.showChatContextMenu;
+    if (origShowChatContextMenu) {
+        window.showChatContextMenu = function(e, chat) {
+            // Вызываем оригинал
+            origShowChatContextMenu(e, chat);
+            // Добавляем пункт "Очистить чат" в меню после открытия
+            const menu = document.getElementById('ctx-menu');
+            if (!menu) return;
+            const existing = menu.querySelector('#ctx-clear');
+            if (existing) return;
+
+            const clearItem = document.createElement('div');
+            clearItem.id = 'ctx-clear';
+            clearItem.className = 'ctx-item';
+            clearItem.innerHTML = '<span class="ctx-icon">🧹</span>Очистить чат';
+            clearItem.onclick = () => {
+                closeCtx();
+                clearChat(chat);
+            };
+            // Вставляем перед "Удалить чат" или в конец
+            const deleteItem = menu.querySelector('#ctx-delete');
+            if (deleteItem) {
+                menu.insertBefore(clearItem, deleteItem);
+            } else {
+                menu.appendChild(clearItem);
+            }
+        };
+    } else {
+        // Если функция не определена, добавим свою
+        window.showChatContextMenu = function(e, chat) {
+            const menu = document.getElementById('ctx-menu');
+            menu.innerHTML = `
+                <div class="ctx-item" id="ctx-open"><span class="ctx-icon">💬</span>Открыть</div>
+                <div class="ctx-item" id="ctx-clear"><span class="ctx-icon">🧹</span>Очистить чат</div>
+                <div class="ctx-item danger" id="ctx-delete"><span class="ctx-icon">🗑️</span>Удалить чат</div>
+            `;
+            menu.style.left = Math.min(e.clientX, window.innerWidth-200) + 'px';
+            menu.style.top = Math.min(e.clientY, window.innerHeight-100) + 'px';
+            menu.classList.add('show');
+            document.getElementById('ctx-open').onclick = () => { openChat(chat); closeCtx(); };
+            document.getElementById('ctx-clear').onclick = () => { closeCtx(); clearChat(chat); };
+            document.getElementById('ctx-delete').onclick = async () => {
+                if (!confirm('Удалить все сообщения?')) { closeCtx(); return; }
+                const cid = await getChatId(chat);
+                if (cid) {
+                    const snp = await getDocs(query(collection(db,'messages'), where('chatId','==',cid)));
+                    const bt = writeBatch(db);
+                    snp.forEach(d=>bt.delete(d.ref));
+                    await bt.commit();
+                }
+                if (activeChat?.id === chat.id) {
+                    activeChat = null;
+                    document.getElementById('chat-area').classList.add('hidden');
+                    document.getElementById('empty-state').classList.remove('hidden');
+                }
+                await buildChatList();
+                closeCtx();
+            };
+        };
+    }
+
+    // ---- 4. ДОБАВЛЯЕМ КНОПКУ "ОЧИСТИТЬ" В ИНТЕРФЕЙС (в шапку чата) ----
+    const hdrActions = document.querySelector('.hdr-actions');
+    if (hdrActions) {
+        const clearBtn = document.createElement('button');
+        clearBtn.className = 'ha-btn';
+        clearBtn.title = 'Очистить чат';
+        clearBtn.innerHTML = '🧹';
+        clearBtn.onclick = () => {
+            if (activeChat) {
+                clearChat(activeChat);
+            }
+        };
+        hdrActions.appendChild(clearBtn);
+    }
+
+    console.log('✅ Улучшенный индикатор набора текста + очистка чата добавлены');
+})();
+// ============================================================
+//  ⬅️  СИСТЕМНАЯ КНОПКА "НАЗАД" (Android / браузер)
+// ============================================================
+(function() {
+    // Добавляем состояние в историю при открытии чата или боковой панели
+    function pushState(type) {
+        if (!history.state || history.state.type !== type) {
+            history.pushState({ type: type }, '');
+        }
+    }
+
+    // Функция возврата к списку чатов (закрыть чат и панель)
+    function goToChatList() {
+        const sidebar = document.getElementById('sidebar');
+        const chatArea = document.getElementById('chat-area');
+        const emptyState = document.getElementById('empty-state');
+        const backBtn = document.getElementById('back-btn');
+        const sidePanel = document.getElementById('side-panel');
+
+        // Закрываем боковую панель, если открыта
+        if (sidePanel && sidePanel.classList.contains('open')) {
+            sidePanel.classList.remove('open');
+            document.querySelectorAll('.sf-btn').forEach(x => x.classList.remove('active'));
+            document.querySelector('.sf-btn[data-view="chats"]')?.classList.add('active');
+            // Удаляем состояние панели из истории
+            if (history.state?.type === 'panel') {
+                history.replaceState(null, '');
+            }
+            return true; // обработано
+        }
+
+        // Если мы на мобильном устройстве и чат открыт – закрываем его
+        const isMobile = window.innerWidth <= 768;
+        if (isMobile && sidebar && sidebar.classList.contains('hidden-mobile')) {
+            sidebar.classList.remove('hidden-mobile');
+            if (backBtn) backBtn.style.display = 'none';
+            if (chatArea) {
+                chatArea.classList.add('hidden');
+                chatArea.style.display = 'none';
+            }
+            if (emptyState) emptyState.classList.remove('hidden');
+            // Сбрасываем активный чат
+            window.activeChat = null;
+            // Удаляем состояние чата из истории
+            if (history.state?.type === 'chat') {
+                history.replaceState(null, '');
+            }
+            return true; // обработано
+        }
+
+        // Если не обработано, возвращаем false (пусть браузер делает своё)
+        return false;
+    }
+
+    // Обработчик события popstate (нажатие кнопки "Назад")
+    window.addEventListener('popstate', function(event) {
+        // Если состояние есть, и это чат или панель – обрабатываем сами
+        if (event.state && (event.state.type === 'chat' || event.state.type === 'panel')) {
+            const handled = goToChatList();
+            if (handled) {
+                // Предотвращаем стандартный переход назад
+                event.preventDefault();
+                // Добавляем новое состояние, чтобы кнопка "Назад" не уводила со страницы
+                history.pushState(null, '');
+            }
+        } else {
+            // Если нет состояния или оно не наше, пытаемся закрыть чат/панель без состояния
+            // (это может быть при переходе с другой страницы)
+            const handled = goToChatList();
+            if (handled) {
+                event.preventDefault();
+                history.pushState(null, '');
+            }
+        }
+    });
+
+    // Перехватываем открытие чата, чтобы добавить состояние
+    const origOpenChat = window.openChat;
+    if (typeof origOpenChat === 'function') {
+        window.openChat = function(chat) {
+            origOpenChat(chat);
+            // Если это мобильное устройство и чат открыт – добавляем состояние
+            if (window.innerWidth <= 768) {
+                const sidebar = document.getElementById('sidebar');
+                if (sidebar && sidebar.classList.contains('hidden-mobile')) {
+                    pushState('chat');
+                }
+            }
+        };
+    }
+
+    // Перехватываем открытие боковой панели (чтобы добавить состояние)
+    const origOpenSidePanel = window.openSidePanel;
+    if (typeof origOpenSidePanel === 'function') {
+        window.openSidePanel = function(view) {
+            origOpenSidePanel(view);
+            // Если панель открылась (не чаты) – добавляем состояние
+            if (view !== 'chats') {
+                pushState('panel');
+            }
+        };
+    }
+
+    // Следим за изменением класса боковой панели через MutationObserver
+    const panel = document.getElementById('side-panel');
+    if (panel) {
+        const observer = new MutationObserver(() => {
+            if (panel.classList.contains('open')) {
+                // Если панель открыта – добавляем состояние, если его нет
+                if (!history.state || history.state.type !== 'panel') {
+                    pushState('panel');
+                }
+            } else {
+                // Если панель закрылась – убираем состояние панели
+                if (history.state?.type === 'panel') {
+                    history.replaceState(null, '');
+                }
+            }
+        });
+        observer.observe(panel, { attributes: true, attributeFilter: ['class'] });
+    }
+
+    // Добавляем обработчик на кнопку "Назад" в шапке чата (для мобильных)
+    const backBtn = document.getElementById('back-btn');
+    if (backBtn) {
+        backBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            goToChatList();
+        });
+    }
+
+    // При загрузке страницы, если чат уже открыт (например, после обновления), добавляем состояние
+    if (window.innerWidth <= 768) {
+        const sidebar = document.getElementById('sidebar');
+        const chatArea = document.getElementById('chat-area');
+        if (sidebar && sidebar.classList.contains('hidden-mobile') && chatArea && !chatArea.classList.contains('hidden')) {
+            pushState('chat');
+        }
+    }
+
+    console.log('⬅️ Обработчик системной кнопки "Назад" активирован');
 })();
 </script>
 </body>
