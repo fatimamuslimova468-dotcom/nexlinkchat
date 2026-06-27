@@ -6762,6 +6762,1529 @@ console.log('📤 Модальное окно пересылки установ�
 
     console.log('⌨️ Клавиатура поднимается автоматически');
 })();
+// ============================================================
+//  🎨  15 ТЕМ ОФОРМЛЕНИЯ (с кнопками в настройках)
+// ============================================================
+(function() {
+    // ---- Определение 15 тем ----
+    const THEMES_DATA = {
+        light: {
+            name: 'Светлая',
+            icon: '☀️',
+            vars: {
+                '--bg': '#FFFFFF',
+                '--bg-secondary': '#F0F2F5',
+                '--bg-tertiary': '#E8EBF0',
+                '--surface': '#FFFFFF',
+                '--sidebar': '#FFFFFF',
+                '--sidebar-hover': '#F4F4F5',
+                '--border': '#E8EBF0',
+                '--text-primary': '#1A1A2E',
+                '--text-secondary': '#4A4A5A',
+                '--text-hint': '#8E8E98',
+                '--accent': '#2AABEE',
+                '--accent-dark': '#1a8bc5',
+                '--accent-light': '#ebf7fd',
+                '--msg-out-bg': '#EFFDDE',
+                '--msg-out-text': '#1A1A1A',
+                '--msg-in-bg': '#FFFFFF',
+                '--msg-in-text': '#1A1A1A',
+            }
+        },
+        dark: {
+            name: 'Тёмная',
+            icon: '🌙',
+            vars: {
+                '--bg': '#212121',
+                '--bg-secondary': '#181818',
+                '--bg-tertiary': '#2c2c2c',
+                '--surface': '#2c2c2c',
+                '--sidebar': '#212121',
+                '--sidebar-hover': '#303030',
+                '--border': '#333333',
+                '--text-primary': '#E8E8E8',
+                '--text-secondary': '#9A9A9A',
+                '--text-hint': '#666666',
+                '--accent': '#4AB8F0',
+                '--accent-dark': '#2a8bc5',
+                '--accent-light': '#1e3854',
+                '--msg-out-bg': '#2b5278',
+                '--msg-out-text': '#E8E8E8',
+                '--msg-in-bg': '#2c2c2c',
+                '--msg-in-text': '#E8E8E8',
+            }
+        },
+        blue: {
+            name: 'Синяя',
+            icon: '🔵',
+            vars: {
+                '--bg': '#F5F8FB',
+                '--bg-secondary': '#E3EDF7',
+                '--bg-tertiary': '#D4E4F0',
+                '--surface': '#FFFFFF',
+                '--sidebar': '#F0F4F8',
+                '--sidebar-hover': '#E3EDF7',
+                '--border': '#C5D5E5',
+                '--text-primary': '#0D2B45',
+                '--text-secondary': '#3A5A7A',
+                '--text-hint': '#7A9AB5',
+                '--accent': '#1976D2',
+                '--accent-dark': '#1565C0',
+                '--accent-light': '#E3F2FD',
+                '--msg-out-bg': '#BBDEFB',
+                '--msg-out-text': '#0D2B45',
+                '--msg-in-bg': '#FFFFFF',
+                '--msg-in-text': '#0D2B45',
+            }
+        },
+        purple: {
+            name: 'Фиолетовая',
+            icon: '🟣',
+            vars: {
+                '--bg': '#F8F6FF',
+                '--bg-secondary': '#EDE8F5',
+                '--bg-tertiary': '#E0D8EE',
+                '--surface': '#FFFFFF',
+                '--sidebar': '#F4F0FA',
+                '--sidebar-hover': '#EDE8F5',
+                '--border': '#D4CCE0',
+                '--text-primary': '#1A0D2E',
+                '--text-secondary': '#4A3A6A',
+                '--text-hint': '#8A7AAA',
+                '--accent': '#7C4DFF',
+                '--accent-dark': '#651FFF',
+                '--accent-light': '#EDE7F6',
+                '--msg-out-bg': '#D1C4E9',
+                '--msg-out-text': '#1A0D2E',
+                '--msg-in-bg': '#FFFFFF',
+                '--msg-in-text': '#1A0D2E',
+            }
+        },
+        green: {
+            name: 'Зелёная',
+            icon: '🟢',
+            vars: {
+                '--bg': '#F6FFF8',
+                '--bg-secondary': '#E8F5EC',
+                '--bg-tertiary': '#D4E8DA',
+                '--surface': '#FFFFFF',
+                '--sidebar': '#F0F8F2',
+                '--sidebar-hover': '#E8F5EC',
+                '--border': '#C5DCCD',
+                '--text-primary': '#0D2E1A',
+                '--text-secondary': '#3A5A4A',
+                '--text-hint': '#7A9A8A',
+                '--accent': '#2E7D32',
+                '--accent-dark': '#1B5E20',
+                '--accent-light': '#E8F5E9',
+                '--msg-out-bg': '#C8E6C9',
+                '--msg-out-text': '#0D2E1A',
+                '--msg-in-bg': '#FFFFFF',
+                '--msg-in-text': '#0D2E1A',
+            }
+        },
+        orange: {
+            name: 'Оранжевая',
+            icon: '🟠',
+            vars: {
+                '--bg': '#FFF8F0',
+                '--bg-secondary': '#F5EDE0',
+                '--bg-tertiary': '#E8DDCC',
+                '--surface': '#FFFFFF',
+                '--sidebar': '#F8F2E8',
+                '--sidebar-hover': '#F5EDE0',
+                '--border': '#DCD0C0',
+                '--text-primary': '#2E1A0D',
+                '--text-secondary': '#5A4A3A',
+                '--text-hint': '#8A7A6A',
+                '--accent': '#E67E22',
+                '--accent-dark': '#D35400',
+                '--accent-light': '#FDEBD0',
+                '--msg-out-bg': '#F5CBA7',
+                '--msg-out-text': '#2E1A0D',
+                '--msg-in-bg': '#FFFFFF',
+                '--msg-in-text': '#2E1A0D',
+            }
+        },
+        pink: {
+            name: 'Розовая',
+            icon: '🩷',
+            vars: {
+                '--bg': '#FFF5F8',
+                '--bg-secondary': '#F5E8ED',
+                '--bg-tertiary': '#E8D4DC',
+                '--surface': '#FFFFFF',
+                '--sidebar': '#F8F0F2',
+                '--sidebar-hover': '#F5E8ED',
+                '--border': '#DCC4CC',
+                '--text-primary': '#2E0D1A',
+                '--text-secondary': '#5A3A4A',
+                '--text-hint': '#8A6A7A',
+                '--accent': '#D81B60',
+                '--accent-dark': '#C2185B',
+                '--accent-light': '#FCE4EC',
+                '--msg-out-bg': '#F8BBD0',
+                '--msg-out-text': '#2E0D1A',
+                '--msg-in-bg': '#FFFFFF',
+                '--msg-in-text': '#2E0D1A',
+            }
+        },
+        teal: {
+            name: 'Бирюзовая',
+            icon: '🩵',
+            vars: {
+                '--bg': '#F0FFFE',
+                '--bg-secondary': '#E0F5F2',
+                '--bg-tertiary': '#CCE8E4',
+                '--surface': '#FFFFFF',
+                '--sidebar': '#F0FAF8',
+                '--sidebar-hover': '#E0F5F2',
+                '--border': '#C5DCD8',
+                '--text-primary': '#0D2E2A',
+                '--text-secondary': '#3A5A56',
+                '--text-hint': '#7A9A96',
+                '--accent': '#00897B',
+                '--accent-dark': '#00695C',
+                '--accent-light': '#E0F2F1',
+                '--msg-out-bg': '#B2DFDB',
+                '--msg-out-text': '#0D2E2A',
+                '--msg-in-bg': '#FFFFFF',
+                '--msg-in-text': '#0D2E2A',
+            }
+        },
+        red: {
+            name: 'Красная',
+            icon: '🔴',
+            vars: {
+                '--bg': '#FFF5F5',
+                '--bg-secondary': '#F5E8E8',
+                '--bg-tertiary': '#E8D4D4',
+                '--surface': '#FFFFFF',
+                '--sidebar': '#F8F0F0',
+                '--sidebar-hover': '#F5E8E8',
+                '--border': '#DCC4C4',
+                '--text-primary': '#2E0D0D',
+                '--text-secondary': '#5A3A3A',
+                '--text-hint': '#8A6A6A',
+                '--accent': '#D32F2F',
+                '--accent-dark': '#B71C1C',
+                '--accent-light': '#FFEBEE',
+                '--msg-out-bg': '#FFCDD2',
+                '--msg-out-text': '#2E0D0D',
+                '--msg-in-bg': '#FFFFFF',
+                '--msg-in-text': '#2E0D0D',
+            }
+        },
+        yellow: {
+            name: 'Жёлтая',
+            icon: '🟡',
+            vars: {
+                '--bg': '#FFFDF0',
+                '--bg-secondary': '#F5F0E0',
+                '--bg-tertiary': '#E8E0CC',
+                '--surface': '#FFFFFF',
+                '--sidebar': '#F8F5E8',
+                '--sidebar-hover': '#F5F0E0',
+                '--border': '#DCD5C0',
+                '--text-primary': '#2E2A0D',
+                '--text-secondary': '#5A563A',
+                '--text-hint': '#8A867A',
+                '--accent': '#F9A825',
+                '--accent-dark': '#F57F17',
+                '--accent-light': '#FFF8E1',
+                '--msg-out-bg': '#FFE082',
+                '--msg-out-text': '#2E2A0D',
+                '--msg-in-bg': '#FFFFFF',
+                '--msg-in-text': '#2E2A0D',
+            }
+        },
+        gray: {
+            name: 'Серая',
+            icon: '⚪',
+            vars: {
+                '--bg': '#F8F8F8',
+                '--bg-secondary': '#EEEEEE',
+                '--bg-tertiary': '#E0E0E0',
+                '--surface': '#FFFFFF',
+                '--sidebar': '#F5F5F5',
+                '--sidebar-hover': '#EEEEEE',
+                '--border': '#D5D5D5',
+                '--text-primary': '#222222',
+                '--text-secondary': '#555555',
+                '--text-hint': '#888888',
+                '--accent': '#757575',
+                '--accent-dark': '#424242',
+                '--accent-light': '#E0E0E0',
+                '--msg-out-bg': '#E0E0E0',
+                '--msg-out-text': '#222222',
+                '--msg-in-bg': '#FFFFFF',
+                '--msg-in-text': '#222222',
+            }
+        },
+        nord: {
+            name: 'Nord',
+            icon: '🏔️',
+            vars: {
+                '--bg': '#ECEFF4',
+                '--bg-secondary': '#E5E9F0',
+                '--bg-tertiary': '#D8DEE9',
+                '--surface': '#FFFFFF',
+                '--sidebar': '#E5E9F0',
+                '--sidebar-hover': '#D8DEE9',
+                '--border': '#C5CBD3',
+                '--text-primary': '#2E3440',
+                '--text-secondary': '#4C566A',
+                '--text-hint': '#6A7A8A',
+                '--accent': '#5E81AC',
+                '--accent-dark': '#4C6A8A',
+                '--accent-light': '#D8DEE9',
+                '--msg-out-bg': '#B0C4DE',
+                '--msg-out-text': '#2E3440',
+                '--msg-in-bg': '#FFFFFF',
+                '--msg-in-text': '#2E3440',
+            }
+        },
+        dracula: {
+            name: 'Dracula',
+            icon: '🧛',
+            vars: {
+                '--bg': '#282A36',
+                '--bg-secondary': '#21222C',
+                '--bg-tertiary': '#313440',
+                '--surface': '#3A3C4A',
+                '--sidebar': '#282A36',
+                '--sidebar-hover': '#313440',
+                '--border': '#44475A',
+                '--text-primary': '#F8F8F2',
+                '--text-secondary': '#BD93F9',
+                '--text-hint': '#6272A4',
+                '--accent': '#BD93F9',
+                '--accent-dark': '#9580D9',
+                '--accent-light': '#44475A',
+                '--msg-out-bg': '#44475A',
+                '--msg-out-text': '#F8F8F2',
+                '--msg-in-bg': '#3A3C4A',
+                '--msg-in-text': '#F8F8F2',
+            }
+        },
+        solarized: {
+            name: 'Solarized',
+            icon: '🌅',
+            vars: {
+                '--bg': '#FDF6E3',
+                '--bg-secondary': '#F0EBD8',
+                '--bg-tertiary': '#E4DDC8',
+                '--surface': '#FFFFFF',
+                '--sidebar': '#F0EBD8',
+                '--sidebar-hover': '#E4DDC8',
+                '--border': '#C5C0B0',
+                '--text-primary': '#073642',
+                '--text-secondary': '#586E75',
+                '--text-hint': '#839496',
+                '--accent': '#268BD2',
+                '--accent-dark': '#1A6FB0',
+                '--accent-light': '#E9F0F5',
+                '--msg-out-bg': '#DCE8F2',
+                '--msg-out-text': '#073642',
+                '--msg-in-bg': '#FFFFFF',
+                '--msg-in-text': '#073642',
+            }
+        },
+        monokai: {
+            name: 'Monokai',
+            icon: '🎨',
+            vars: {
+                '--bg': '#272822',
+                '--bg-secondary': '#1E1F1C',
+                '--bg-tertiary': '#33332E',
+                '--surface': '#3E3D32',
+                '--sidebar': '#272822',
+                '--sidebar-hover': '#33332E',
+                '--border': '#49483E',
+                '--text-primary': '#F8F8F2',
+                '--text-secondary': '#FD971F',
+                '--text-hint': '#88846F',
+                '--accent': '#A6E22E',
+                '--accent-dark': '#8CC41D',
+                '--accent-light': '#3E3D32',
+                '--msg-out-bg': '#49483E',
+                '--msg-out-text': '#F8F8F2',
+                '--msg-in-bg': '#3E3D32',
+                '--msg-in-text': '#F8F8F2',
+            }
+        }
+    };
+
+    const THEME_NAMES = Object.keys(THEMES_DATA);
+    const DEFAULT_THEME = 'light';
+
+    // ---- Функция применения темы ----
+    function applyTheme(themeName) {
+        if (!THEMES_DATA[themeName]) themeName = DEFAULT_THEME;
+        const theme = THEMES_DATA[themeName];
+        const root = document.documentElement;
+        Object.keys(theme.vars).forEach(key => {
+            root.style.setProperty(key, theme.vars[key]);
+        });
+        localStorage.setItem('nx_theme', themeName);
+        // Обновляем отображение в настройках
+        const themeVal = document.getElementById('s-theme-val');
+        if (themeVal) themeVal.textContent = theme.name;
+        // Обновляем все превью
+        document.querySelectorAll('.theme-preview').forEach(el => {
+            const name = el.dataset.theme;
+            if (name === themeName) {
+                el.classList.add('active');
+                el.style.border = '3px solid var(--accent)';
+                el.style.transform = 'scale(1.05)';
+            } else {
+                el.classList.remove('active');
+                el.style.border = '2px solid transparent';
+                el.style.transform = 'scale(1)';
+            }
+        });
+    }
+
+    window.applyTheme = applyTheme;
+
+    // ---- Функция добавления секции с темами ----
+    function addThemesSection() {
+        const body = document.getElementById('panel-body');
+        if (!body) return;
+        if (document.getElementById('themes-section')) return;
+
+        const currentTheme = localStorage.getItem('nx_theme') || DEFAULT_THEME;
+        const section = document.createElement('div');
+        section.id = 'themes-section';
+        section.className = 'settings-section';
+        section.style.marginTop = '16px';
+        section.style.padding = '0 4px';
+
+        let html = `
+            <div class="settings-label">🎨 Оформление</div>
+            <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(70px,1fr)); gap:10px; padding:4px 0;">
+        `;
+
+        THEME_NAMES.forEach(name => {
+            const theme = THEMES_DATA[name];
+            const isActive = name === currentTheme;
+            const bg = theme.vars['--bg'] || '#ffffff';
+            const accent = theme.vars['--accent'] || '#2AABEE';
+            const text = theme.vars['--text-primary'] || '#000000';
+
+            html += `
+                <div class="theme-preview ${isActive ? 'active' : ''}" 
+                     data-theme="${name}" 
+                     style="
+                        display:flex; flex-direction:column; align-items:center; gap:4px;
+                        padding:8px 4px; border-radius:14px; cursor:pointer;
+                        background: ${bg};
+                        border: ${isActive ? '3px solid ' + accent : '2px solid transparent'};
+                        transition: all 0.25s ease;
+                        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+                        ${isActive ? 'transform: scale(1.05);' : ''}
+                     "
+                     onmouseover="this.style.transform='scale(1.08)'" 
+                     onmouseout="this.style.transform='${isActive ? 'scale(1.05)' : 'scale(1)'}'">
+                    <div style="font-size:20px;">${theme.icon || '🎨'}</div>
+                    <div style="font-size:10px; font-weight:600; color:${text}; text-align:center; line-height:1.2;">${theme.name}</div>
+                </div>
+            `;
+        });
+
+        html += `</div>`;
+        section.innerHTML = html;
+        body.appendChild(section);
+
+        // ---- Обработчики клика по темам ----
+        body.querySelectorAll('.theme-preview').forEach(el => {
+            el.addEventListener('click', function() {
+                const name = this.dataset.theme;
+                if (name) {
+                    applyTheme(name);
+                }
+            });
+        });
+    }
+
+    // ---- Переопределяем renderSettingsPanel ----
+    const origRenderSettings = window.renderSettingsPanel;
+    window.renderSettingsPanel = function() {
+        if (typeof origRenderSettings === 'function') {
+            origRenderSettings.call(this);
+        }
+        // Добавляем секцию с темами
+        setTimeout(addThemesSection, 100);
+    };
+
+    // ---- Добавляем наблюдатель за открытием панели ----
+    const panel = document.getElementById('side-panel');
+    if (panel) {
+        const observer = new MutationObserver(() => {
+            if (panel.classList.contains('open')) {
+                const title = document.getElementById('panel-title');
+                if (title && title.textContent === 'Настройки') {
+                    setTimeout(addThemesSection, 200);
+                }
+            }
+        });
+        observer.observe(panel, { attributes: true, attributeFilter: ['class'] });
+    }
+
+    // ---- Применяем сохранённую тему ----
+    const savedTheme = localStorage.getItem('nx_theme') || DEFAULT_THEME;
+    applyTheme(savedTheme);
+
+    // ---- Добавляем кнопку "Темы" в настройки (если её нет) ----
+    setTimeout(() => {
+        const themeItem = document.getElementById('s-theme');
+        if (themeItem) {
+            themeItem.onclick = () => {
+                const section = document.getElementById('themes-section');
+                if (section) {
+                    section.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    section.style.background = 'var(--accent-light)';
+                    section.style.borderRadius = '16px';
+                    section.style.padding = '8px 4px';
+                    setTimeout(() => {
+                        section.style.background = 'transparent';
+                        section.style.padding = '0 4px';
+                    }, 1500);
+                }
+            };
+        }
+    }, 500);
+
+    console.log('🎨 15 тем оформления с кнопками в настройках!');
+})();
+// ============================================================
+//  📢  КАНАЛЫ: без «Заявки», с кнопкой «Подписчики»
+// ============================================================
+(function() {
+    // ---- Функция рендеринга канала ----
+    function renderChannelInfo(roomData) {
+        const modal = document.getElementById('modal-room-info');
+        if (!modal) return;
+
+        const title = document.getElementById('room-info-title');
+        const body = modal.querySelector('.modal-body');
+        if (!body) return;
+
+        // ---- Данные канала ----
+        const name = roomData.name || 'Канал';
+        const avatar = roomData.avatar || '📢';
+        const username = roomData.username || '@channel';
+        const subscribers = roomData.subscribers || [];
+        const description = roomData.description || 'Описание отсутствует';
+        const isSubscribed = subscribers.includes(me?.uid);
+
+        title.textContent = 'Инфо';
+
+        // ---- HTML ----
+        body.innerHTML = `
+            <div class="channel-profile">
+                <!-- Аватар и название -->
+                <div class="channel-header">
+                    <div class="channel-avatar">${avatarHtml(avatar)}</div>
+                    <div class="channel-name">${esc(name)}</div>
+                    <div class="channel-username">${esc(username)}</div>
+                </div>
+
+                <!-- Кнопки действий -->
+                <div class="channel-actions">
+                    <button class="channel-btn secondary" id="channel-more-btn">Ещё</button>
+                    <button class="channel-btn subscribe ${isSubscribed ? 'subscribed' : ''}" id="channel-subscribe-btn">
+                        ${isSubscribed ? '✅ Подписан' : 'Подписаться'}
+                    </button>
+                    <button class="channel-btn secondary" id="channel-subscribers-btn">
+                        👥 ${subscribers.length}
+                    </button>
+                </div>
+
+                <!-- Описание -->
+                <div class="channel-description">
+                    <span class="desc-label">Описание</span>
+                    <p>${esc(description)}</p>
+                </div>
+
+                <!-- Медиа-вкладки -->
+                <div class="channel-media-tabs">
+                    <span class="media-tab active">Медиа</span>
+                    <span class="media-tab">Файлы</span>
+                    <span class="media-tab">Голосовые</span>
+                    <span class="media-tab">Ссылки</span>
+                </div>
+            </div>
+        `;
+
+        // ---- Стили (добавляем, если ещё нет) ----
+        if (!document.getElementById('channel-styles')) {
+            const style = document.createElement('style');
+            style.id = 'channel-styles';
+            style.textContent = `
+                .channel-profile {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 16px;
+                    padding: 4px 0;
+                }
+                .channel-header {
+                    text-align: center;
+                    padding-bottom: 8px;
+                }
+                .channel-avatar {
+                    width: 80px;
+                    height: 80px;
+                    border-radius: 50%;
+                    margin: 0 auto 10px;
+                    background: var(--bg-secondary);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 40px;
+                    overflow: hidden;
+                    border: 2px solid var(--border);
+                }
+                .channel-avatar img {
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                }
+                .channel-name {
+                    font-size: 22px;
+                    font-weight: 700;
+                    color: var(--text-primary);
+                }
+                .channel-username {
+                    font-size: 15px;
+                    color: var(--text-secondary);
+                    margin-top: 2px;
+                }
+                .channel-actions {
+                    display: flex;
+                    gap: 8px;
+                    justify-content: center;
+                    flex-wrap: wrap;
+                }
+                .channel-btn {
+                    padding: 8px 24px;
+                    border-radius: 30px;
+                    border: none;
+                    font-size: 15px;
+                    font-weight: 600;
+                    cursor: pointer;
+                    transition: var(--transition);
+                }
+                .channel-btn.secondary {
+                    background: var(--bg-secondary);
+                    color: var(--text-primary);
+                }
+                .channel-btn.secondary:hover {
+                    background: var(--border);
+                    transform: translateY(-2px);
+                }
+                .channel-btn.subscribe {
+                    background: var(--green);
+                    color: white;
+                }
+                .channel-btn.subscribe:hover {
+                    background: #229954;
+                    transform: translateY(-2px);
+                }
+                .channel-btn.subscribe.subscribed {
+                    background: var(--bg-secondary);
+                    color: var(--text-primary);
+                }
+                .channel-btn.subscribe.subscribed:hover {
+                    background: var(--border);
+                    transform: none;
+                }
+                .channel-description {
+                    background: var(--bg-secondary);
+                    border-radius: 16px;
+                    padding: 12px 16px;
+                }
+                .channel-description .desc-label {
+                    font-size: 12px;
+                    font-weight: 600;
+                    color: var(--text-hint);
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                    display: block;
+                    margin-bottom: 4px;
+                }
+                .channel-description p {
+                    font-size: 15px;
+                    color: var(--text-primary);
+                    line-height: 1.5;
+                    margin: 0;
+                    white-space: pre-wrap;
+                }
+                .channel-media-tabs {
+                    display: flex;
+                    gap: 12px;
+                    padding: 4px 0;
+                    border-bottom: 1px solid var(--border);
+                    flex-wrap: wrap;
+                }
+                .media-tab {
+                    font-size: 14px;
+                    color: var(--text-secondary);
+                    cursor: pointer;
+                    padding: 6px 0;
+                    border-bottom: 2px solid transparent;
+                    transition: var(--transition);
+                }
+                .media-tab.active {
+                    color: var(--accent);
+                    border-bottom-color: var(--accent);
+                    font-weight: 600;
+                }
+                .media-tab:hover {
+                    color: var(--accent);
+                }
+                /* Список подписчиков */
+                .subscribers-list {
+                    max-height: 200px;
+                    overflow-y: auto;
+                    margin-top: 8px;
+                }
+                .subscribers-list .subscriber-item {
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    padding: 6px 10px;
+                    border-radius: 10px;
+                    transition: background 0.15s;
+                }
+                .subscribers-list .subscriber-item:hover {
+                    background: var(--bg-secondary);
+                }
+                .subscriber-avatar {
+                    width: 32px;
+                    height: 32px;
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    background: var(--bg-secondary);
+                    font-size: 16px;
+                    overflow: hidden;
+                }
+                .subscriber-name {
+                    font-size: 14px;
+                    font-weight: 500;
+                    color: var(--text-primary);
+                }
+                @media (max-width: 480px) {
+                    .channel-avatar {
+                        width: 60px;
+                        height: 60px;
+                        font-size: 30px;
+                    }
+                    .channel-name {
+                        font-size: 18px;
+                    }
+                    .channel-btn {
+                        padding: 6px 16px;
+                        font-size: 13px;
+                    }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        // ---- Обработчики ----
+        const moreBtn = document.getElementById('channel-more-btn');
+        const subscribeBtn = document.getElementById('channel-subscribe-btn');
+        const subscribersBtn = document.getElementById('channel-subscribers-btn');
+
+        if (moreBtn) {
+            moreBtn.onclick = () => {
+                alert('📋 Дополнительные действия');
+            };
+        }
+
+        if (subscribeBtn) {
+            subscribeBtn.onclick = async function() {
+                if (!me) return alert('Войдите в аккаунт');
+                const roomId = activeChat?.id;
+                if (!roomId) return;
+                const isSubscribed = subscribers.includes(me.uid);
+                try {
+                    if (isSubscribed) {
+                        await updateDoc(doc(db, 'rooms', roomId), {
+                            subscribers: arrayRemove(me.uid)
+                        });
+                        this.textContent = 'Подписаться';
+                        this.classList.remove('subscribed');
+                        this.style.background = 'var(--green)';
+                        this.style.color = 'white';
+                        subscribers.splice(subscribers.indexOf(me.uid), 1);
+                    } else {
+                        await updateDoc(doc(db, 'rooms', roomId), {
+                            subscribers: arrayUnion(me.uid)
+                        });
+                        this.textContent = '✅ Подписан';
+                        this.classList.add('subscribed');
+                        this.style.background = 'var(--bg-secondary)';
+                        this.style.color = 'var(--text-primary)';
+                        subscribers.push(me.uid);
+                    }
+                    // Обновляем кнопку подписчиков
+                    const subBtn = document.getElementById('channel-subscribers-btn');
+                    if (subBtn) {
+                        subBtn.textContent = `👥 ${subscribers.length}`;
+                    }
+                } catch(e) {
+                    alert('Ошибка: ' + e.message);
+                }
+            };
+        }
+
+        if (subscribersBtn) {
+            subscribersBtn.onclick = function() {
+                if (!subscribers.length) {
+                    alert('Нет подписчиков');
+                    return;
+                }
+                // Модалка со списком
+                const overlay = document.createElement('div');
+                overlay.className = 'modal-overlay open';
+                overlay.style.cssText = 'z-index: 300;';
+                const card = document.createElement('div');
+                card.className = 'modal-card';
+                card.style.maxWidth = '400px';
+                card.innerHTML = `
+                    <div class="modal-hdr">
+                        <h3>Подписчики (${subscribers.length})</h3>
+                        <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">✕</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="subscribers-list">
+                            ${subscribers.map(uid => {
+                                const user = usersCache.get(uid);
+                                return `
+                                    <div class="subscriber-item">
+                                        <div class="subscriber-avatar">${avatarHtml(user?.avatar)}</div>
+                                        <div class="subscriber-name">${esc(getDisplayName(uid))}</div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                `;
+                overlay.appendChild(card);
+                document.body.appendChild(overlay);
+                overlay.onclick = function(e) {
+                    if (e.target === overlay) overlay.remove();
+                };
+            };
+        }
+
+        openModal('modal-room-info');
+    }
+
+    // ---- Переопределяем открытие канала ----
+    const roomInfoBtn = document.getElementById('room-info-btn');
+    if (roomInfoBtn) {
+        const origHandler = roomInfoBtn.onclick;
+        roomInfoBtn.onclick = function(e) {
+            if (!activeChat) return;
+            if (activeChat.type === 'channel') {
+                const roomData = activeChat.roomData || {};
+                renderChannelInfo(roomData);
+            } else {
+                if (typeof origHandler === 'function') {
+                    origHandler.call(this, e);
+                } else {
+                    // для групп стандартная логика
+                    const rd = activeChat?.roomData;
+                    if (!rd) return;
+                    document.getElementById('room-info-title').textContent = rd.name;
+                    const membersList = document.getElementById('room-members');
+                    if (membersList) {
+                        membersList.innerHTML = (rd.members || []).map(uid => `
+                            <div class="contact-item">
+                                <div class="ci-av">${avatarHtml(usersCache.get(uid)?.avatar)}</div>
+                                <div><div class="ci-name">${esc(getDisplayName(uid))}</div>
+                                <div class="ci-user">${esc(usersCache.get(uid)?.username || uid.slice(0,12))}</div></div>
+                            </div>
+                        `).join('');
+                    }
+                    openModal('modal-room-info');
+                }
+            }
+        };
+    }
+
+    // ---- Создание канала (обновляем) ----
+    const origCreateChannel = document.getElementById('create-ch-btn')?.onclick;
+    if (origCreateChannel) {
+        document.getElementById('create-ch-btn').onclick = async function() {
+            const name = document.getElementById('ch-name').value.trim();
+            const uname = document.getElementById('ch-uname').value.trim();
+            if (!name || !uname) return alert('Заполните все поля');
+            if (!uname.startsWith('@')) return alert('Юзернейм должен начинаться с @');
+            const existing = await getDocs(query(collection(db, 'rooms'), where('username', '==', uname)));
+            if (!existing.empty) return alert('Юзернейм занят');
+            const r = await addDoc(collection(db, 'rooms'), {
+                name,
+                type: 'channel',
+                username: uname,
+                avatar: chAvatar || '📢',
+                subscribers: [me.uid],
+                admins: [me.uid],
+                description: 'Новый канал',
+                createdBy: me.uid,
+                createdAt: serverTimestamp()
+            });
+            closeModal('modal-create-channel');
+            await refreshRoomsCache();
+            await buildChatList();
+            const rd = roomsCache.get(r.id);
+            openChat({ id: r.id, name, avatar: chAvatar || '📢', type: 'channel', roomData: rd });
+        };
+    }
+
+    console.log('📢 Каналы: убрана "Заявка", добавлена кнопка "Подписчики"');
+})();
+// ============================================================
+//  ✨  МИНИМАЛИСТИЧНАЯ ЗАСТАВКА: ПЕЧАТАЮЩИЙСЯ ТЕКСТ + ЛИНИЯ
+//      + АНИМИРОВАННЫЙ ФОН (РАЗМЫТЫЕ КРУГИ)
+// ============================================================
+(function() {
+    const splash = document.getElementById('splash');
+    if (!splash) return;
+
+    splash.innerHTML = '';
+    splash.style.cssText = `
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        background: #0a0a0a;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        transition: opacity 1.2s ease, visibility 1.2s ease;
+        opacity: 1;
+        visibility: visible;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    `;
+
+    // ---- ФОНОВЫЕ ЭЛЕМЕНТЫ (размытые круги) ----
+    const bgContainer = document.createElement('div');
+    bgContainer.style.cssText = `
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        overflow: hidden;
+        pointer-events: none;
+    `;
+    splash.appendChild(bgContainer);
+
+    // Параметры кругов: цвета, размеры, начальные позиции, анимации
+    const circles = [
+        {
+            color: 'rgba(167, 139, 250, 0.25)', // фиолетовый
+            size: '40vw',
+            pos: { top: '-10%', left: '-10%' },
+            anim: 'float0 20s ease-in-out infinite alternate'
+        },
+        {
+            color: 'rgba(96, 165, 250, 0.25)', // синий
+            size: '50vw',
+            pos: { bottom: '-10%', right: '-10%' },
+            anim: 'float1 25s ease-in-out infinite alternate-reverse'
+        },
+        {
+            color: 'rgba(236, 72, 153, 0.20)', // розовый
+            size: '30vw',
+            pos: { top: '50%', left: '50%', transform: 'translate(-50%, -50%)' },
+            anim: 'float2 30s ease-in-out infinite alternate'
+        }
+    ];
+
+    circles.forEach((c, i) => {
+        const circle = document.createElement('div');
+        circle.style.cssText = `
+            position: absolute;
+            width: ${c.size};
+            height: ${c.size};
+            border-radius: 50%;
+            background: radial-gradient(circle, ${c.color}, transparent 70%);
+            filter: blur(60px);
+            animation: ${c.anim};
+            ${c.pos.top ? `top: ${c.pos.top};` : ''}
+            ${c.pos.left ? `left: ${c.pos.left};` : ''}
+            ${c.pos.bottom ? `bottom: ${c.pos.bottom};` : ''}
+            ${c.pos.right ? `right: ${c.pos.right};` : ''}
+            ${c.pos.transform ? `transform: ${c.pos.transform};` : ''}
+        `;
+        bgContainer.appendChild(circle);
+    });
+
+    // ---- Ключевые кадры для анимации кругов ----
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+        @keyframes lineGrow {
+            0% { width: 0%; }
+            100% { width: 100%; }
+        }
+        @keyframes float0 {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(30px, -30px) scale(1.1); }
+        }
+        @keyframes float1 {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(-40px, 20px) scale(1.2); }
+        }
+        @keyframes float2 {
+            0% { transform: translate(-50%, -50%) scale(1); }
+            100% { transform: translate(-50%, -50%) scale(1.3); }
+        }
+    `;
+    document.head.appendChild(style);
+
+    // ---- Контейнер для текста (поверх фона) ----
+    const container = document.createElement('div');
+    container.style.cssText = `
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+        position: relative;
+        z-index: 2;
+    `;
+    splash.appendChild(container);
+
+    // ---- Логотип (крупный текст) ----
+    const logo = document.createElement('div');
+    logo.style.cssText = `
+        font-size: min(14vw, 80px);
+        font-weight: 700;
+        color: #ffffff;
+        letter-spacing: 4px;
+        position: relative;
+        line-height: 1;
+    `;
+    container.appendChild(logo);
+
+    // ---- Подложка для печатающегося текста ----
+    const textSpan = document.createElement('span');
+    textSpan.style.cssText = `
+        display: inline-block;
+        min-width: 10px;
+    `;
+    logo.appendChild(textSpan);
+
+    // ---- Мигающий курсор ----
+    const cursor = document.createElement('span');
+    cursor.style.cssText = `
+        display: inline-block;
+        width: 3px;
+        height: 1em;
+        background: #ffffff;
+        margin-left: 4px;
+        animation: blink 0.8s step-end infinite;
+    `;
+    logo.appendChild(cursor);
+
+    // ---- Подзаголовок (появляется после печати) ----
+    const subtitle = document.createElement('div');
+    subtitle.style.cssText = `
+        font-size: min(3vw, 18px);
+        font-weight: 300;
+        color: rgba(255,255,255,0.5);
+        letter-spacing: 6px;
+        text-transform: uppercase;
+        opacity: 0;
+        transition: opacity 1s ease 1s;
+        margin-top: 4px;
+    `;
+    subtitle.textContent = 'Мессенджер будущего';
+    container.appendChild(subtitle);
+
+    // ---- Декоративная линия (стирается снизу вверх) ----
+    const lineContainer = document.createElement('div');
+    lineContainer.style.cssText = `
+        width: 200px;
+        height: 2px;
+        background: rgba(255,255,255,0.1);
+        border-radius: 2px;
+        margin-top: 8px;
+        overflow: hidden;
+    `;
+    container.appendChild(lineContainer);
+
+    const lineFill = document.createElement('div');
+    lineFill.style.cssText = `
+        width: 0%;
+        height: 100%;
+        background: linear-gradient(90deg, #a78bfa, #60a5fa);
+        border-radius: 2px;
+        animation: lineGrow 1.5s ease forwards;
+        animation-delay: 1.8s;
+    `;
+    lineContainer.appendChild(lineFill);
+
+    // ---- Печатающийся текст ----
+    const fullText = 'NexLink';
+    let index = 0;
+    let isDone = false;
+
+    function typeNext() {
+        if (index < fullText.length) {
+            textSpan.textContent += fullText[index];
+            index++;
+            const delay = 80 + Math.random() * 60;
+            setTimeout(typeNext, delay);
+        } else {
+            isDone = true;
+            setTimeout(() => {
+                cursor.style.display = 'none';
+            }, 600);
+            subtitle.style.opacity = '1';
+        }
+    }
+
+    // ---- Запуск печати с задержкой ----
+    setTimeout(typeNext, 400);
+
+    // ---- Скрытие заставки ----
+    const observer = new MutationObserver(() => {
+        if (splash.classList.contains('gone')) {
+            splash.style.opacity = '0';
+            splash.style.visibility = 'hidden';
+            setTimeout(() => splash.style.display = 'none', 1300);
+        }
+    });
+    observer.observe(splash, { attributes: true, attributeFilter: ['class'] });
+})();
+// ============================================================
+//  🔐  ДВУХФАКТОРНАЯ АУТЕНТИФИКАЦИЯ (TOTP) — ВСТРОЕННАЯ РЕАЛИЗАЦИЯ
+// ============================================================
+(function() {
+    // ---- 1. TOTP на чистом JavaScript (RFC 6238) ----
+    // Используем Web Crypto API для HMAC-SHA-1
+    async function hmacSha1(key, message) {
+        const encoder = new TextEncoder();
+        const keyData = encoder.encode(key);
+        const msgData = encoder.encode(message);
+        const cryptoKey = await crypto.subtle.importKey(
+            'raw',
+            keyData,
+            { name: 'HMAC', hash: { name: 'SHA-1' } },
+            false,
+            ['sign']
+        );
+        const signature = await crypto.subtle.sign('HMAC', cryptoKey, msgData);
+        return new Uint8Array(signature);
+    }
+
+    // Преобразование base32 в массив байт (простая реализация)
+    function base32Decode(base32) {
+        const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+        const clean = base32.toUpperCase().replace(/[^A-Z2-7]/g, '');
+        const bytes = [];
+        let bits = 0, value = 0;
+        for (let i = 0; i < clean.length; i++) {
+            const idx = alphabet.indexOf(clean[i]);
+            if (idx === -1) continue;
+            value = (value << 5) | idx;
+            bits += 5;
+            while (bits >= 8) {
+                bytes.push((value >> (bits - 8)) & 0xFF);
+                bits -= 8;
+            }
+        }
+        return new Uint8Array(bytes);
+    }
+
+    // Генерация TOTP-кода (6 цифр)
+    async function generateTOTP(secret, timeStep = 30) {
+        const counter = Math.floor(Date.now() / 1000 / timeStep);
+        const msg = new ArrayBuffer(8);
+        const view = new DataView(msg);
+        view.setUint32(4, counter, false); // big-endian
+
+        const keyBytes = base32Decode(secret);
+        const key = new TextDecoder().decode(keyBytes);
+        const hmac = await hmacSha1(key, new Uint8Array(msg));
+        const offset = hmac[hmac.length - 1] & 0x0F;
+        const binary = ((hmac[offset] & 0x7F) << 24) |
+                       ((hmac[offset + 1] & 0xFF) << 16) |
+                       ((hmac[offset + 2] & 0xFF) << 8) |
+                       (hmac[offset + 3] & 0xFF);
+        const otp = binary % 1000000;
+        return String(otp).padStart(6, '0');
+    }
+
+    // Верификация TOTP-кода (с учётом допустимого отклонения в 1 шаг)
+    async function verifyTOTP(secret, token, timeStep = 30) {
+        const now = Math.floor(Date.now() / 1000 / timeStep);
+        for (let i = -1; i <= 1; i++) {
+            const counter = now + i;
+            const msg = new ArrayBuffer(8);
+            const view = new DataView(msg);
+            view.setUint32(4, counter, false);
+            const keyBytes = base32Decode(secret);
+            const key = new TextDecoder().decode(keyBytes);
+            const hmac = await hmacSha1(key, new Uint8Array(msg));
+            const offset = hmac[hmac.length - 1] & 0x0F;
+            const binary = ((hmac[offset] & 0x7F) << 24) |
+                           ((hmac[offset + 1] & 0xFF) << 16) |
+                           ((hmac[offset + 2] & 0xFF) << 8) |
+                           (hmac[offset + 3] & 0xFF);
+            const otp = binary % 1000000;
+            const code = String(otp).padStart(6, '0');
+            if (code === token) return true;
+        }
+        return false;
+    }
+
+    // ---- 2. Генерация секрета (base32) ----
+    function generateSecret() {
+        const bytes = crypto.getRandomValues(new Uint8Array(20));
+        let base32 = '';
+        const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+        let bits = 0, value = 0;
+        for (let i = 0; i < bytes.length; i++) {
+            value = (value << 8) | bytes[i];
+            bits += 8;
+            while (bits >= 5) {
+                base32 += alphabet[(value >> (bits - 5)) & 0x1F];
+                bits -= 5;
+            }
+        }
+        if (bits > 0) base32 += alphabet[(value << (5 - bits)) & 0x1F];
+        return base32;
+    }
+
+    // ---- 3. Функции для работы с QR-кодом (через API) ----
+    function getOtpAuthUrl(secret, email, issuer = 'NexLink') {
+        return `otpauth://totp/${issuer}:${encodeURIComponent(email)}?secret=${secret}&issuer=${issuer}`;
+    }
+
+    function generateQRImageUrl(otpauth, size = 200) {
+        return `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(otpauth)}&size=${size}x${size}`;
+    }
+
+    // ---- 4. Состояние ----
+    let tempSecret = null;
+
+    // ---- 5. Исправление avatarHtml (чтобы убрать 404) ----
+    const origAvatarHtml = window.avatarHtml;
+    window.avatarHtml = function(av, size) {
+        if (!av || typeof av !== 'string') return '😊';
+        if (av.startsWith('data:') || av.startsWith('http')) {
+            return `<img src="${av}" style="width:${size||'100%'};height:${size||'100%'};object-fit:cover;border-radius:50%;" onerror="this.style.display='none'">`;
+        }
+        return av;
+    };
+
+    // ---- 6. Добавление секции в настройки ----
+    function add2FASection() {
+        const body = document.getElementById('panel-body');
+        if (!body || document.getElementById('2fa-section')) return;
+
+        const uid = me?.uid;
+        if (!uid) return;
+
+        const userRef = doc(db, 'users', uid);
+        getDoc(userRef).then(snap => {
+            if (!snap.exists()) return;
+            const data = snap.data();
+            const enabled = data.totpEnabled || false;
+
+            const section = document.createElement('div');
+            section.id = '2fa-section';
+            section.className = 'settings-section';
+            section.style.marginTop = '16px';
+            section.style.padding = '0 4px';
+
+            let html = `
+                <div class="settings-label">🔐 Двухфакторная аутентификация</div>
+                <div style="background:var(--bg-secondary);border-radius:16px;padding:14px;margin-bottom:6px;">
+                    <div style="display:flex;align-items:center;gap:10px;">
+                        <span style="font-size:24px;">${enabled ? '✅' : '⚠️'}</span>
+                        <div style="flex:1;">
+                            <div style="font-weight:600;font-size:14px;">${enabled ? '2FA включена' : '2FA отключена'}</div>
+                            <div style="font-size:12px;color:var(--text-secondary);">${enabled ? 'Ваш аккаунт защищён дополнительным кодом' : 'Включите двухфакторную аутентификацию для защиты аккаунта'}</div>
+                        </div>
+                    </div>`;
+
+            if (!enabled) {
+                html += `
+                    <button id="2fa-enable-btn" style="margin-top:12px;padding:10px 20px;border-radius:12px;background:var(--accent);color:white;border:none;font-weight:600;cursor:pointer;width:100%;">🔑 Включить 2FA</button>
+                    <div id="2fa-setup-area" style="margin-top:12px;display:none;"></div>
+                `;
+            } else {
+                html += `
+                    <button id="2fa-disable-btn" style="margin-top:12px;padding:10px 20px;border-radius:12px;background:var(--red);color:white;border:none;font-weight:600;cursor:pointer;width:100%;">🚫 Отключить 2FA</button>
+                `;
+            }
+            html += `<div id="2fa-status-msg" style="margin-top:8px;font-size:13px;"></div></div>`;
+            section.innerHTML = html;
+            body.appendChild(section);
+
+            // Обработчики
+            const enableBtn = document.getElementById('2fa-enable-btn');
+            const disableBtn = document.getElementById('2fa-disable-btn');
+            const setupArea = document.getElementById('2fa-setup-area');
+            const statusMsg = document.getElementById('2fa-status-msg');
+
+            if (enableBtn) {
+                enableBtn.onclick = function() {
+                    tempSecret = generateSecret();
+                    const email = me.email || 'user@nexlink.com';
+                    const otpauth = getOtpAuthUrl(tempSecret, email);
+
+                    setupArea.style.display = 'block';
+                    setupArea.innerHTML = `
+                        <div style="background:var(--bg);border-radius:12px;padding:14px;margin-top:8px;">
+                            <p style="font-size:14px;margin-bottom:8px;">Отсканируйте QR-код в приложении (Google Authenticator и др.):</p>
+                            <div id="2fa-qr" style="display:flex;justify-content:center;margin:10px 0;">
+                                <img src="${generateQRImageUrl(otpauth)}" style="width:160px;height:160px;border-radius:8px;" alt="QR-код">
+                            </div>
+                            <p style="font-size:12px;color:var(--text-hint);word-break:break-all;">Или введите ключ вручную: <strong>${tempSecret}</strong></p>
+                            <div style="display:flex;gap:8px;margin-top:10px;">
+                                <input type="text" id="2fa-verify-input" placeholder="Введите код из приложения" style="flex:1;padding:10px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text-primary);font-size:16px;">
+                                <button id="2fa-verify-btn" style="padding:10px 20px;border-radius:10px;background:var(--green);color:white;border:none;font-weight:600;cursor:pointer;">Подтвердить</button>
+                            </div>
+                            <button id="2fa-cancel-setup" style="margin-top:8px;background:none;border:none;color:var(--text-hint);cursor:pointer;font-size:13px;">Отмена</button>
+                        </div>
+                    `;
+
+                    document.getElementById('2fa-verify-btn').onclick = async function() {
+                        const token = document.getElementById('2fa-verify-input').value.trim();
+                        if (!token) {
+                            statusMsg.textContent = '❌ Введите код';
+                            statusMsg.style.color = 'var(--red)';
+                            return;
+                        }
+                        const isValid = await verifyTOTP(tempSecret, token);
+                        if (!isValid) {
+                            statusMsg.textContent = '❌ Неверный код. Попробуйте ещё раз.';
+                            statusMsg.style.color = 'var(--red)';
+                            return;
+                        }
+                        try {
+                            await updateDoc(userRef, { totpSecret: tempSecret, totpEnabled: true });
+                            statusMsg.textContent = '✅ 2FA успешно включена!';
+                            statusMsg.style.color = 'var(--green)';
+                            setTimeout(add2FASection, 1000);
+                        } catch (err) {
+                            statusMsg.textContent = '❌ Ошибка сохранения: ' + err.message;
+                            statusMsg.style.color = 'var(--red)';
+                        }
+                    };
+
+                    document.getElementById('2fa-cancel-setup').onclick = function() {
+                        setupArea.style.display = 'none';
+                        tempSecret = null;
+                        statusMsg.textContent = '';
+                    };
+                };
+            }
+
+            if (disableBtn) {
+                disableBtn.onclick = async function() {
+                    if (!confirm('Отключить двухфакторную аутентификацию?')) return;
+                    try {
+                        await updateDoc(userRef, { totpSecret: null, totpEnabled: false });
+                        statusMsg.textContent = '✅ 2FA отключена';
+                        statusMsg.style.color = 'var(--green)';
+                        setTimeout(add2FASection, 500);
+                    } catch (err) {
+                        statusMsg.textContent = '❌ Ошибка: ' + err.message;
+                        statusMsg.style.color = 'var(--red)';
+                    }
+                };
+            }
+        });
+    }
+
+    // ---- 7. Встраиваем в настройки ----
+    const origRenderSettings = window.renderSettingsPanel;
+    window.renderSettingsPanel = function() {
+        if (typeof origRenderSettings === 'function') origRenderSettings.call(this);
+        setTimeout(add2FASection, 300);
+    };
+
+    // ---- 8. Модификация входа с 2FA ----
+    const loginBtn = document.getElementById('login-btn');
+    if (loginBtn) {
+        loginBtn.onclick = async function(e) {
+            const email = document.getElementById('l-email').value.trim().toLowerCase();
+            const password = document.getElementById('l-pass').value;
+            const errEl = document.getElementById('l-err');
+
+            if (!validEmail(email)) {
+                errEl.textContent = 'Некорректный email';
+                errEl.className = 'err-msg show';
+                return;
+            }
+
+            try {
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+                const userDoc = await getDoc(doc(db, 'users', user.uid));
+                if (userDoc.exists()) {
+                    const data = userDoc.data();
+                    if (data.totpEnabled) {
+                        const secret = data.totpSecret;
+                        const token = await askTOTP();
+                        if (!token || !(await verifyTOTP(secret, token))) {
+                            await signOut(auth);
+                            errEl.textContent = token ? '❌ Неверный код подтверждения.' : '❌ 2FA обязательна. Вход отменён.';
+                            errEl.className = 'err-msg show';
+                            return;
+                        }
+                    }
+                }
+                return;
+            } catch (err) {
+                if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
+                    errEl.textContent = '❌ Неверный email или пароль';
+                } else {
+                    errEl.textContent = '❌ ' + err.message;
+                }
+                errEl.className = 'err-msg show';
+            }
+        };
+    }
+
+    // ---- 9. Модалка для ввода TOTP-кода ----
+    function askTOTP() {
+        return new Promise((resolve) => {
+            const overlay = document.createElement('div');
+            overlay.className = 'modal-overlay open';
+            overlay.style.cssText = 'z-index: 999;';
+            const card = document.createElement('div');
+            card.className = 'modal-card';
+            card.style.maxWidth = '360px';
+            card.innerHTML = `
+                <div class="modal-hdr">
+                    <h3>🔐 Код подтверждения</h3>
+                    <button class="modal-close" id="totp-modal-close">✕</button>
+                </div>
+                <div class="modal-body">
+                    <p style="font-size:14px;color:var(--text-secondary);margin-bottom:16px;">Введите код из вашего приложения-аутентификатора (Google Authenticator и т.д.)</p>
+                    <input type="text" id="totp-input" placeholder="6-значный код" style="width:100%;padding:14px;border-radius:12px;border:1.5px solid var(--border);background:var(--bg-secondary);font-size:20px;letter-spacing:4px;text-align:center;color:var(--text-primary);" maxlength="6">
+                    <div style="display:flex;gap:10px;margin-top:16px;">
+                        <button id="totp-cancel" class="modal-btn secondary" style="flex:1;">Отмена</button>
+                        <button id="totp-confirm" class="modal-btn" style="flex:1;">Подтвердить</button>
+                    </div>
+                    <div id="totp-error" style="margin-top:10px;font-size:13px;color:var(--red);display:none;"></div>
+                </div>
+            `;
+            overlay.appendChild(card);
+            document.body.appendChild(overlay);
+
+            const input = document.getElementById('totp-input');
+            const confirmBtn = document.getElementById('totp-confirm');
+            const cancelBtn = document.getElementById('totp-cancel');
+            const closeBtn = document.getElementById('totp-modal-close');
+            const errorEl = document.getElementById('totp-error');
+
+            function cleanup() { overlay.remove(); resolve(null); }
+            function confirm() {
+                const token = input.value.trim();
+                if (!token || token.length !== 6) {
+                    errorEl.textContent = 'Введите 6 цифр';
+                    errorEl.style.display = 'block';
+                    return;
+                }
+                cleanup();
+                resolve(token);
+            }
+            confirmBtn.onclick = confirm;
+            cancelBtn.onclick = cleanup;
+            closeBtn.onclick = cleanup;
+            overlay.onclick = (e) => { if (e.target === overlay) cleanup(); };
+            input.addEventListener('keydown', (e) => { if (e.key === 'Enter') confirm(); });
+            input.focus();
+        });
+    }
+
+    console.log('🔐 2FA TOTP (встроенная версия) активирована');
+})();
+// ============================================================
+//  ⌨️  ПОДНЯТИЕ ФОРМЫ ВВОДА ПРИ КЛАВИАТУРЕ (гарантированно)
+// ============================================================
+(function() {
+    const input = document.getElementById('msg-input');
+    const inputBar = document.getElementById('input-bar');
+    const messagesWrap = document.getElementById('messages-wrap');
+
+    if (!input || !inputBar) return;
+
+    // ---- Функция, которая плавно прокручивает поле ввода в центр видимой области ----
+    function scrollInputIntoView() {
+        // Небольшая задержка, чтобы клавиатура успела появиться
+        setTimeout(() => {
+            inputBar.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 100);
+    }
+
+    // ---- При фокусе на поле ввода ----
+    input.addEventListener('focus', function() {
+        scrollInputIntoView();
+    });
+
+    // ---- При изменении размера видимой области (появление/исчезновение клавиатуры) ----
+    if (window.visualViewport) {
+        let prevHeight = window.visualViewport.height;
+        window.visualViewport.addEventListener('resize', function() {
+            const newHeight = window.visualViewport.height;
+            // Если высота уменьшилась (клавиатура открыта) и поле в фокусе
+            if (newHeight < prevHeight && document.activeElement === input) {
+                scrollInputIntoView();
+            }
+            prevHeight = newHeight;
+        });
+    }
+
+    // ---- Дополнительно: при изменении размера окна (для старых браузеров) ----
+    let lastWindowHeight = window.innerHeight;
+    window.addEventListener('resize', function() {
+        const newHeight = window.innerHeight;
+        if (newHeight < lastWindowHeight && document.activeElement === input) {
+            scrollInputIntoView();
+        }
+        lastWindowHeight = newHeight;
+    });
+
+    // ---- При открытии чата, если поле ввода уже в фокусе ----
+    const origOpenChat = window.openChat;
+    if (origOpenChat) {
+        window.openChat = function(chat) {
+            origOpenChat(chat);
+            // После открытия чата, если поле активно, прокручиваем
+            setTimeout(() => {
+                if (document.activeElement === input) {
+                    scrollInputIntoView();
+                }
+            }, 400);
+        };
+    }
+
+    // ---- Также при каждом клике по полю ввода (на случай, если фокус уже был) ----
+    input.addEventListener('click', function() {
+        if (document.activeElement === input) {
+            scrollInputIntoView();
+        }
+    });
+
+    console.log('⌨️ Поднятие формы с клавиатурой активировано (гарантированно)');
+})();
 </script>
 </body>
 </html>
