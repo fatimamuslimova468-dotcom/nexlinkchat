@@ -9793,7 +9793,91 @@ console.log('📤 Модальное окно пересылки установ�
     });
     observer.observe(document.body, { childList: true, subtree: true });
 })();
+// ============================================================
+//  📐  ФИКС РАЗМЕРОВ: СПИСОК ЧАТОВ И ПОЛЕ ВВОДА
+// ============================================================
+(function() {
+    const style = document.createElement('style');
+    style.textContent = `
+        /* ---- Список чатов ---- */
+        #chat-list {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            max-height: calc(100vh - 150px); /* подстраивается под шапку и футер */
+        }
+        #chat-list .chat-row {
+            max-width: 100%;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        #chat-list .cr-preview {
+            max-width: 200px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
 
+        /* ---- Поле ввода ---- */
+        .input-wrap {
+            flex: 1;
+            min-width: 0; /* разрешаем сжатие */
+        }
+        #msg-input {
+            max-height: 80px;
+            resize: none;
+            overflow-y: auto;
+            width: 100%;
+            box-sizing: border-box;
+            padding: 8px 0;
+            line-height: 1.4;
+            font-size: 15px;
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+        }
+        #msg-input::placeholder {
+            color: var(--text-hint);
+        }
+
+        /* ---- Кнопки в панели ввода ---- */
+        .ib-icon {
+            flex-shrink: 0;
+            width: 34px;
+            height: 34px;
+        }
+        .send-btn {
+            flex-shrink: 0;
+            width: 44px;
+            height: 44px;
+        }
+
+        /* ---- Адаптив для мобилок ---- */
+        @media (max-width: 768px) {
+            #chat-list {
+                max-height: calc(100vh - 120px);
+            }
+            #msg-input {
+                font-size: 16px;
+                max-height: 60px;
+            }
+            .ib-icon {
+                width: 28px;
+                height: 28px;
+                font-size: 16px;
+            }
+            .send-btn {
+                width: 36px;
+                height: 36px;
+                font-size: 16px;
+            }
+        }
+    `;
+    document.head.appendChild(style);
+
+    console.log('📐 Размеры исправлены');
+})();
 </script>
 </body>
 </html>
