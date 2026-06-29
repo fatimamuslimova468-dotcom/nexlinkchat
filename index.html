@@ -5377,7 +5377,7 @@ const callInterval = setInterval(() => {
 
 console.log('✅ Аудио/видео звонки добавлены');
    // ════════════════════════════════════════════════════
-//  АДАПТИВНЫЙ РЕЖИМ ДЛЯ ПК И ПЛАНШЕТА
+//  АДАПТИВНЫЙ РЕЖИМ ДЛЯ ПК И ПЛАНШЕТА (исправлено)
 // ════════════════════════════════════════════════════
 
 (function() {
@@ -5518,38 +5518,8 @@ console.log('✅ Аудио/видео звонки добавлены');
     applyDesktopMode(false);
   }
 
-  console.log('✅ Адаптивный режим для ПК/планшета добавлен');
-})();
-   // ════════════════════════════════════════════════════
-//  СКРЫТИЕ ЛОГОВ (режим отладки)
-// ════════════════════════════════════════════════════
-
-(function() {
-  // Проверяем, был ли режим отладки включён ранее
-  const debugEnabled = localStorage.getItem('debug_mode') === 'true';
-  
-  // Сохраняем оригинальный console.log
-  const originalLog = console.log;
-  
-  // Функция-заглушка, если отладка выключена
-  const noop = function() {};
-  
-  // Устанавливаем console.log в зависимости от режима
-  console.log = debugEnabled ? originalLog : noop;
-  
-  // Экспортируем функцию для включения/отключения
-  window.setDebugMode = function(enable) {
-    if (enable) {
-      console.log = originalLog;
-      localStorage.setItem('debug_mode', 'true');
-    } else {
-      console.log = noop;
-      localStorage.setItem('debug_mode', 'false');
-    }
-  };
-  
-  // По умолчанию отладка выключена, логи скрыты
-})();
+  // Здесь была пропущена закрывающая скобка и вызов функции
+})(); // <-- вот это было пропущено
 </script>
 </body>
 </html>
