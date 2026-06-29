@@ -3263,342 +3263,6 @@ if (activeChat) setupAvatarClick();
 
 console.log('✅ Полноэкранный аватар при клике в шапке готов');
 // ════════════════════════════════════════════════════
-//  УЛЬТРА-СОВРЕМЕННЫЙ ВОЛНИСТЫЙ ДИЗАЙН ГОЛОСОВЫХ
-// ════════════════════════════════════════════════════
-
-// --- Обновлённые стили ---
-(function updateVoiceStylesUltra() {
-  const old = document.getElementById('voice-ultra-style');
-  if (old) old.remove();
-
-  const st = document.createElement('style');
-  st.id = 'voice-ultra-style';
-  st.textContent = `
-    /* ── Плеер в ленте ── */
-    .voice-player {
-      display: flex !important;
-      align-items: center;
-      gap: 10px;
-      background: transparent !important;
-      padding: 0 !important;
-      border-radius: 0 !important;
-      min-width: 200px;
-      height: 40px;
-    }
-    .voice-player .vp-play-btn {
-      width: 38px; height: 38px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-      color: white;
-      font-size: 16px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      flex-shrink: 0;
-      box-shadow: 0 4px 12px rgba(79,172,254,0.4);
-      transition: 0.25s ease;
-      position: relative;
-      user-select: none;
-    }
-    .msg-group.in .voice-player .vp-play-btn {
-      background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
-      box-shadow: 0 4px 12px rgba(67,233,123,0.4);
-    }
-    .voice-player .vp-play-btn:active {
-      transform: scale(0.9);
-    }
-    /* Круговой прогресс */
-    .voice-player .vp-play-btn svg.circle-progress {
-      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-      transform: rotate(-90deg);
-    }
-    .voice-player .vp-play-btn svg.circle-progress circle {
-      fill: none; stroke: rgba(255,255,255,0.3); stroke-width: 2;
-      stroke-dasharray: 0 100;
-      transition: stroke-dasharray 0.1s linear;
-    }
-
-    .voice-player .vp-wave {
-      display: flex;
-      align-items: flex-end;
-      gap: 1.5px;
-      height: 28px;
-      flex: 1;
-    }
-    .voice-player .vp-wave .bar {
-      width: 2px;
-      background: linear-gradient(180deg, #4facfe 0%, #00f2fe 100%);
-      border-radius: 2px;
-      transition: height 0.05s linear;
-      will-change: height;
-    }
-    .msg-group.in .voice-player .vp-wave .bar {
-      background: linear-gradient(180deg, #43e97b 0%, #38f9d7 100%);
-    }
-
-    .voice-player .vp-time {
-      font-size: 12px; font-weight: 500;
-      color: var(--text-secondary);
-      min-width: 36px; text-align: right;
-      flex-shrink: 0; opacity: 0.8;
-    }
-    .msg-group.out .voice-player .vp-time {
-      color: rgba(255,255,255,0.85);
-    }
-    .msg-group.in .voice-player .vp-time {
-      color: var(--text-secondary);
-    }
-    .voice-player .vp-progress, .voice-player .vp-progress-fill {
-      display: none;
-    }
-
-    /* ── Предпрослушивание ── */
-    #voice-preview {
-      background: white;
-      border-top: 1px solid var(--border);
-      padding: 10px 16px;
-      display: none;
-      align-items: center;
-      gap: 12px;
-      flex-shrink: 0;
-      box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
-    }
-    #voice-preview.show { display: flex; }
-    #voice-preview .vp-player {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    #voice-preview .vp-play-btn {
-      width: 40px; height: 40px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-      color: white;
-      font-size: 18px;
-      display: flex; align-items: center; justify-content: center;
-      cursor: pointer; flex-shrink: 0;
-      box-shadow: 0 4px 12px rgba(79,172,254,0.4);
-    }
-    #voice-preview .vp-wave-preview {
-      display: flex; align-items: flex-end; gap: 1.5px; height: 28px; flex: 1;
-    }
-    #voice-preview .vp-wave-preview .bar {
-      width: 2px;
-      background: linear-gradient(180deg, #4facfe 0%, #00f2fe 100%);
-      border-radius: 2px; transition: height 0.05s linear;
-      will-change: height;
-    }
-    #voice-preview .vp-time {
-      font-size: 13px; font-weight: 500; color: var(--text-secondary);
-      min-width: 40px; text-align: right;
-    }
-    #voice-preview .vp-actions {
-      display: flex; gap: 8px;
-    }
-    #voice-preview .vp-send-btn {
-      background: var(--accent); color: white; border: none;
-      border-radius: 20px; padding: 8px 20px; font-weight: 600; font-size: 14px; cursor: pointer;
-    }
-    #voice-preview .vp-del-btn {
-      background: var(--bg-secondary); color: var(--text-secondary);
-      border: none; border-radius: 20px; padding: 8px 16px; font-weight: 600; font-size: 14px; cursor: pointer;
-    }
-  `;
-  document.head.appendChild(st);
-})();
-
-// ── Функция генерации случайных амплитуд (для имитации живой волны) ──
-function generateRandomAmplitudes(count = 30) {
-  const amps = [];
-  for (let i = 0; i < count; i++) {
-    amps.push(0.2 + Math.random() * 0.8); // от 0.2 до 1.0
-  }
-  return amps;
-}
-
-// ── Создание красивого плеера ──
-function buildUltraVoicePlayer(audioElement, isPreview = false) {
-  const container = document.createElement('div');
-  container.className = isPreview ? 'vp-player' : 'voice-player';
-
-  // Кнопка с круговым прогрессом
-  const playBtn = document.createElement('div');
-  playBtn.className = isPreview ? 'vp-play-btn' : 'vp-play-btn';
-  playBtn.innerHTML = '▶️'; // иконка
-
-  // SVG для кругового прогресса
-  const svgNS = 'http://www.w3.org/2000/svg';
-  const svg = document.createElementNS(svgNS, 'svg');
-  svg.classList.add('circle-progress');
-  svg.setAttribute('viewBox', '0 0 36 36');
-  const circle = document.createElementNS(svgNS, 'circle');
-  circle.setAttribute('cx', '18');
-  circle.setAttribute('cy', '18');
-  circle.setAttribute('r', '15');
-  circle.setAttribute('stroke', 'rgba(255,255,255,0.4)');
-  circle.setAttribute('stroke-width', '2');
-  circle.setAttribute('fill', 'none');
-  circle.setAttribute('stroke-dasharray', '0 100');
-  svg.appendChild(circle);
-  playBtn.appendChild(svg);
-
-  // Волна (30 полосок)
-  const wave = document.createElement('div');
-  wave.className = isPreview ? 'vp-wave-preview' : 'vp-wave';
-  const barCount = 30;
-  const bars = [];
-  for (let i = 0; i < barCount; i++) {
-    const bar = document.createElement('div');
-    bar.className = 'bar';
-    bar.style.height = '4px';
-    wave.appendChild(bar);
-    bars.push(bar);
-  }
-
-  // Время
-  const timeDisplay = document.createElement('span');
-  timeDisplay.className = 'vp-time';
-  timeDisplay.textContent = '0:00';
-
-  container.appendChild(playBtn);
-  container.appendChild(wave);
-  container.appendChild(timeDisplay);
-
-  // Логика плеера
-  let isPlaying = false;
-  let animationFrameId = null;
-  const baseAmplitudes = generateRandomAmplitudes(barCount);
-
-  function updateWave(currentTime, duration) {
-    const progress = duration > 0 ? Math.min(currentTime / duration, 1) : 0;
-    // Высота каждой полоски зависит от базовой амплитуды и прогресса
-    // Чтобы волна "двигалась", сдвигаем фазу в зависимости от currentTime
-    const shift = Math.floor(currentTime * 10) % barCount; // бегущая волна
-    bars.forEach((bar, i) => {
-      const amp = baseAmplitudes[(i + shift) % barCount];
-      // Максимальная высота 24px, минимальная 2px
-      const height = 2 + amp * 22 * (0.3 + 0.7 * progress); // немного уменьшаем в начале
-      bar.style.height = `${height}px`;
-    });
-
-    // Обновляем круговой прогресс
-    const dashLength = (progress * 94.2); // окружность ~94.2 (2*π*15)
-    circle.setAttribute('stroke-dasharray', `${dashLength} 100`);
-  }
-
-  function startAnimation() {
-    function step() {
-      if (audioElement && !audioElement.paused) {
-        const current = audioElement.currentTime || 0;
-        const duration = audioElement.duration || 0;
-        updateWave(current, duration);
-        // Время
-        const mins = Math.floor(current / 60);
-        const secs = Math.floor(current % 60);
-        timeDisplay.textContent = `${mins}:${String(secs).padStart(2,'0')}`;
-        animationFrameId = requestAnimationFrame(step);
-      } else {
-        // Остановились — застывшая волна
-        const current = audioElement.currentTime || 0;
-        const duration = audioElement.duration || 0;
-        updateWave(current, duration);
-      }
-    }
-    if (animationFrameId) cancelAnimationFrame(animationFrameId);
-    animationFrameId = requestAnimationFrame(step);
-  }
-
-  function stopAnimation() {
-    if (animationFrameId) {
-      cancelAnimationFrame(animationFrameId);
-      animationFrameId = null;
-    }
-    // Застывшая волна (показываем текущий прогресс)
-    const current = audioElement.currentTime || 0;
-    const duration = audioElement.duration || 0;
-    updateWave(current, duration);
-    timeDisplay.textContent = '0:00';
-  }
-
-  audioElement.addEventListener('play', () => {
-    isPlaying = true;
-    playBtn.innerHTML = '⏸️'; // иконка паузы
-    startAnimation();
-  });
-
-  audioElement.addEventListener('pause', () => {
-    isPlaying = false;
-    playBtn.innerHTML = '▶️';
-    stopAnimation();
-  });
-
-  audioElement.addEventListener('ended', () => {
-    isPlaying = false;
-    playBtn.innerHTML = '▶️';
-    stopAnimation();
-    // Сброс прогресса
-    circle.setAttribute('stroke-dasharray', '0 100');
-    bars.forEach(b => b.style.height = '4px');
-    timeDisplay.textContent = '0:00';
-  });
-
-  audioElement.addEventListener('loadedmetadata', () => {
-    // инициализируем длительность, если не было
-    const duration = audioElement.duration || 0;
-    const mins = Math.floor(duration / 60);
-    const secs = Math.floor(duration % 60);
-    timeDisplay.textContent = `${mins}:${String(secs).padStart(2,'0')}`;
-  });
-
-  playBtn.addEventListener('click', () => {
-    if (audioElement.paused) {
-      audioElement.play();
-    } else {
-      audioElement.pause();
-    }
-  });
-
-  // Скрываем оригинальный audio
-  audioElement.style.display = 'none';
-  audioElement.parentNode.insertBefore(container, audioElement);
-  return container;
-}
-
-// ── Заменяем старый рендеринг ──
-const _origRenderMessages = renderMessages;
-renderMessages = function() {
-  _origRenderMessages.call(this);
-  // Заменяем все аудио на ультра-плееры
-  document.querySelectorAll('.bubble .bubble-text audio').forEach(audio => {
-    if (audio.src && audio.src.startsWith('data:audio/webm')) {
-      if (!audio.nextElementSibling || !audio.nextElementSibling.classList.contains('voice-player')) {
-        buildUltraVoicePlayer(audio, false);
-      }
-    }
-  });
-};
-
-// ── Предпрослушивание: перехватываем открытие и вставляем плеер ──
-const previewObserver = new MutationObserver((mutations) => {
-  mutations.forEach(mut => {
-    if (mut.target.id === 'voice-preview' && mut.target.classList.contains('show')) {
-      const audio = document.getElementById('vp-audio');
-      if (audio && !audio.nextElementSibling?.classList?.contains('vp-player')) {
-        buildUltraVoicePlayer(audio, true);
-      }
-    }
-  });
-});
-const previewEl2 = document.getElementById('voice-preview');
-if (previewEl2) previewObserver.observe(previewEl2, { attributes: true, attributeFilter: ['class'] });
-
-// Синхронизируем кнопки предпрослушивания с новым плеером
-// (уже работает через наш плеер)
-
-console.log('🎙️ Ультра-современный волнистый плеер активирован');
-// ════════════════════════════════════════════════════
 //  ПОЛНОЭКРАННЫЙ ПРОСМОТР ИЗОБРАЖЕНИЙ
 // ════════════════════════════════════════════════════
 
@@ -4927,9 +4591,9 @@ console.log('✅ Автоматическое появление новых ча
     // Даём время на отрисовку DOM
     setTimeout(addReduceAnimationsSetting, 50);
   };
-
+})();
   console.log('✅ Настройка "Уменьшить анимации" добавлена');
-   // ════════════════════════════════════════════════════
+  // ════════════════════════════════════════════════════
 //  АДАПТИВНЫЙ РЕЖИМ ДЛЯ ПК И ПЛАНШЕТА (исправлено)
 // ════════════════════════════════════════════════════
 
@@ -5073,6 +4737,2594 @@ console.log('✅ Автоматическое появление новых ча
 
   // Здесь была пропущена закрывающая скобка и вызов функции
 })(); // <-- вот это было пропущено
+// ════════════════════════════════════════════════════
+//  СКРЫТИЕ ЛОГОВ (режим отладки)
+// ════════════════════════════════════════════════════
+
+(function() {
+  // Проверяем, был ли режим отладки включён ранее
+  const debugEnabled = localStorage.getItem('debug_mode') === 'true';
+  
+  // Сохраняем оригинальный console.log
+  const originalLog = console.log;
+  
+  // Функция-заглушка, если отладка выключена
+  const noop = function() {};
+  
+  // Устанавливаем console.log в зависимости от режима
+  console.log = debugEnabled ? originalLog : noop;
+  
+  // Экспортируем функцию для включения/отключения
+  window.setDebugMode = function(enable) {
+    if (enable) {
+      console.log = originalLog;
+      localStorage.setItem('debug_mode', 'true');
+    } else {
+      console.log = noop;
+      localStorage.setItem('debug_mode', 'false');
+    }
+  };
+  
+  // По умолчанию отладка выключена, логи скрыты
+})();
+// Обработка правого клика для вызова контекстного меню сообщения
+document.getElementById('messages-wrap').addEventListener('contextmenu', function(e) {
+  const bubble = e.target.closest('.bubble');
+  if (!bubble) return;
+  const msgId = bubble.dataset.msgId;
+  if (!msgId) return;
+  const msg = allMessages.find(m => m.id === msgId);
+  if (!msg) return;
+  e.preventDefault();
+  showMsgCtx(msg, bubble);
+});
+// ════════════════════════════════════════════════════
+//  ФИКС: СИНИЕ КРУЖКИ НЕПРОЧИТАННЫХ (активный чат = 0)
+// ════════════════════════════════════════════════════
+(function() {
+  if (typeof buildChatList === 'undefined') return;
+  const _prevBuildChatList = buildChatList;
+
+  buildChatList = async function() {
+    await _prevBuildChatList.call(this);
+    if (!me) return;
+
+    const activeChatId = activeChat ? await getActiveChatId() : null;
+
+    // Обнуляем непрочитанные для открытого чата
+    if (activeChat && activeChatId) {
+      // В основном списке
+      const chatInList = chatList.find(c => c.id === activeChat.id && c.type === activeChat.type);
+      if (chatInList) chatInList.unreadCount = 0;
+      // В архиве
+      if (window._archivedChats) {
+        const archivedChat = window._archivedChats.find(c => c.id === activeChat.id && c.type === activeChat.type);
+        if (archivedChat) archivedChat.unreadCount = 0;
+      }
+    }
+
+    renderChatList();
+  };
+})();
+// ════════════════════════════════════════════════════
+//  КНОПКА НАСТРОЙКИ «РЕЖИМ ПК» (без конфликтов)
+// ════════════════════════════════════════════════════
+(function() {
+  // Применяем режим при загрузке, если он был включён принудительно
+  function applyDesktop(enable) {
+    if (enable) {
+      document.body.classList.add('desktop-layout');
+      // Показываем боковую панель чатов на широком экране
+      const pageChats = document.getElementById('page-chats');
+      if (pageChats) pageChats.style.display = 'flex';
+    } else {
+      document.body.classList.remove('desktop-layout');
+      // Восстанавливаем мобильное поведение
+      const pageChats = document.getElementById('page-chats');
+      if (pageChats) pageChats.style.display = '';
+    }
+  }
+
+  // Проверяем сохранённую настройку и применяем
+  let desktopEnabled = localStorage.getItem('force-desktop-layout') === 'true';
+  applyDesktop(desktopEnabled);
+
+  // Функция добавления пункта в настройки (вызывается после рендера настроек)
+  function addLayoutSettingItem() {
+    if (document.getElementById('s-layout-mode')) return; // уже добавлен
+    const bodyEl = document.getElementById('settings-body');
+    if (!bodyEl) return;
+
+    // Ищем раздел "Дополнительно"
+    let targetSection = null;
+    bodyEl.querySelectorAll('.settings-section').forEach(sec => {
+      if (sec.querySelector('.settings-label')?.textContent?.trim() === 'Дополнительно') {
+        targetSection = sec;
+      }
+    });
+    if (!targetSection) return;
+
+    const item = document.createElement('div');
+    item.className = 'settings-item';
+    item.id = 's-layout-mode';
+    item.innerHTML = `
+      <div class="si-icon">🖥️</div>
+      <div class="si-text">Режим ПК</div>
+      <label class="toggle-switch" style="margin-left:auto; position:relative; display:inline-block; width:44px; height:24px;">
+        <input type="checkbox" id="desktop-layout-checkbox" style="opacity:0; width:0; height:0;">
+        <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#ccc; transition:.3s; border-radius:24px;"></span>
+      </label>
+    `;
+    targetSection.appendChild(item);
+
+    const checkbox = item.querySelector('#desktop-layout-checkbox');
+    checkbox.checked = desktopEnabled;
+    checkbox.addEventListener('change', () => {
+      desktopEnabled = checkbox.checked;
+      applyDesktop(desktopEnabled);
+      localStorage.setItem('force-desktop-layout', desktopEnabled ? 'true' : 'false');
+    });
+  }
+
+  // Ждём появления настроек (наблюдатель или таймаут)
+  const observer = new MutationObserver(() => {
+    if (document.getElementById('settings-body')) {
+      addLayoutSettingItem();
+    }
+  });
+  observer.observe(document.body, { childList: true, subtree: true });
+
+  // На случай, если настройки уже отрендерены
+  if (document.getElementById('settings-body')) {
+    addLayoutSettingItem();
+  }
+})();
+// ════════════════════════════════════════════════════
+//  СТАТУСЫ ПОЛЬЗОВАТЕЛЯ: онлайн / был недавно / давно
+// ════════════════════════════════════════════════════
+
+// Форматирует lastSeen в читаемый статус
+function formatLastSeen(timestamp) {
+  if (!timestamp) return 'был(а) давно';
+  const now = Date.now();
+  const diff = now - timestamp.toMillis();
+  const minutes = Math.floor(diff / 60000);
+  if (minutes < 1) return 'только что';
+  if (minutes < 60) return `был(а) ${minutes} мин. назад`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `был(а) ${hours} ч. назад`;
+  return 'был(а) давно';
+}
+
+// Обновляет статус в шапке чата для приватного собеседника
+async function updateUserOnlineStatus(uid) {
+  if (!uid || uid === me?.uid) return;
+  const user = usersCache.get(uid);
+  const statusEl = document.getElementById('chat-hdr-status');
+  if (!statusEl) return;
+  
+  // Не перезаписываем, если активный чат не с этим пользователем
+  if (!activeChat || activeChat.type !== 'private' || activeChat.id !== uid) return;
+
+  // Проверяем, не печатает ли он (уже установлено через typing)
+  if (statusEl.querySelector('.typing-dots')) return;
+
+  if (user?.online) {
+    statusEl.textContent = 'в сети';
+    statusEl.className = 'hdr-status online';
+  } else if (user?.lastSeen) {
+    statusEl.textContent = formatLastSeen(user.lastSeen);
+    statusEl.className = 'hdr-status';
+  } else {
+    statusEl.textContent = 'не в сети';
+    statusEl.className = 'hdr-status';
+  }
+}
+
+// Подписываемся на изменения документа конкретного пользователя
+function listenUserStatus(uid) {
+  if (!uid) return;
+  const unsub = onSnapshot(doc(db, 'users', uid), (snap) => {
+    if (snap.exists()) {
+      const data = snap.data();
+      usersCache.set(uid, data); // обновляем кэш
+      updateUserOnlineStatus(uid);
+    }
+  });
+  // Сохраняем функцию отписки, чтобы вызвать при смене чата
+  if (activeChat?.id === uid) {
+    if (window._userStatusUnsub) window._userStatusUnsub();
+    window._userStatusUnsub = unsub;
+  }
+}
+
+// При открытии чата (приватного) запускаем слежение за статусом
+const _origOpenChatForStatus = openChat;
+openChat = async function(chat) {
+  // Отписываемся от предыдущего слушателя
+  if (window._userStatusUnsub) {
+    window._userStatusUnsub();
+    window._userStatusUnsub = null;
+  }
+  await _origOpenChatForStatus(chat);
+  if (chat?.type === 'private') {
+    // Обновляем статус сразу
+    updateUserOnlineStatus(chat.id);
+    // Запускаем слушатель изменений
+    listenUserStatus(chat.id);
+  }
+};
+
+// Интеграция с уже существующим updateChatHeaderWithProfile
+// (не заменяем, а дополняем, чтобы не сломать группы/блокировку)
+const _origUpdateHeader = updateChatHeaderWithProfile;
+updateChatHeaderWithProfile = function() {
+  _origUpdateHeader();
+  if (activeChat?.type === 'private') {
+    updateUserOnlineStatus(activeChat.id);
+  }
+};
+// Обновление статуса при изменении кэша пользователей (если чат открыт)
+// Уже есть onSnapshot на коллекцию users — можно добавить вызов в его обработчик.
+// Но мы уже добавили персональный слушатель в openChat, поэтому обновление будет мгновенным.
+
+console.log('✅ Статусы "в сети", "был(а) недавно", "был(а) давно" добавлены');
+// ════════════════════════════════════════════════════
+//  КНОПКА НАСТРОЙКИ «РЕЖИМ ПК» (без конфликтов)
+// ════════════════════════════════════════════════════
+(function() {
+  // Применяем режим при загрузке, если он был включён принудительно
+  function applyDesktop(enable) {
+    if (enable) {
+      document.body.classList.add('desktop-layout');
+      // Показываем боковую панель чатов на широком экране
+      const pageChats = document.getElementById('page-chats');
+      if (pageChats) pageChats.style.display = 'flex';
+    } else {
+      document.body.classList.remove('desktop-layout');
+      // Восстанавливаем мобильное поведение
+      const pageChats = document.getElementById('page-chats');
+      if (pageChats) pageChats.style.display = '';
+    }
+  }
+
+  // Проверяем сохранённую настройку и применяем
+  let desktopEnabled = localStorage.getItem('force-desktop-layout') === 'true';
+  applyDesktop(desktopEnabled);
+
+  // Функция добавления пункта в настройки (вызывается после рендера настроек)
+  function addLayoutSettingItem() {
+    if (document.getElementById('s-layout-mode')) return; // уже добавлен
+    const bodyEl = document.getElementById('settings-body');
+    if (!bodyEl) return;
+
+    // Ищем раздел "Дополнительно"
+    let targetSection = null;
+    bodyEl.querySelectorAll('.settings-section').forEach(sec => {
+      if (sec.querySelector('.settings-label')?.textContent?.trim() === 'Дополнительно') {
+        targetSection = sec;
+      }
+    });
+    if (!targetSection) return;
+
+    const item = document.createElement('div');
+    item.className = 'settings-item';
+    item.id = 's-layout-mode';
+    item.innerHTML = `
+      <div class="si-icon">🖥️</div>
+      <div class="si-text">Режим ПК</div>
+      <label class="toggle-switch" style="margin-left:auto; position:relative; display:inline-block; width:44px; height:24px;">
+        <input type="checkbox" id="desktop-layout-checkbox" style="opacity:0; width:0; height:0;">
+        <span class="toggle-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#ccc; transition:.3s; border-radius:24px;"></span>
+      </label>
+    `;
+    targetSection.appendChild(item);
+
+    const checkbox = item.querySelector('#desktop-layout-checkbox');
+    checkbox.checked = desktopEnabled;
+    checkbox.addEventListener('change', () => {
+      desktopEnabled = checkbox.checked;
+      applyDesktop(desktopEnabled);
+      localStorage.setItem('force-desktop-layout', desktopEnabled ? 'true' : 'false');
+    });
+  }
+
+  // Ждём появления настроек (наблюдатель или таймаут)
+  const observer = new MutationObserver(() => {
+    if (document.getElementById('settings-body')) {
+      addLayoutSettingItem();
+    }
+  });
+  observer.observe(document.body, { childList: true, subtree: true });
+
+  // На случай, если настройки уже отрендерены
+  if (document.getElementById('settings-body')) {
+    addLayoutSettingItem();
+  }
+})();
+// ════════════════════════════════════════════════════
+//  КНОПКА «НАСТРОЙКИ» В ШАПКЕ ДЛЯ РЕЖИМА ПК
+// ════════════════════════════════════════════════════
+(function() {
+  // Добавляем CSS для отображения кнопки только на больших экранах
+  const style = document.createElement('style');
+  style.id = 'desktop-settings-btn-style';
+  style.textContent = `
+    #desktop-settings-btn {
+      display: none; /* по умолчанию скрыта */
+    }
+    @media (min-width: 768px) {
+      #desktop-settings-btn {
+        display: flex;
+      }
+      /* Если принудительно включён режим ПК — показываем всегда */
+      body.desktop-layout #desktop-settings-btn {
+        display: flex;
+      }
+    }
+  `;
+  document.head.appendChild(style);
+
+  // Функция для вставки кнопки в шапку списка чатов
+  function injectSettingsButton() {
+    const hdr = document.querySelector('#page-chats .hdr');
+    if (!hdr || document.getElementById('desktop-settings-btn')) return;
+
+    const settingsBtn = document.createElement('button');
+    settingsBtn.id = 'desktop-settings-btn';
+    settingsBtn.className = 'hdr-btn';
+    settingsBtn.title = 'Настройки';
+    settingsBtn.innerHTML = '⚙️';
+    settingsBtn.onclick = () => {
+      // Переключаем на страницу настроек
+      navigateTo('settings');
+    };
+
+    // Вставляем перед кнопкой создания нового чата или в конец
+    const composeBtn = document.getElementById('compose-btn');
+    if (composeBtn) {
+      hdr.insertBefore(settingsBtn, composeBtn);
+    } else {
+      hdr.appendChild(settingsBtn);
+    }
+  }
+
+  // При загрузке страницы сразу пытаемся вставить
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', injectSettingsButton);
+  } else {
+    injectSettingsButton();
+  }
+
+  // Также подстрахуемся: если шапка была пересоздана, добавим кнопку при открытии чатов
+  const observer = new MutationObserver(() => {
+    if (!document.getElementById('desktop-settings-btn')) {
+      injectSettingsButton();
+    }
+  });
+  observer.observe(document.body, { childList: true, subtree: true });
+})();
+// ════════════════════════════════════════════════════
+//  КРЕСТИК ДЛЯ ЗАКРЫТИЯ НАСТРОЕК / КОНТАКТОВ (ПК-режим)
+// ════════════════════════════════════════════════════
+(function addCloseButtons() {
+  function injectCloseBtn(selector) {
+    const hdr = document.querySelector(selector);
+    if (!hdr || hdr.querySelector('.hdr-close')) return;
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'hdr-btn hdr-close';
+    closeBtn.textContent = '✕';
+    closeBtn.style.cssText = 'margin-left:auto; font-size:18px;';
+    closeBtn.addEventListener('click', () => navigateTo('chats'));
+    hdr.appendChild(closeBtn);
+  }
+  // Добавляем в шапку настроек и контактов
+  injectCloseBtn('#page-settings .hdr');
+  injectCloseBtn('#page-contacts .hdr');
+})();
+// ════════════════════════════════════════════════════
+//  УЛУЧШЕННЫЙ ДИЗАЙН ГОЛОСОВЫХ СООБЩЕНИЙ
+// ════════════════════════════════════════════════════
+(function() {
+  // Стили
+  const style = document.createElement('style');
+  style.id = 'voice-message-style';
+  style.textContent = `
+    .voice-msg {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 200px;
+      padding: 4px 0;
+    }
+    .voice-play-btn {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #4A90E2, #5B9BD5);
+      box-shadow: 0 4px 10px rgba(74,144,226,0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.2s;
+      flex-shrink: 0;
+    }
+    .voice-play-btn:active {
+      transform: scale(0.9);
+      box-shadow: 0 2px 5px rgba(74,144,226,0.2);
+    }
+    .voice-play-btn svg {
+      width: 16px; height: 16px;
+      fill: white;
+    }
+    .voice-wave-container {
+      flex: 1;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+    .voice-wave-bar {
+      width: 3px;
+      border-radius: 3px;
+      background: linear-gradient(to top, #4A90E2, #8BC4F8);
+      transition: height 0.2s ease;
+      will-change: height;
+    }
+    .voice-time {
+      font-size: 12px;
+      font-weight: 500;
+      color: #666;
+      min-width: 36px;
+      text-align: right;
+      flex-shrink: 0;
+    }
+    .msg-group.out .voice-time {
+      color: rgba(255,255,255,0.8);
+    }
+    .msg-group.in .voice-time {
+      color: #888;
+    }
+    /* Тёмная тема (если есть) */
+    body.dark .voice-time { color: #aaa; }
+  `;
+  document.head.appendChild(style);
+
+  // Функция создания визуализации (волны) на основе аудио-файла
+  function createWaveform(audioSrc) {
+    return new Promise(resolve => {
+      const audio = new Audio(audioSrc);
+      audio.addEventListener('loadedmetadata', () => {
+        const duration = audio.duration;
+        const sampleCount = 30; // количество полосок
+        // Генерируем случайные высоты, похожие на звуковую волну
+        const bars = Array.from({ length: sampleCount }, () => Math.random() * 0.8 + 0.2);
+        resolve(bars);
+      });
+      audio.load();
+    });
+  }
+
+  // Строим плеер
+  async function buildVoicePlayer(audioElement, container) {
+    const audioSrc = audioElement.src;
+    if (!audioSrc) return;
+
+    // Получаем данные волны
+    const bars = await createWaveform(audioSrc);
+
+    // Контейнер плеера
+    const voiceMsg = document.createElement('div');
+    voiceMsg.className = 'voice-msg';
+
+    // Кнопка воспроизведения
+    const playBtn = document.createElement('div');
+    playBtn.className = 'voice-play-btn';
+    playBtn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>`; // треугольник play
+    voiceMsg.appendChild(playBtn);
+
+    // Волна
+    const waveContainer = document.createElement('div');
+    waveContainer.className = 'voice-wave-container';
+    const maxBars = 30;
+    bars.slice(0, maxBars).forEach(height => {
+      const bar = document.createElement('div');
+      bar.className = 'voice-wave-bar';
+      bar.style.height = (height * 24) + 'px';
+      waveContainer.appendChild(bar);
+    });
+    voiceMsg.appendChild(waveContainer);
+
+    // Время
+    const timeDisplay = document.createElement('span');
+    timeDisplay.className = 'voice-time';
+    const mins = Math.floor((audioElement.duration || 0) / 60);
+    const secs = Math.floor((audioElement.duration || 0) % 60).toString().padStart(2,'0');
+    timeDisplay.textContent = `${mins}:${secs}`;
+    voiceMsg.appendChild(timeDisplay);
+
+    // Логика управления
+    let isPlaying = false;
+    const updatePlayIcon = () => {
+      playBtn.innerHTML = isPlaying ? 
+        `<svg viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>` : // пауза
+        `<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>`;
+    };
+
+    playBtn.addEventListener('click', () => {
+      if (audioElement.paused) {
+        audioElement.play();
+        isPlaying = true;
+      } else {
+        audioElement.pause();
+        isPlaying = false;
+      }
+      updatePlayIcon();
+    });
+
+    audioElement.addEventListener('ended', () => {
+      isPlaying = false;
+      updatePlayIcon();
+      // сброс прогресса волны
+      waveContainer.querySelectorAll('.voice-wave-bar').forEach(bar => {
+        bar.style.height = bar.dataset.originalHeight || bar.style.height;
+      });
+    });
+
+    audioElement.addEventListener('timeupdate', () => {
+      const current = audioElement.currentTime;
+      const duration = audioElement.duration || 1;
+      const progress = current / duration;
+      // обновляем высоту полосок в зависимости от прогресса
+      waveContainer.querySelectorAll('.voice-wave-bar').forEach((bar, i) => {
+        const originalHeight = parseFloat(bar.dataset.originalHeight || bar.style.height);
+        if (!bar.dataset.originalHeight) {
+          bar.dataset.originalHeight = bar.style.height;
+        }
+        const adjusted = originalHeight * (i / maxBars <= progress ? 1 : 0.3);
+        bar.style.height = adjusted + 'px';
+      });
+      // обновляем время
+      const mins = Math.floor(current / 60);
+      const secs = Math.floor(current % 60).toString().padStart(2,'0');
+      timeDisplay.textContent = `${mins}:${secs}`;
+    });
+
+    // Заменяем стандартный аудиоплеер
+    audioElement.style.display = 'none';
+    container.appendChild(voiceMsg);
+  }
+
+  // Применяем ко всем аудио в сообщениях при рендеринге
+  const origRenderMessages = renderMessages;
+  renderMessages = function() {
+    origRenderMessages.call(this);
+    // Находим все аудио в сообщениях и заменяем
+    document.querySelectorAll('.bubble .bubble-text audio').forEach(audio => {
+      if (!audio.nextElementSibling?.classList.contains('voice-msg')) {
+        buildVoicePlayer(audio, audio.parentElement);
+      }
+    });
+  };
+
+  // Также обработаем уже существующие аудио (если вдруг)
+  if (typeof allMessages !== 'undefined') {
+    setTimeout(() => {
+      document.querySelectorAll('.bubble .bubble-text audio').forEach(audio => {
+        if (!audio.nextElementSibling?.classList.contains('voice-msg')) {
+          buildVoicePlayer(audio, audio.parentElement);
+        }
+      });
+    }, 100);
+  }
+})();
+// ════════════════════════════════════════════════════
+//  КРАСИВАЯ ЗАСТАВКА NEXLINK
+// ════════════════════════════════════════════════════
+(function() {
+  // Обновлённые стили для #splash (добавим, если ещё не добавлены)
+  if (!document.getElementById('new-splash-style')) {
+    const style = document.createElement('style');
+    style.id = 'new-splash-style';
+    style.textContent = `
+      #splash {
+        background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%) !important;
+        display: flex; align-items: center; justify-content: center;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      /* Анимированные круги на фоне */
+      .splash-bg {
+        position: absolute; inset: 0;
+        pointer-events: none;
+      }
+      .splash-circle {
+        position: absolute; border-radius: 50%;
+        background: rgba(255,255,255,0.05);
+        animation: floatCircle 12s infinite ease-in-out alternate;
+      }
+      .c1 { width: 300px; height: 300px; top: -50px; left: -50px; }
+      .c2 { width: 400px; height: 400px; bottom: -100px; right: -100px; animation-delay: -4s; }
+      .c3 { width: 200px; height: 200px; top: 40%; left: 60%; animation-delay: -8s; }
+      @keyframes floatCircle {
+        0% { transform: translate(0,0) scale(1); }
+        100% { transform: translate(30px,-30px) scale(1.1); }
+      }
+      /* Логотип */
+      .splash-logo-img {
+        background: rgba(255,255,255,0.15) !important;
+        backdrop-filter: blur(12px);
+        border-radius: 24px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        animation: logoPulse 2.5s ease-in-out infinite;
+        display: flex; align-items: center; justify-content: center;
+        width: 80px; height: 80px;
+      }
+      .splash-logo-img svg { width: 48px; height: 48px; }
+      @keyframes logoPulse {
+        0% { box-shadow: 0 0 0 0 rgba(255,255,255,0.4); }
+        70% { box-shadow: 0 0 0 20px rgba(255,255,255,0); }
+        100% { box-shadow: 0 0 0 0 rgba(255,255,255,0); }
+      }
+      .splash-title {
+        font-size: 38px; font-weight: 800; color: white;
+        text-shadow: 0 0 15px rgba(0,0,0,0.3);
+        animation: fadeUp 0.8s 0.2s both;
+      }
+      .splash-sub {
+        color: rgba(255,255,255,0.7); font-size: 16px;
+        margin-top: 4px;
+        animation: fadeUp 0.8s 0.4s both;
+      }
+      @keyframes fadeUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      /* Полоска загрузки */
+      .splash-bar {
+        width: 140px; height: 3px; background: rgba(255,255,255,0.2);
+        border-radius: 3px; overflow: hidden; margin-top: 20px;
+        animation: fadeUp 0.8s 0.6s both;
+      }
+      .splash-bar-fill {
+        height: 100%; background: white; border-radius: 3px;
+        animation: barFill 2s ease-in-out 0.8s forwards;
+      }
+      @keyframes barFill {
+        from { width: 0%; }
+        to { width: 100%; }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  // Добавим анимированные круги в #splash, если их ещё нет
+  const splash = document.getElementById('splash');
+  if (splash && !splash.querySelector('.splash-bg')) {
+    const bg = document.createElement('div');
+    bg.className = 'splash-bg';
+    bg.innerHTML = '<div class="splash-circle c1"></div><div class="splash-circle c2"></div><div class="splash-circle c3"></div>';
+    splash.insertBefore(bg, splash.firstChild);
+  }
+
+  // Заменим содержимое логотипа на SVG
+  const logoImg = document.querySelector('.splash-logo-img');
+  if (logoImg) {
+    logoImg.innerHTML = `<svg viewBox="0 0 48 48"><path d="M24 4C13 4 4 12 4 22c0 4 1.5 7.5 4 10.5L6 42l10-4c3 1.5 5.5 2 8 2 11 0 20-8 20-18S35 4 24 4z" fill="white"/><path d="M16 20h16M16 26h10" stroke="#2AABEE" stroke-width="2.5" stroke-linecap="round"/></svg>`;
+  }
+
+  // Плавное скрытие заставки
+  const origHideSplash = window.hideSplash;
+  window.hideSplash = function() {
+    const el = document.getElementById('splash');
+    if (el) {
+      el.classList.add('gone');
+      setTimeout(() => { if (el.parentNode) el.parentNode.removeChild(el); }, 600);
+    }
+    if (origHideSplash) origHideSplash();
+  };
+})();
+// ════════════════════════════════════════════════════
+//  10 СОВРЕМЕННЫХ ТЕМ ОФОРМЛЕНИЯ
+// ════════════════════════════════════════════════════
+(function() {
+  // Предустановленные темы
+  const themes = {
+    default: {
+      name: 'Стандартная',
+      accent: '#2AABEE',
+      bg: '#FFFFFF',
+      bgSecondary: '#F0F2F5',
+      textPrimary: '#1A1A2E',
+      textSecondary: '#4A4A5A',
+      msgOutBg: '#2AABEE',
+      msgOutText: '#FFFFFF',
+      msgInBg: '#FFFFFF',
+      msgInText: '#1A1A2E',
+      border: '#E8EBF0',
+      gradient: 'linear-gradient(135deg, #2AABEE, #1a8bc5)'
+    },
+    dark: {
+      name: 'Тёмная',
+      accent: '#6C63FF',
+      bg: '#1E1E2E',
+      bgSecondary: '#2A2A3C',
+      textPrimary: '#EAEAEA',
+      textSecondary: '#B0B0C0',
+      msgOutBg: '#6C63FF',
+      msgOutText: '#FFFFFF',
+      msgInBg: '#2A2A3C',
+      msgInText: '#EAEAEA',
+      border: '#3A3A4E',
+      gradient: 'linear-gradient(135deg, #6C63FF, #4A42E0)'
+    },
+    midnight: {
+      name: 'Полночь',
+      accent: '#FF6B6B',
+      bg: '#0B0C10',
+      bgSecondary: '#1F2833',
+      textPrimary: '#FFFFFF',
+      textSecondary: '#C5C6C7',
+      msgOutBg: '#FF6B6B',
+      msgOutText: '#FFFFFF',
+      msgInBg: '#1F2833',
+      msgInText: '#FFFFFF',
+      border: '#2C353D',
+      gradient: 'linear-gradient(135deg, #FF6B6B, #E74C3C)'
+    },
+    mint: {
+      name: 'Мятная',
+      accent: '#2ECC71',
+      bg: '#F0FFF4',
+      bgSecondary: '#E8F8E8',
+      textPrimary: '#1E3B2F',
+      textSecondary: '#4A6A5E',
+      msgOutBg: '#2ECC71',
+      msgOutText: '#FFFFFF',
+      msgInBg: '#FFFFFF',
+      msgInText: '#1E3B2F',
+      border: '#C8E6C9',
+      gradient: 'linear-gradient(135deg, #2ECC71, #27AE60)'
+    },
+    sunset: {
+      name: 'Закат',
+      accent: '#FF7E67',
+      bg: '#FFF5F0',
+      bgSecondary: '#FFE8E0',
+      textPrimary: '#4A2C2C',
+      textSecondary: '#7A5C5C',
+      msgOutBg: '#FF7E67',
+      msgOutText: '#FFFFFF',
+      msgInBg: '#FFFFFF',
+      msgInText: '#4A2C2C',
+      border: '#F0C4B0',
+      gradient: 'linear-gradient(135deg, #FF7E67, #FF5E3A)'
+    },
+    ocean: {
+      name: 'Океан',
+      accent: '#0077B6',
+      bg: '#F0F8FF',
+      bgSecondary: '#E0F0FF',
+      textPrimary: '#002233',
+      textSecondary: '#335566',
+      msgOutBg: '#0077B6',
+      msgOutText: '#FFFFFF',
+      msgInBg: '#FFFFFF',
+      msgInText: '#002233',
+      border: '#B0D4F0',
+      gradient: 'linear-gradient(135deg, #0077B6, #005B8E)'
+    },
+    lavender: {
+      name: 'Лаванда',
+      accent: '#9B59B6',
+      bg: '#F8F4FF',
+      bgSecondary: '#ECE0FF',
+      textPrimary: '#2D1B3E',
+      textSecondary: '#5C4A6E',
+      msgOutBg: '#9B59B6',
+      msgOutText: '#FFFFFF',
+      msgInBg: '#FFFFFF',
+      msgInText: '#2D1B3E',
+      border: '#D4C0F0',
+      gradient: 'linear-gradient(135deg, #9B59B6, #8E44AD)'
+    },
+    forest: {
+      name: 'Лесная',
+      accent: '#4CAF50',
+      bg: '#F2F9F2',
+      bgSecondary: '#E0F0E0',
+      textPrimary: '#1B3B1B',
+      textSecondary: '#4A6A4A',
+      msgOutBg: '#4CAF50',
+      msgOutText: '#FFFFFF',
+      msgInBg: '#FFFFFF',
+      msgInText: '#1B3B1B',
+      border: '#B0D0B0',
+      gradient: 'linear-gradient(135deg, #4CAF50, #388E3C)'
+    },
+    rose: {
+      name: 'Розовая',
+      accent: '#E91E63',
+      bg: '#FFF0F5',
+      bgSecondary: '#FFE0EC',
+      textPrimary: '#3E1B2E',
+      textSecondary: '#6E4A5E',
+      msgOutBg: '#E91E63',
+      msgOutText: '#FFFFFF',
+      msgInBg: '#FFFFFF',
+      msgInText: '#3E1B2E',
+      border: '#F0B0C8',
+      gradient: 'linear-gradient(135deg, #E91E63, #C2185B)'
+    },
+    cyan: {
+      name: 'Циан',
+      accent: '#00BCD4',
+      bg: '#F0FFFF',
+      bgSecondary: '#E0FFFF',
+      textPrimary: '#003333',
+      textSecondary: '#336666',
+      msgOutBg: '#00BCD4',
+      msgOutText: '#FFFFFF',
+      msgInBg: '#FFFFFF',
+      msgInText: '#003333',
+      border: '#B0E0E0',
+      gradient: 'linear-gradient(135deg, #00BCD4, #0097A7)'
+    }
+  };
+
+  // Применить тему
+  function applyTheme(themeKey) {
+    const theme = themes[themeKey];
+    if (!theme) return;
+    const root = document.documentElement;
+    Object.entries(theme).forEach(([key, value]) => {
+      if (key === 'name') return;
+      root.style.setProperty(`--${key.replace(/([A-Z])/g, '-$1').toLowerCase()}`, value);
+    });
+    // Дополнительно установим переменную градиента для кнопок
+    root.style.setProperty('--accent-gradient', theme.gradient);
+    localStorage.setItem('selected-theme', themeKey);
+  }
+
+  // Загрузка сохраненной темы или дефолт
+  const savedTheme = localStorage.getItem('selected-theme') || 'default';
+  applyTheme(savedTheme);
+
+  // Добавление пункта выбора темы в настройки
+  function addThemeSetting() {
+    const settingsBody = document.getElementById('settings-body');
+    if (!settingsBody || document.getElementById('s-theme-selector')) return;
+
+    // Ищем раздел "Дополнительно"
+    let targetSection = null;
+    settingsBody.querySelectorAll('.settings-section').forEach(sec => {
+      if (sec.querySelector('.settings-label')?.textContent.trim() === 'Дополнительно') {
+        targetSection = sec;
+      }
+    });
+    if (!targetSection) return;
+
+    const item = document.createElement('div');
+    item.className = 'settings-item';
+    item.id = 's-theme-selector';
+    item.innerHTML = `
+      <div class="si-icon">🎨</div>
+      <div class="si-text">Тема оформления</div>
+      <span class="si-value" id="current-theme-name">${themes[savedTheme]?.name || ''}</span>
+      <span class="si-arrow">›</span>
+    `;
+    item.addEventListener('click', showThemeModal);
+    targetSection.appendChild(item);
+  }
+
+  // Модальное окно выбора темы
+  function showThemeModal() {
+    // Удаляем старое, если есть
+    const oldModal = document.getElementById('modal-theme-picker');
+    if (oldModal) oldModal.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'modal-theme-picker';
+    modal.className = 'modal-ov';
+    modal.innerHTML = `
+      <div class="modal-sheet">
+        <div class="modal-pill"></div>
+        <div class="modal-hdr">
+          <h3>Выберите тему</h3>
+          <button class="modal-close">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="theme-grid" id="theme-grid"></div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+
+    const grid = modal.querySelector('#theme-grid');
+    grid.innerHTML = Object.entries(themes).map(([key, theme]) => `
+      <div class="theme-card ${key === savedTheme ? 'active' : ''}" data-theme="${key}">
+        <div class="theme-preview" style="background:${theme.bg}; border:2px solid ${theme.border};">
+          <div style="background:${theme.accent}; width:100%; height:8px; border-radius: 0 0 12px 12px;"></div>
+          <div style="display:flex; flex:1; padding:4px;">
+            <div style="background:${theme.msgInBg}; flex:1; margin:2px; border-radius:4px; border-left:3px solid ${theme.accent};"></div>
+            <div style="background:${theme.msgOutBg}; flex:1; margin:2px; border-radius:4px; border-right:3px solid ${theme.accent};"></div>
+          </div>
+        </div>
+        <span>${theme.name}</span>
+        ${key === savedTheme ? '<span class="check">✓</span>' : ''}
+      </div>
+    `).join('');
+
+    // Обработчики
+    grid.querySelectorAll('.theme-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const themeKey = card.dataset.theme;
+        applyTheme(themeKey);
+        // Обновить интерфейс
+        document.querySelectorAll('.theme-card').forEach(c => c.classList.remove('active'));
+        card.classList.add('active');
+        // Обновить отображаемое имя темы в настройках
+        const nameEl = document.getElementById('current-theme-name');
+        if (nameEl) nameEl.textContent = themes[themeKey].name;
+        // Закрыть модалку через небольшой таймаут
+        setTimeout(() => modal.remove(), 200);
+      });
+    });
+
+    modal.querySelector('.modal-close').addEventListener('click', () => modal.remove());
+    modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+    modal.classList.add('open');
+
+    // Добавим стили для сетки тем (если ещё нет)
+    if (!document.getElementById('theme-picker-styles')) {
+      const st = document.createElement('style');
+      st.id = 'theme-picker-styles';
+      st.textContent = `
+        .theme-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 12px; }
+        .theme-card {
+          text-align: center; cursor: pointer; padding: 8px; border-radius: 12px;
+          transition: 0.2s; position: relative;
+        }
+        .theme-card.active { background: var(--accent-light); }
+        .theme-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .theme-preview {
+          width: 100%; height: 60px; border-radius: 12px; overflow: hidden;
+          display: flex; flex-direction: column; margin-bottom: 6px;
+          box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+        .theme-card .check {
+          position: absolute; top: 4px; right: 8px;
+          background: var(--accent); color: white; border-radius: 50%;
+          width: 22px; height: 22px; display: flex; align-items: center; justify-content: center;
+          font-size: 12px; font-weight: bold;
+        }
+      `;
+      document.head.appendChild(st);
+    }
+  }
+
+  // Внедряем в настройки при их рендере
+  const origRenderSettings = renderSettings;
+  renderSettings = function() {
+    origRenderSettings.apply(this, arguments);
+    setTimeout(addThemeSetting, 100);
+  };
+
+  // На случай, если настройки уже отрендерены
+  if (document.getElementById('settings-body')) addThemeSetting();
+})();
+// ════════════════════════════════════════════════════
+//  АНИМАЦИЯ ВХОДА, КОТОРАЯ ЖДЁТ ФАКТИЧЕСКОГО ВХОДА
+// ════════════════════════════════════════════════════
+(function() {
+  // Стили
+  const style = document.createElement('style');
+  style.textContent = `
+    .auth-btn.loading {
+      pointer-events: none;
+      opacity: 0.8;
+      position: relative;
+      color: transparent !important;
+    }
+    .auth-btn.loading::after {
+      content: '';
+      position: absolute;
+      width: 22px;
+      height: 22px;
+      top: 50%;
+      left: 50%;
+      margin-left: -11px;
+      margin-top: -11px;
+      border: 2.5px solid rgba(255,255,255,0.4);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: btn-spin 0.7s linear infinite;
+    }
+    @keyframes btn-spin { to { transform: rotate(360deg); } }
+    #auth-screen {
+      transition: opacity 0.5s ease, visibility 0.5s ease;
+    }
+    #auth-screen.gone {
+      opacity: 0;
+      visibility: hidden;
+    }
+  `;
+  document.head.appendChild(style);
+
+  // Храним кнопки, на которых активен спиннер
+  let loadingButtons = [];
+
+  function setButtonLoading(btn, isLoading) {
+    if (!btn) return;
+    if (isLoading) {
+      btn.classList.add('loading');
+      btn.textContent = '';
+      if (!loadingButtons.includes(btn)) loadingButtons.push(btn);
+    } else {
+      btn.classList.remove('loading');
+      // восстановим текст (возьмём из data-атрибута или захардкодим)
+      if (btn.id === 'login-btn') btn.textContent = 'Войти';
+      else if (btn.id === 'reg-btn') btn.textContent = 'Создать аккаунт';
+      else if (btn.id === 'google-btn') btn.textContent = '🟢 Войти через Google';
+      loadingButtons = loadingButtons.filter(b => b !== btn);
+    }
+  }
+
+  // Следим за скрытием auth-screen и убираем спиннеры
+  const authScreen = document.getElementById('auth-screen');
+  const observer = new MutationObserver(() => {
+    if (authScreen && authScreen.classList.contains('gone')) {
+      // Убираем спиннеры со всех кнопок
+      loadingButtons.forEach(btn => setButtonLoading(btn, false));
+    }
+  });
+  if (authScreen) {
+    observer.observe(authScreen, { attributes: true, attributeFilter: ['class'] });
+  }
+
+  // Перехватываем кнопки
+  function wrapAuthButton(btnId, originalAction) {
+    const btn = document.getElementById(btnId);
+    if (!btn) return;
+    // Удаляем старые обработчики, оставляем только наш
+    btn.onclick = null;
+    btn.addEventListener('click', async function(e) {
+      if (btn.classList.contains('loading')) return;
+      setButtonLoading(btn, true);
+      try {
+        await originalAction(e);
+        // Не убираем спиннер здесь — ждём, пока auth-screen не скроется
+      } catch (err) {
+        // При ошибке сразу убираем спиннер
+        setButtonLoading(btn, false);
+      }
+    });
+  }
+
+  // Оригинальные обработчики (если они уже определены, например, через onclick)
+  // Поскольку в коде они прописаны как onclick или addEventListener, 
+  // мы можем просто взять текущую функцию и передать её.
+  const loginBtn = document.getElementById('login-btn');
+  const regBtn = document.getElementById('reg-btn');
+  const googleBtn = document.getElementById('google-btn');
+
+  if (loginBtn) {
+    const origHandler = loginBtn.onclick || (() => document.getElementById('login-btn').click());
+    wrapAuthButton('login-btn', origHandler);
+  }
+  if (regBtn) {
+    const origHandler = regBtn.onclick || (() => document.getElementById('reg-btn').click());
+    wrapAuthButton('reg-btn', origHandler);
+  }
+  if (googleBtn) {
+    const origHandler = googleBtn.onclick || (() => document.getElementById('google-btn').click());
+    wrapAuthButton('google-btn', origHandler);
+  }
+})();
+// ════════════════════════════════════════════════════
+//  НОВЫЙ ДИЗАЙН АВТОРИЗАЦИИ (современный)
+// ════════════════════════════════════════════════════
+(function() {
+  // Добавляем стили
+  const style = document.createElement('style');
+  style.id = 'new-auth-style';
+  style.textContent = `
+    /* Фон всей страницы авторизации */
+    #auth-screen {
+      background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%) !important;
+      display: flex; align-items: center; justify-content: center;
+    }
+    /* Карточка */
+    .auth-box {
+      background: rgba(255,255,255,0.08) !important;
+      backdrop-filter: blur(20px);
+      border-radius: 28px !important;
+      padding: 36px 28px !important;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.1) !important;
+      animation: authBoxIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+      max-width: 400px;
+      width: 100%;
+    }
+    @keyframes authBoxIn {
+      from { opacity: 0; transform: translateY(30px) scale(0.96); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    /* Логотип */
+    .auth-logo .logo-icon {
+      background: rgba(255,255,255,0.15) !important;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.2) !important;
+      animation: logoFloat 3s ease-in-out infinite;
+    }
+    @keyframes logoFloat {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-5px); }
+    }
+    .auth-logo h1 {
+      color: white !important;
+      text-shadow: 0 0 10px rgba(0,0,0,0.3);
+    }
+    .auth-logo p {
+      color: rgba(255,255,255,0.8) !important;
+    }
+    /* Вкладки */
+    .auth-tabs {
+      background: rgba(255,255,255,0.1) !important;
+      border-radius: 14px !important;
+      padding: 4px !important;
+      gap: 4px !important;
+    }
+    .auth-tab {
+      color: rgba(255,255,255,0.7) !important;
+      border-radius: 12px !important;
+      transition: 0.3s !important;
+      padding: 10px !important;
+    }
+    .auth-tab.active {
+      background: white !important;
+      color: #0f2027 !important;
+      font-weight: 700 !important;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.15) !important;
+    }
+    /* Поля ввода */
+    .field label {
+      color: rgba(255,255,255,0.85) !important;
+      font-weight: 500 !important;
+    }
+    .field input, .field select, .field textarea {
+      background: rgba(255,255,255,0.1) !important;
+      border: 1.5px solid rgba(255,255,255,0.2) !important;
+      color: white !important;
+      border-radius: 14px !important;
+      padding: 13px 16px !important;
+      font-size: 15px !important;
+      transition: 0.25s !important;
+    }
+    .field input:focus, .field select:focus, .field textarea:focus {
+      border-color: rgba(255,255,255,0.5) !important;
+      background: rgba(255,255,255,0.15) !important;
+      box-shadow: 0 0 0 4px rgba(255,255,255,0.05) !important;
+      outline: none;
+    }
+    .field input::placeholder {
+      color: rgba(255,255,255,0.4);
+    }
+    /* Кнопка входа/регистрации */
+    .auth-btn {
+      background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%) !important;
+      color: white !important;
+      font-weight: 700 !important;
+      border-radius: 16px !important;
+      padding: 14px !important;
+      box-shadow: 0 10px 25px rgba(79,172,254,0.3) !important;
+      transition: 0.3s !important;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border: none;
+    }
+    .auth-btn:active {
+      transform: scale(0.97);
+      box-shadow: 0 5px 15px rgba(79,172,254,0.2) !important;
+    }
+    /* Google */
+    .google-btn {
+      background: rgba(255,255,255,0.1) !important;
+      border: 1px solid rgba(255,255,255,0.2) !important;
+      color: white !important;
+      backdrop-filter: blur(8px);
+      border-radius: 14px !important;
+      transition: 0.3s;
+    }
+    .google-btn:active {
+      background: rgba(255,255,255,0.2) !important;
+    }
+    /* Разделитель */
+    .auth-divider {
+      color: rgba(255,255,255,0.5) !important;
+    }
+    .auth-divider::before, .auth-divider::after {
+      background: rgba(255,255,255,0.2) !important;
+    }
+    /* Аватарки */
+    .av-grid {
+      gap: 8px;
+    }
+    .av-opt {
+      background: rgba(255,255,255,0.1) !important;
+      border-radius: 12px !important;
+      transition: 0.2s;
+    }
+    .av-opt.sel {
+      background: rgba(255,255,255,0.3) !important;
+      border-color: white !important;
+    }
+    /* Ошибка */
+    .err-msg {
+      background: rgba(255,0,0,0.2) !important;
+      border-radius: 12px;
+      color: #ffcccc !important;
+    }
+  `;
+  document.head.appendChild(style);
+})();
+// ════════════════════════════════════════════════════
+//  ИСПРАВЛЕННАЯ РЕГИСТРАЦИЯ ДЕТСКОГО АККАУНТА
+// ════════════════════════════════════════════════════
+(function() {
+  // Дождёмся появления кнопки
+  function patchChildRegButton() {
+    const btn = document.getElementById('child-reg-btn');
+    if (!btn) return;
+    // Удаляем старый обработчик (если был)
+    btn.onclick = null;
+    btn.addEventListener('click', async () => {
+      const errEl = document.getElementById('c-err');
+      errEl.className = 'err-msg';
+      errEl.textContent = '';
+
+      const firstName = document.getElementById('c-first').value.trim();
+      const lastName = document.getElementById('c-last').value.trim();
+      const age = parseInt(document.getElementById('c-age').value);
+      const email = document.getElementById('c-email').value.trim().toLowerCase();
+      const parentEmail = document.getElementById('c-parent-email').value.trim().toLowerCase();
+      const password = document.getElementById('c-pass').value;
+
+      if (!firstName) { errEl.textContent = '❌ Введите имя'; errEl.classList.add('show'); return; }
+      if (!email || !validEmail(email)) { errEl.textContent = '❌ Некорректный email ребёнка'; errEl.classList.add('show'); return; }
+      if (!parentEmail || !validEmail(parentEmail)) { errEl.textContent = '❌ Некорректный email родителя'; errEl.classList.add('show'); return; }
+      if (isNaN(age) || age < 1 || age > 14) { errEl.textContent = '❌ Возраст должен быть от 1 до 14 лет'; errEl.classList.add('show'); return; }
+      if (password.length < 6) { errEl.textContent = '❌ Пароль минимум 6 символов'; errEl.classList.add('show'); return; }
+
+      // ⚠️ Не проверяем Firestore — сразу пробуем создать аккаунт
+      try {
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+
+        // Сохраняем данные в Firestore
+        await setDoc(doc(db, 'users', user.uid), {
+          email: email,
+          username: '',
+          firstName: firstName,
+          lastName: lastName,
+          name: firstName + (lastName ? ' ' + lastName : ''),
+          avatar: childAvatar,
+          uid: user.uid,
+          contacts: [],
+          privacyWrite: 'all',
+          childAccount: true,
+          age: age,
+          parentEmail: parentEmail,
+          createdAt: serverTimestamp()
+        });
+
+        await sendEmailVerification(user);
+        showVerifyScreen(email);
+      } catch (e) {
+        if (e.code === 'auth/email-already-in-use') {
+          errEl.textContent = '❌ Этот email уже используется (возможно, родителем). Введите другой.';
+        } else {
+          errEl.textContent = `❌ ${e.message}`;
+        }
+        errEl.classList.add('show');
+      }
+    });
+  }
+
+  // Запускаем после загрузки DOM
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', patchChildRegButton);
+  } else {
+    patchChildRegButton();
+  }
+})();
+// ════════════════════════════════════════════════════
+//  ДЕТСКИЙ АККАУНТ: ЗАПРЕТ ГОЛОСОВЫХ, ОГРАНИЧЕНИЕ ВОЗРАСТА,
+//  ЗАПРОС НА СМЕНУ ВОЗРАСТА
+// ════════════════════════════════════════════════════
+(function() {
+  // Проверка, является ли текущий пользователь детским
+  function isChildAccount() {
+    return myProfile && myProfile.childAccount === true;
+  }
+
+  // Проверка, что собеседник не старше 14 лет
+  function isPeerTooOld(peerUid) {
+    const peer = usersCache.get(peerUid);
+    if (!peer) return true; // неизвестный – блокируем
+    const age = peer.age;
+    // Если у собеседника нет возраста или он > 14, считаем взрослым
+    if (age === undefined || age === null || age > 14) return true;
+    return false;
+  }
+
+  // ── 1. Запрет голосовых сообщений для детского аккаунта ──
+  const _origSendMessage = sendMessage;
+  sendMessage = async function() {
+    if (isChildAccount()) {
+      // Проверяем, не голосовое ли сообщение (isVoice в данных)
+      // Так как мы не можем заранее узнать, голосовое ли, пока не отправлено,
+      // проще заблокировать кнопку записи голоса.
+      // Но также можно перехватить отправку, если текст начинается с [voice]
+      // Однако голосовые отправляются отдельной логикой через vpSend.
+      // Поэтому отключим кнопку записи и запретим голосовые через другой путь.
+    }
+    // Продолжаем обычную отправку
+    await _origSendMessage();
+  };
+
+  // Отключим возможность записи голоса для детей (убираем кнопку)
+  function disableVoiceForChild() {
+    if (!isChildAccount()) return;
+    const voiceBtn = document.getElementById('voice-btn');
+    if (voiceBtn) {
+      voiceBtn.style.display = 'none';
+    }
+    // Также заблокируем отправку голосовых через vp-send
+    const vpSend = document.getElementById('vp-send');
+    if (vpSend) {
+      vpSend.onclick = async () => {
+        showToast('❌ Детские аккаунты не могут отправлять голосовые сообщения');
+        // Сбросим предпрослушивание
+        const preview = document.getElementById('voice-preview');
+        if (preview) preview.classList.remove('show');
+        const vpAudio = document.getElementById('vp-audio');
+        if (vpAudio) vpAudio.src = '';
+      };
+    }
+  }
+
+  // ── 2. Запрет общения со взрослыми ──
+  // При открытии приватного чата проверяем возраст собеседника
+  const _origOpenChat = openChat;
+  openChat = async function(chat) {
+    if (isChildAccount() && chat.type === 'private') {
+      if (isPeerTooOld(chat.id)) {
+        showToast('🚫 Вы не можете общаться с пользователями старше 14 лет');
+        return; // не открываем чат
+      }
+    }
+    await _origOpenChat(chat);
+    // После открытия чата отключаем голосовые кнопки
+    disableVoiceForChild();
+  };
+
+  // При отправке сообщения (если чат уже открыт, а возраст собеседника изменился) — проверка
+  const _origSendMessage2 = sendMessage;
+  sendMessage = async function() {
+    if (isChildAccount() && activeChat && activeChat.type === 'private') {
+      if (isPeerTooOld(activeChat.id)) {
+        showToast('🚫 Вы не можете отправлять сообщения этому пользователю (старше 14 лет)');
+        return;
+      }
+    }
+    await _origSendMessage2();
+  };
+
+  // ── 3. Запрос на изменение возраста ──
+  // Расширим настройки профиля для детского аккаунта
+  const _origOpenProfileModal = openProfileModal;
+  openProfileModal = function() {
+    _origOpenProfileModal();
+    if (!isChildAccount()) return;
+
+    const modalBody = document.querySelector('#modal-profile .modal-body');
+    if (!modalBody || document.getElementById('child-age-section')) return;
+
+    // Добавляем поле возраста и кнопку запроса
+    const ageSection = document.createElement('div');
+    ageSection.id = 'child-age-section';
+    ageSection.style.marginTop = '12px';
+    ageSection.innerHTML = `
+      <div class="modal-field">
+        <label>Возраст (до 14 лет)</label>
+        <input type="number" id="prof-age" min="1" max="14" value="${myProfile.age || ''}" disabled style="opacity:0.7;">
+      </div>
+      <button class="modal-btn secondary" id="request-age-change-btn" style="width:100%; margin-top:8px;">
+        ✉️ Запросить изменение возраста
+      </button>
+      <p style="font-size:12px; color:var(--text-secondary); margin-top:4px;">
+        Заявка будет отправлена родителю на ${myProfile.parentEmail || 'указанную почту'}
+      </p>
+    `;
+    modalBody.appendChild(ageSection);
+
+    document.getElementById('request-age-change-btn').addEventListener('click', async () => {
+      const newAgeInput = document.getElementById('prof-age');
+      const newAge = parseInt(newAgeInput.value);
+      if (isNaN(newAge) || newAge < 1 || newAge > 14) {
+        showToast('Введите корректный возраст (1-14)');
+        return;
+      }
+      // Создаём запрос в Firestore
+      try {
+        await addDoc(collection(db, 'parentRequests'), {
+          childUid: me.uid,
+          childEmail: myProfile.email,
+          parentEmail: myProfile.parentEmail,
+          currentAge: myProfile.age,
+          requestedAge: newAge,
+          status: 'pending',
+          createdAt: serverTimestamp()
+        });
+        showToast('✅ Заявка отправлена родителю. Ожидайте подтверждения.');
+        closeModal('modal-profile');
+      } catch (e) {
+        showToast('Ошибка отправки запроса');
+      }
+    });
+
+    // Разблокируем поле для возможности ввода нового возраста
+    const ageInput = document.getElementById('prof-age');
+    if (ageInput) {
+      ageInput.disabled = false;
+      ageInput.style.opacity = '1';
+      ageInput.value = myProfile.age || '';
+    }
+  };
+
+  // Вызываем отключение голосовых при каждой загрузке
+  if (me && isChildAccount()) {
+    disableVoiceForChild();
+  }
+
+  // При входе в аккаунт (после обновления myProfile) тоже проверяем
+  const _origOnAuthStateChanged = onAuthStateChanged;
+  // Вмешаемся в цепочку не будем, просто добавим слушатель на изменение myProfile
+  // Используем тот факт, что myProfile обновляется через listenProfileUpdates
+  // Поэтому добавим туда вызов disableVoiceForChild при изменении childAccount
+  const _origListenProfileUpdates = listenProfileUpdates;
+  listenProfileUpdates = function() {
+    _origListenProfileUpdates();
+    if (me && myProfile && myProfile.childAccount) {
+      disableVoiceForChild();
+    }
+  };
+})();
+// ════════════════════════════════════════════════════
+//  ДЕТСКИЙ АККАУНТ — полная версия (вкладка + форма + обработчик)
+// ════════════════════════════════════════════════════
+(function() {
+  function initChildAccount() {
+    const authTabs = document.querySelector('.auth-tabs');
+    const authForms = document.getElementById('auth-forms');
+    if (!authTabs || !authForms || document.getElementById('child-tab')) return;
+
+    // 1. Вкладка «Детский»
+    const childTab = document.createElement('button');
+    childTab.className = 'auth-tab';
+    childTab.id = 'child-tab';
+    childTab.dataset.tab = 'child';
+    childTab.textContent = 'Детский';
+    authTabs.appendChild(childTab);
+
+    // 2. Форма
+    const childForm = document.createElement('div');
+    childForm.id = 'child-form';
+    childForm.className = 'hidden';
+    childForm.innerHTML = `
+      <div class="field">
+        <label>Имя *</label>
+        <input type="text" id="c-first" placeholder="Имя ребёнка" autocorrect="off">
+      </div>
+      <div class="field">
+        <label>Фамилия</label>
+        <input type="text" id="c-last" placeholder="Фамилия (необязательно)" autocorrect="off">
+      </div>
+      <div class="field">
+        <label>Возраст * (до 14 лет)</label>
+        <input type="number" id="c-age" placeholder="Возраст" min="1" max="14" inputmode="numeric">
+      </div>
+      <div class="field">
+        <label>Email ребёнка *</label>
+        <input type="email" id="c-email" placeholder="child@example.com" inputmode="email">
+      </div>
+      <div class="field">
+        <label>Email родителя *</label>
+        <input type="email" id="c-parent-email" placeholder="parent@example.com" inputmode="email">
+      </div>
+      <div class="field">
+        <label>Пароль * (мин. 6 символов)</label>
+        <input type="password" id="c-pass" placeholder="••••••••">
+      </div>
+      <div class="field">
+        <label>Аватар</label>
+        <div class="av-grid" id="child-av-grid"></div>
+      </div>
+      <div class="err-msg" id="c-err"></div>
+      <button class="auth-btn" id="child-reg-btn">Создать детский аккаунт</button>
+    `;
+    authForms.appendChild(childForm);
+
+    // Аватар
+    let childAvatar = '😊';
+    if (typeof renderAvGrid === 'function') {
+      renderAvGrid('child-av-grid', childAvatar, (av) => { childAvatar = av; });
+    }
+
+    // Переключение вкладок
+    document.querySelectorAll('.auth-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        const tabName = tab.dataset.tab;
+        document.getElementById('login-form').classList.toggle('hidden', tabName !== 'login');
+        document.getElementById('reg-form').classList.toggle('hidden', tabName !== 'reg');
+        childForm.classList.toggle('hidden', tabName !== 'child');
+      });
+    });
+
+    // Обработчик регистрации
+    document.getElementById('child-reg-btn').addEventListener('click', async () => {
+      const errEl = document.getElementById('c-err');
+      errEl.className = 'err-msg'; errEl.textContent = '';
+
+      const firstName = document.getElementById('c-first').value.trim();
+      const lastName = document.getElementById('c-last').value.trim();
+      const age = parseInt(document.getElementById('c-age').value);
+      const email = document.getElementById('c-email').value.trim().toLowerCase();
+      const parentEmail = document.getElementById('c-parent-email').value.trim().toLowerCase();
+      const password = document.getElementById('c-pass').value;
+
+      if (!firstName) { errEl.textContent = '❌ Введите имя'; errEl.classList.add('show'); return; }
+      if (!email || !validEmail(email)) { errEl.textContent = '❌ Некорректный email ребёнка'; errEl.classList.add('show'); return; }
+      if (!parentEmail || !validEmail(parentEmail)) { errEl.textContent = '❌ Некорректный email родителя'; errEl.classList.add('show'); return; }
+      if (isNaN(age) || age < 1 || age > 14) { errEl.textContent = '❌ Возраст должен быть от 1 до 14 лет'; errEl.classList.add('show'); return; }
+      if (password.length < 6) { errEl.textContent = '❌ Пароль минимум 6 символов'; errEl.classList.add('show'); return; }
+
+      // Пробуем создать аккаунт (без предварительной проверки Firestore)
+      try {
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+        await setDoc(doc(db, 'users', user.uid), {
+          email,
+          username: '',
+          firstName,
+          lastName,
+          name: firstName + (lastName ? ' ' + lastName : ''),
+          avatar: childAvatar,
+          uid: user.uid,
+          contacts: [],
+          privacyWrite: 'all',
+          childAccount: true,
+          age,
+          parentEmail,
+          createdAt: serverTimestamp()
+        });
+        await sendEmailVerification(user);
+        showVerifyScreen(email);
+      } catch (e) {
+        if (e.code === 'auth/email-already-in-use') {
+          errEl.textContent = '❌ Этот email уже используется (возможно, родителем).';
+        } else {
+          errEl.textContent = `❌ ${e.message}`;
+        }
+        errEl.classList.add('show');
+      }
+    });
+  }
+
+  // Запуск после готовности DOM
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initChildAccount);
+  } else {
+    initChildAccount();
+  }
+})();
+// ════════════════════════════════════════════════════
+//  АВТО-ПЕРЕХОД ПОСЛЕ ПОДТВЕРЖДЕНИЯ EMAIL
+// ════════════════════════════════════════════════════
+(function() {
+  let verificationAutoCheckInterval = null;
+
+  // Функция, которая скрывает верификацию и показывает приложение
+  function proceedToApp() {
+    // Скрываем verify-wrap и auth-screen
+    const verifyWrap = document.getElementById('verify-wrap');
+    if (verifyWrap) verifyWrap.classList.add('hidden');
+    const authForms = document.getElementById('auth-forms');
+    if (authForms) authForms.classList.remove('hidden');
+    const authScreen = document.getElementById('auth-screen');
+    if (authScreen) authScreen.classList.add('gone');
+    // Показываем app
+    const app = document.getElementById('app');
+    if (app) app.classList.remove('hidden');
+    // Останавливаем интервал проверки
+    if (verificationAutoCheckInterval) {
+      clearInterval(verificationAutoCheckInterval);
+      verificationAutoCheckInterval = null;
+    }
+    // Убедимся, что пользовательские данные загружены и запущен heartbeat
+    if (auth.currentUser) {
+      // Обновим me и myProfile (обычно onAuthStateChanged уже отработает,
+      // но на всякий случай можно принудительно вызвать обновление)
+      // Однако проще положиться на основной поток: после скрытия auth-screen
+      // onAuthStateChanged сработает, потому что auth-screen убран и user уже верифицирован.
+    }
+  }
+
+  // Периодическая проверка статуса верификации
+  function startVerificationAutoCheck() {
+    if (verificationAutoCheckInterval) return;
+    verificationAutoCheckInterval = setInterval(async () => {
+      if (!auth.currentUser) {
+        clearInterval(verificationAutoCheckInterval);
+        verificationAutoCheckInterval = null;
+        return;
+      }
+      try {
+        await auth.currentUser.reload();
+        if (auth.currentUser.emailVerified) {
+          proceedToApp();
+        }
+      } catch (e) {
+        // Игнорируем ошибки сети
+      }
+    }, 5000);
+  }
+
+  // Переопределяем showVerifyScreen, чтобы запускать проверку
+  const originalShowVerifyScreen = showVerifyScreen;
+  showVerifyScreen = function(email) {
+    if (originalShowVerifyScreen) originalShowVerifyScreen(email);
+    // Запускаем автоматическую проверку
+    startVerificationAutoCheck();
+  };
+
+  // Исправляем кнопку "Проверить" – теперь она не делает signOut, а проверяет и переходит
+  const checkBtn = document.getElementById('check-verify-btn');
+  if (checkBtn) {
+    checkBtn.onclick = async () => {
+      if (!auth.currentUser) return;
+      await auth.currentUser.reload();
+      if (auth.currentUser.emailVerified) {
+        proceedToApp();
+      } else {
+        showToast('❌ Email ещё не подтверждён. Проверьте папку "Спам".');
+      }
+    };
+  }
+
+  // Также кнопка "Отправить повторно" и "Выйти" могут оставаться как есть.
+  // При выходе (verify-logout-btn) нужно остановить интервал.
+  const logoutBtn = document.getElementById('verify-logout-btn');
+  if (logoutBtn) {
+    const originalLogout = logoutBtn.onclick;
+    logoutBtn.onclick = () => {
+      if (verificationAutoCheckInterval) {
+        clearInterval(verificationAutoCheckInterval);
+        verificationAutoCheckInterval = null;
+      }
+      if (originalLogout) originalLogout();
+      else signOut(auth);
+    };
+  }
+})();
+// ════════════════════════════════════════════════════
+//  ФИНАЛЬНЫЙ МОДУЛЬ (без ограничений для ребёнка)
+// ════════════════════════════════════════════════════
+(function() {
+  // 1. Создаём служебные функции, если их ещё нет (нужны для родительского контроля)
+  window.isChildAccount = function() {
+    return myProfile && myProfile.childAccount === true;
+  };
+
+  window.isPeerTooOld = function() {
+    return false; // возрастные ограничения полностью отключены
+  };
+
+  window.disableVoiceForChild = function() {
+    // Детский аккаунт может использовать голосовые – ничего не делаем
+  };
+
+  // 2. Родительский контроль (оставляем полностью)
+  // Если вы уже вставляли этот блок ранее, дублировать не нужно.
+  // Но для гарантии можно оставить — он проверяет, не добавлен ли уже пункт.
+  async function addParentalControlSetting() {
+    if (!me || !myProfile) return;
+    const settingsBody = document.getElementById('settings-body');
+    if (!settingsBody || document.getElementById('s-parental-control')) return;
+
+    // Проверяем, есть ли дети (пользователи с parentEmail = наш email)
+    const parentEmail = myProfile.email;
+    if (!parentEmail) return;
+    const childrenSnap = await getDocs(query(collection(db, 'users'), where('parentEmail', '==', parentEmail)));
+    if (childrenSnap.empty) return;
+
+    let targetSection = null;
+    settingsBody.querySelectorAll('.settings-section').forEach(sec => {
+      if (sec.querySelector('.settings-label')?.textContent.trim() === 'Дополнительно') targetSection = sec;
+    });
+    if (!targetSection) return;
+
+    const item = document.createElement('div');
+    item.className = 'settings-item';
+    item.id = 's-parental-control';
+    item.innerHTML = `
+      <div class="si-icon">👨‍👩‍👧</div>
+      <div class="si-text">Родительский контроль</div>
+      <span class="si-arrow">›</span>
+    `;
+    item.addEventListener('click', showChildrenList);
+    targetSection.appendChild(item);
+  }
+
+  // Показать список детей
+  function showChildrenList() {
+    const modal = createModal('modal-parental', 'Мои дети');
+    const body = modal.querySelector('.modal-body');
+    body.innerHTML = '<div class="loader" style="margin:20px auto;"></div>';
+    getDocs(query(collection(db, 'users'), where('parentEmail', '==', myProfile.email))).then(snap => {
+      body.innerHTML = '';
+      if (snap.empty) {
+        body.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-hint);">Нет привязанных детей</div>';
+        return;
+      }
+      snap.forEach(doc => {
+        const child = doc.data();
+        const row = document.createElement('div');
+        row.className = 'child-row';
+        row.innerHTML = `
+          <div class="child-av">${avatarHtml(child.avatar)}</div>
+          <div class="child-info">
+            <div class="child-name">${esc(child.firstName || child.name || 'Ребёнок')}</div>
+            <div class="child-detail">${esc(child.email)} · ${child.age ? child.age + ' лет' : ''}</div>
+          </div>
+        `;
+        row.addEventListener('click', () => {
+          closeModal('modal-parental');
+          showChildChats(child);
+        });
+        body.appendChild(row);
+      });
+    });
+    openModal('modal-parental');
+  }
+
+  // Чаты ребёнка
+  async function showChildChats(child) {
+    const childUid = child.uid;
+    const modal = createModal('modal-child-chats', `Чаты: ${child.firstName || 'Ребёнок'}`);
+    const body = modal.querySelector('.modal-body');
+    body.innerHTML = '<div class="loader" style="margin:20px auto;"></div>';
+    openModal('modal-child-chats');
+
+    const msgsSnap = await getDocs(query(collection(db, 'messages'), where('senderUid', '==', childUid)));
+    const peerMap = new Map();
+    msgsSnap.docs.forEach(doc => {
+      const data = doc.data();
+      const chatId = data.chatId;
+      if (!chatId || !chatId.startsWith('chat_')) return;
+      const parts = chatId.split('_');
+      const other = parts.find(p => p !== childUid && p !== 'chat');
+      if (!other) return;
+      if (!peerMap.has(other) || (data.timestamp?.toMillis() || 0) > (peerMap.get(other).time || 0)) {
+        peerMap.set(other, { text: data.text, time: data.timestamp?.toMillis() || 0 });
+      }
+    });
+
+    const roomsSnap = await getDocs(query(collection(db, 'rooms'), where('members', 'array-contains', childUid)));
+    const rooms = [];
+    roomsSnap.docs.forEach(doc => rooms.push({ id: doc.id, ...doc.data() }));
+
+    body.innerHTML = '';
+    if (peerMap.size === 0 && rooms.length === 0) {
+      body.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-hint);">Нет чатов</div>';
+      return;
+    }
+
+    for (const [uid, info] of peerMap.entries()) {
+      const user = usersCache.get(uid) || {};
+      const name = getDisplayName(uid);
+      const row = document.createElement('div');
+      row.className = 'child-chat-row';
+      row.innerHTML = `
+        <div class="chat-av">${avatarHtml(user.avatar)}</div>
+        <div class="chat-info">
+          <div class="chat-name">${esc(name)}</div>
+          <div class="chat-lastmsg">${esc(info.text?.slice(0, 60) || '')}</div>
+        </div>
+      `;
+      row.addEventListener('click', () => {
+        closeModal('modal-child-chats');
+        showConversation(child, uid, false);
+      });
+      body.appendChild(row);
+    }
+
+    for (const room of rooms) {
+      const row = document.createElement('div');
+      row.className = 'child-chat-row';
+      row.innerHTML = `
+        <div class="chat-av">${avatarHtml(room.avatar || '👥')}</div>
+        <div class="chat-info">
+          <div class="chat-name">${esc(room.name)}</div>
+          <div class="chat-lastmsg">${room.type === 'channel' ? 'Канал' : 'Группа'}</div>
+        </div>
+      `;
+      row.addEventListener('click', () => {
+        closeModal('modal-child-chats');
+        showConversation(child, room.id, true);
+      });
+      body.appendChild(row);
+    }
+  }
+
+  // Просмотр переписки и управление
+  async function showConversation(child, peerOrRoomId, isGroup) {
+    const childUid = child.uid;
+    const childName = child.firstName || 'Ребёнок';
+    let chatId, peerName;
+    if (isGroup) {
+      chatId = `room_${peerOrRoomId}`;
+      const room = roomsCache.get(peerOrRoomId) || (await getDoc(doc(db, 'rooms', peerOrRoomId))).data() || {};
+      peerName = room.name || 'Группа';
+    } else {
+      chatId = `chat_${[childUid, peerOrRoomId].sort().join('_')}`;
+      const user = usersCache.get(peerOrRoomId) || (await getDoc(doc(db, 'users', peerOrRoomId))).data() || {};
+      peerName = getDisplayName(peerOrRoomId);
+    }
+
+    const modal = createModal('modal-child-conversation', `💬 ${childName} и ${peerName}`);
+    const body = modal.querySelector('.modal-body');
+    body.innerHTML = '<div class="loader" style="margin:20px auto;"></div>';
+    openModal('modal-child-conversation');
+
+    const snap = await getDocs(query(collection(db, 'messages'), where('chatId', '==', chatId), orderBy('timestamp', 'asc')));
+    const messages = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+    body.innerHTML = '';
+    if (messages.length === 0) {
+      body.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-hint);">Нет сообщений</div>';
+    } else {
+      const msgsContainer = document.createElement('div');
+      msgsContainer.style.cssText = 'max-height: 50vh; overflow-y: auto; padding: 8px;';
+      messages.forEach(msg => {
+        const isChild = msg.senderUid === childUid;
+        const senderName = isChild ? childName : getDisplayName(msg.senderUid);
+        const time = msg.timestamp?.toDate()?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) || '';
+        const row = document.createElement('div');
+        row.className = `child-msg-row${isChild ? ' out' : ''}`;
+        row.innerHTML = `
+          <div class="child-msg-sender">${esc(senderName)}</div>
+          <div class="child-msg-bubble${isChild ? ' out' : ''}">
+            ${msg.isDeleted ? '<i>Удалено</i>' : (msg.text ? esc(msg.text) : '📎')}
+            <div class="child-msg-time">${time}</div>
+          </div>
+        `;
+        msgsContainer.appendChild(row);
+      });
+      body.appendChild(msgsContainer);
+    }
+
+    const controls = document.createElement('div');
+    controls.className = 'child-chat-controls';
+
+    if (!isGroup) {
+      const blockBtn = document.createElement('button');
+      blockBtn.className = 'btn-block';
+      blockBtn.textContent = '🚫 Заблокировать';
+      blockBtn.addEventListener('click', async () => {
+        if (confirm(`Заблокировать ${peerName} для ${childName}?`)) {
+          await setDoc(doc(db, 'users', childUid), { blockedUsers: arrayUnion(peerOrRoomId) }, { merge: true });
+          showToast(`${peerName} заблокирован(а)`);
+        }
+      });
+      controls.appendChild(blockBtn);
+
+      const delBtn = document.createElement('button');
+      delBtn.className = 'btn-delete';
+      delBtn.textContent = '🗑️ Очистить чат';
+      delBtn.addEventListener('click', async () => {
+        if (confirm(`Полностью удалить переписку с ${peerName}?`)) {
+          const batch = writeBatch(db);
+          snap.docs.forEach(doc => batch.delete(doc.ref));
+          await batch.commit();
+          showToast('Чат очищен');
+          closeModal('modal-child-conversation');
+        }
+      });
+      controls.appendChild(delBtn);
+    } else {
+      const leaveBtn = document.createElement('button');
+      leaveBtn.className = 'btn-block';
+      leaveBtn.textContent = '🚪 Покинуть группу';
+      leaveBtn.addEventListener('click', async () => {
+        if (confirm(`Удалить ${childName} из "${peerName}"?`)) {
+          await updateDoc(doc(db, 'rooms', peerOrRoomId), { members: arrayRemove(childUid) });
+          showToast('Ребёнок исключён из группы');
+          closeModal('modal-child-conversation');
+        }
+      });
+      controls.appendChild(leaveBtn);
+    }
+
+    body.appendChild(controls);
+  }
+
+  // Хелперы модалок
+  function createModal(id, title) {
+    let modal = document.getElementById(id);
+    if (modal) {
+      modal.querySelector('.modal-hdr h3').textContent = title;
+      return modal;
+    }
+    modal = document.createElement('div');
+    modal.id = id;
+    modal.className = 'modal-ov';
+    modal.innerHTML = `
+      <div class="modal-sheet">
+        <div class="modal-pill"></div>
+        <div class="modal-hdr"><h3>${title}</h3><button class="modal-close">✕</button></div>
+        <div class="modal-body"></div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+    modal.querySelector('.modal-close').addEventListener('click', () => closeModal(id));
+    modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(id); });
+    return modal;
+  }
+
+  function openModal(id) { document.getElementById(id)?.classList.add('open'); }
+  function closeModal(id) { document.getElementById(id)?.classList.remove('open'); }
+
+  // Стили для родительского интерфейса (если ещё не добавлены)
+  if (!document.getElementById('parental-control-styles')) {
+    const st = document.createElement('style');
+    st.id = 'parental-control-styles';
+    st.textContent = `
+      .child-row, .child-chat-row {
+        display: flex; align-items: center; gap: 12px; padding: 12px 8px;
+        border-radius: 12px; cursor: pointer; transition: background 0.2s;
+      }
+      .child-row:active, .child-chat-row:active { background: var(--bg-secondary); }
+      .child-av, .chat-av {
+        width: 44px; height: 44px; border-radius: 50%; background: var(--accent);
+        display: flex; align-items: center; justify-content: center; font-size: 22px; color: white;
+        overflow: hidden; flex-shrink: 0;
+      }
+      .child-av img, .chat-av img { width: 100%; height: 100%; object-fit: cover; }
+      .child-info, .chat-info { flex: 1; min-width: 0; }
+      .child-name, .chat-name { font-size: 15px; font-weight: 600; }
+      .child-detail, .chat-lastmsg { font-size: 13px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .child-msg-bubble {
+        max-width: 80%; padding: 8px 12px; border-radius: 16px; margin: 4px 0;
+        word-break: break-word; font-size: 14px; line-height: 1.4;
+        background: var(--msg-in-bg); color: var(--text-primary);
+        border: 1px solid var(--border);
+      }
+      .child-msg-bubble.out { background: var(--accent); color: white; align-self: flex-end; }
+      .child-msg-row { display: flex; flex-direction: column; align-items: flex-start; }
+      .child-msg-row.out { align-items: flex-end; }
+      .child-msg-sender { font-size: 11px; font-weight: 600; margin: 0 8px 2px; color: var(--text-secondary); }
+      .child-msg-time { font-size: 10px; opacity: 0.6; margin-top: 2px; text-align: right; }
+      .child-chat-controls { display: flex; gap: 8px; margin-top: 12px; }
+      .child-chat-controls button { flex: 1; padding: 10px; border-radius: 12px; font-weight: 600; border: none; cursor: pointer; }
+      .child-chat-controls .btn-block { background: var(--red); color: white; }
+      .child-chat-controls .btn-delete { background: var(--bg-secondary); color: var(--text-primary); }
+    `;
+    document.head.appendChild(st);
+  }
+
+  // Добавляем пункт в настройки, если пользователь – родитель
+  const origRenderSettings = renderSettings;
+  renderSettings = function() {
+    origRenderSettings.apply(this, arguments);
+    setTimeout(addParentalControlSetting, 100);
+  };
+  if (document.getElementById('settings-body')) setTimeout(addParentalControlSetting, 100);
+})();
+// ════════════════════════════════════════════════════
+//  СЛУЖБА УВЕДОМЛЕНИЙ (браузерные, без сервера)
+// ════════════════════════════════════════════════════
+(function() {
+  // Запрос разрешения при первой возможности
+  function requestNotificationPermission() {
+    if (!('Notification' in window)) return;
+    if (Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+  }
+  // Запрашиваем при клике в любом месте (после взаимодействия пользователя)
+  document.addEventListener('click', requestNotificationPermission, { once: true });
+
+  // Подписка на новые сообщения во всех чатах
+  let notifiedMessageIds = new Set(); // чтобы не слать повторно
+
+  if (typeof db !== 'undefined' && typeof collection !== 'undefined') {
+    const messagesRef = collection(db, 'messages');
+    // Слушаем добавление новых документов (только добавленные)
+    onSnapshot(messagesRef, (snapshot) => {
+      snapshot.docChanges().forEach(change => {
+        if (change.type !== 'added') return;
+        const msg = change.doc.data();
+        const msgId = change.doc.id;
+        // Не уведомляем о своих сообщениях, о прочитанных ранее, о системных
+        if (msg.senderUid === me?.uid) return;
+        if (msg.isCallEvent || msg.isDeleted) return;
+        if (notifiedMessageIds.has(msgId)) return;
+        notifiedMessageIds.add(msgId);
+        // Не показываем уведомление, если чат открыт и вкладка активна
+        if (document.visibilityState === 'visible' && activeChat && msg.chatId) {
+          const activeChatId = activeChat?.type === 'private'
+            ? `chat_${[me.uid, activeChat.id].sort().join('_')}`
+            : `room_${activeChat.id}`;
+          if (msg.chatId === activeChatId) return;
+        }
+        // Отправляем уведомление
+        showBrowserNotification(msg);
+      });
+    });
+  }
+
+  function showBrowserNotification(msg) {
+    if (!('Notification' in window) || Notification.permission !== 'granted') return;
+
+    const senderName = getDisplayName(msg.senderUid);
+    let body = msg.text || '';
+    if (msg.isSticker && body.startsWith('[sticker]')) body = '🎨 Стикер';
+    else if (msg.isVoice) body = '🎙️ Голосовое сообщение';
+    else if (msg.isFileLink) body = '📎 Вложение';
+    else if (body.length > 100) body = body.slice(0, 100) + '...';
+
+    const notification = new Notification(senderName, {
+      body: body,
+      icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><circle cx="24" cy="24" r="24" fill="%232AABEE"/><path d="M24 12c-5.5 0-10 4-10 9 0 2 .7 3.8 2 5.2L15 34l5-2c1.5.7 2.8 1 4 1 5.5 0 10-4 10-9s-4.5-9-10-9z" fill="white"/><path d="M20 22h8M20 26h5" stroke="%232AABEE" stroke-width="2" stroke-linecap="round"/></svg>',
+      tag: msg.chatId, // группирует уведомления по чату
+      requireInteraction: false
+    });
+
+    notification.onclick = () => {
+      window.focus();
+      // Попробуем открыть нужный чат, если возможно
+      if (msg.chatId && typeof openChatFromNotification === 'function') {
+        openChatFromNotification(msg);
+      }
+      notification.close();
+    };
+
+    // Автоматически закрыть через 5 секунд
+    setTimeout(() => notification.close(), 5000);
+  }
+
+  // Функция для открытия чата по уведомлению (опционально)
+  window.openChatFromNotification = async function(msg) {
+    const chatId = msg.chatId;
+    if (!chatId) return;
+    if (chatId.startsWith('chat_')) {
+      const parts = chatId.split('_');
+      const otherUid = parts.find(p => p !== me.uid);
+      if (otherUid) {
+        const user = usersCache.get(otherUid);
+        if (user) {
+          openChat({ id: otherUid, name: getDisplayName(otherUid), avatar: user.avatar, type: 'private' });
+        }
+      }
+    } else if (chatId.startsWith('room_')) {
+      const roomId = chatId.replace('room_', '');
+      const room = roomsCache.get(roomId);
+      if (room) {
+        openChat({ id: roomId, name: room.name, avatar: room.avatar, type: room.type, roomData: room });
+      }
+    }
+  };
+
+  console.log('🔔 Служба уведомлений запущена');
+})();
+// ════════════════════════════════════════════════════
+//  СТИЛЬНЫЕ ЗВОНКИ (WebRTC + красивый UI)
+// ════════════════════════════════════════════════════
+(function() {
+  // ---------- CSS-стили для интерфейса звонка ----------
+  const style = document.createElement('style');
+  style.textContent = `
+    .call-overlay {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: #0f0f1a; z-index: 9999; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; color: white;
+      font-family: var(--font); animation: fadeIn 0.3s ease;
+    }
+    @keyframes fadeIn { from { opacity: 0; } }
+    .call-background {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background-size: cover; background-position: center;
+      filter: blur(20px) brightness(0.4); transform: scale(1.1);
+      transition: background-image 0.3s;
+    }
+    .call-content {
+      position: relative; z-index: 1; display: flex; flex-direction: column;
+      align-items: center; gap: 30px;
+    }
+    .call-avatar {
+      width: 120px; height: 120px; border-radius: 50%;
+      background: rgba(255,255,255,0.2); display: flex; align-items: center;
+      justify-content: center; font-size: 60px;
+      box-shadow: 0 0 40px rgba(255,255,255,0.3);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(255,255,255,0.4); }
+      70% { box-shadow: 0 0 0 20px rgba(255,255,255,0); }
+      100% { box-shadow: 0 0 0 0 rgba(255,255,255,0); }
+    }
+    .call-name {
+      font-size: 26px; font-weight: 600; text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    }
+    .call-status {
+      font-size: 16px; opacity: 0.8;
+    }
+    .call-timer {
+      font-size: 32px; font-weight: 700; letter-spacing: 2px;
+      font-variant-numeric: tabular-nums;
+    }
+    .call-actions {
+      display: flex; gap: 20px; margin-top: 20px;
+    }
+    .call-btn {
+      width: 56px; height: 56px; border-radius: 50%; border: none;
+      font-size: 24px; display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: transform 0.2s, background 0.3s;
+      backdrop-filter: blur(8px);
+    }
+    .call-btn:active { transform: scale(0.9); }
+    .call-btn-mute { background: rgba(255,255,255,0.2); color: white; }
+    .call-btn-mute.active { background: #f44336; }
+    .call-btn-video { background: rgba(255,255,255,0.2); color: white; }
+    .call-btn-video.active { background: #f44336; }
+    .call-btn-end { background: #f44336; color: white; width: 64px; height: 64px; font-size: 28px; }
+    .call-video-container {
+      position: absolute; top: 20px; right: 20px; width: 120px; height: 180px;
+      border-radius: 16px; overflow: hidden; border: 2px solid rgba(255,255,255,0.5);
+      background: #000; display: none; z-index: 2;
+    }
+    .call-video-container video { width: 100%; height: 100%; object-fit: cover; }
+    .call-remote-video {
+      width: 100%; height: 100%; object-fit: cover;
+      position: absolute; top: 0; left: 0;
+    }
+  `;
+  document.head.appendChild(style);
+
+  // ---------- Кнопки в шапке чата ----------
+  function addCallButtons() {
+    if (!document.getElementById('call-btns-container')) {
+      const hdr = document.getElementById('chat-hdr');
+      if (!hdr) return;
+      const container = document.createElement('div');
+      container.id = 'call-btns-container';
+      container.style.cssText = 'display:flex; gap:6px; margin-left:8px;';
+      container.innerHTML = `
+        <button id="audio-call-btn" class="hdr-btn" title="Аудиозвонок" style="font-size:18px;">📞</button>
+        <button id="video-call-btn" class="hdr-btn" title="Видеозвонок" style="font-size:18px;">📹</button>
+      `;
+      hdr.appendChild(container);
+      document.getElementById('audio-call-btn').onclick = () => initiateCall('audio');
+      document.getElementById('video-call-btn').onclick = () => initiateCall('video');
+    }
+    const container = document.getElementById('call-btns-container');
+    if (container) {
+      container.style.display = (activeChat && activeChat.type === 'private') ? 'flex' : 'none';
+    }
+  }
+
+  // ---------- Глобальные переменные звонка ----------
+  let localStream = null;
+  let peerConnection = null;
+  let callTimerInterval = null;
+  let callStartTime = 0;
+  let currentCallDoc = null; // { id, data }
+
+  const rtcConfig = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+
+  // ---------- Инициирование звонка ----------
+  async function initiateCall(callType) {
+    if (!activeChat || activeChat.type !== 'private' || !me) return;
+    const targetUid = activeChat.id;
+    if (targetUid === me.uid) return;
+
+    const existing = await getDocs(query(collection(db, 'calls'), 
+      where('participants', 'array-contains', me.uid), where('status', 'in', ['ringing', 'active'])));
+    if (!existing.empty) { showToast('У вас уже есть активный звонок'); return; }
+
+    const callDoc = await addDoc(collection(db, 'calls'), {
+      type: callType,
+      callerUid: me.uid,
+      targetUid,
+      participants: [me.uid, targetUid],
+      status: 'ringing',
+      createdAt: serverTimestamp(),
+      offer: null,
+      answer: null,
+      iceCandidates: []
+    });
+
+    const chatId = await getActiveChatId();
+    await addDoc(collection(db, 'messages'), {
+      chatId,
+      text: callType === 'audio' ? '📞 Аудиозвонок' : '📹 Видеозвонок',
+      timestamp: serverTimestamp(),
+      senderUid: me.uid,
+      isCallEvent: true,
+      callType,
+      callStatus: 'outgoing'
+    });
+
+    listenCallUpdates(callDoc.id, callType);
+    showToast('Звонок...');
+  }
+
+  // ---------- Слушатель входящих ----------
+  function listenForIncomingCalls() {
+    if (!me) return;
+    const q = query(collection(db, 'calls'), where('targetUid', '==', me.uid), where('status', '==', 'ringing'));
+    onSnapshot(q, (snap) => {
+      snap.docChanges().forEach(change => {
+        if (change.type === 'added') {
+          const callData = { id: change.doc.id, ...change.doc.data() };
+          showIncomingCallModal(callData);
+        }
+      });
+    });
+  }
+
+  // ---------- Модальное окно входящего ----------
+  function showIncomingCallModal(callData) {
+    const caller = usersCache.get(callData.callerUid);
+    const callerName = caller ? getDisplayName(callData.callerUid) : 'Неизвестный';
+
+    const modal = document.createElement('div');
+    modal.className = 'modal-ov';
+    modal.id = 'incoming-call-modal';
+    modal.style.background = 'rgba(0,0,0,0.8)';
+    modal.innerHTML = `
+      <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); text-align:center; color:white;">
+        <div style="font-size:60px; margin-bottom:16px;">${avatarHtml(caller?.avatar || '😊')}</div>
+        <div style="font-size:24px; font-weight:bold; margin-bottom:8px;">${esc(callerName)}</div>
+        <div style="font-size:18px; margin-bottom:24px;">${callData.type === 'video' ? '📹 Видеозвонок' : '📞 Аудиозвонок'}</div>
+        <div style="display:flex; gap:20px; justify-content:center;">
+          <button id="accept-call-btn" style="width:64px; height:64px; border-radius:50%; background:#4CAF50; border:none; font-size:28px; cursor:pointer;">📞</button>
+          <button id="decline-call-btn" style="width:64px; height:64px; border-radius:50%; background:#f44336; border:none; font-size:28px; cursor:pointer;">📵</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+    modal.classList.add('open');
+    document.getElementById('accept-call-btn').onclick = () => {
+      modal.remove();
+      acceptCall(callData);
+    };
+    document.getElementById('decline-call-btn').onclick = () => {
+      modal.remove();
+      declineCall(callData);
+    };
+    setTimeout(() => {
+      if (document.getElementById('incoming-call-modal')) {
+        modal.remove();
+        declineCall(callData);
+      }
+    }, 30000);
+  }
+
+  async function acceptCall(callData) {
+    try {
+      localStream = await navigator.mediaDevices.getUserMedia({
+        audio: true, video: callData.type === 'video'
+      });
+    } catch (e) {
+      showToast('Нет доступа к медиа');
+      await updateCallStatus(callData.id, 'declined');
+      return;
+    }
+    await updateDoc(doc(db, 'calls', callData.id), { status: 'active' });
+    openCallUI(callData.id, callData.type, false);
+  }
+
+  async function declineCall(callData) {
+    await updateDoc(doc(db, 'calls', callData.id), { status: 'declined' });
+    if (callData.callerUid !== me.uid) {
+      const chatId = chatIdForPrivate(callData.callerUid);
+      await addDoc(collection(db, 'messages'), {
+        chatId,
+        text: callData.type === 'video' ? '📹 Пропущенный видеозвонок' : '📞 Пропущенный звонок',
+        timestamp: serverTimestamp(),
+        senderUid: callData.callerUid,
+        isCallEvent: true,
+        callType: callData.type,
+        callStatus: 'missed'
+      });
+    }
+    setTimeout(() => deleteCallDoc(callData.id), 2000);
+  }
+
+  // ---------- Отслеживание состояния звонка (для инициатора) ----------
+  function listenCallUpdates(callId, callType) {
+    const unsub = onSnapshot(doc(db, 'calls', callId), (docSnap) => {
+      if (!docSnap.exists()) { endCall(); return; }
+      const data = docSnap.data();
+      if (data.status === 'active') {
+        if (!peerConnection && !localStream) {
+          initWebRTC(callId, callType, true);
+        }
+      } else if (data.status === 'declined' || data.status === 'ended') {
+        endCall();
+        unsub();
+      }
+    });
+  }
+
+  // ---------- WebRTC ----------
+  async function initWebRTC(callId, callType, isCaller) {
+    try {
+      if (!localStream) {
+        localStream = await navigator.mediaDevices.getUserMedia({
+          audio: true, video: callType === 'video'
+        });
+      }
+    } catch (e) {
+      showToast('Ошибка доступа к медиа');
+      await updateCallStatus(callId, 'ended');
+      return;
+    }
+    peerConnection = new RTCPeerConnection(rtcConfig);
+    localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+
+    peerConnection.ontrack = (event) => {
+      const remoteVideo = document.getElementById('remote-video');
+      if (remoteVideo) remoteVideo.srcObject = event.streams[0];
+    };
+
+    peerConnection.onicecandidate = (event) => {
+      if (event.candidate) {
+        updateDoc(doc(db, 'calls', callId), {
+          iceCandidates: arrayUnion(event.candidate.toJSON())
+        }).catch(console.error);
+      }
+    };
+
+    if (isCaller) {
+      const offer = await peerConnection.createOffer();
+      await peerConnection.setLocalDescription(offer);
+      await updateDoc(doc(db, 'calls', callId), { offer: JSON.parse(JSON.stringify(offer)) });
+    } else {
+      const unsubOffer = onSnapshot(doc(db, 'calls', callId), async (docSnap) => {
+        if (!docSnap.exists()) return;
+        const data = docSnap.data();
+        if (data.offer && !peerConnection.currentRemoteDescription) {
+          await peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
+          const answer = await peerConnection.createAnswer();
+          await peerConnection.setLocalDescription(answer);
+          await updateDoc(doc(db, 'calls', callId), { answer: JSON.parse(JSON.stringify(answer)) });
+          unsubOffer();
+        }
+      });
+    }
+
+    const unsubAnswer = onSnapshot(doc(db, 'calls', callId), async (docSnap) => {
+      if (!docSnap.exists()) return;
+      const data = docSnap.data();
+      if (data.answer && peerConnection.currentRemoteDescription?.type !== 'answer') {
+        await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
+        unsubAnswer();
+      }
+    });
+
+    // ICE кандидаты
+    const unsubIce = onSnapshot(doc(db, 'calls', callId), (docSnap) => {
+      if (!docSnap.exists()) return;
+      const data = docSnap.data();
+      if (data.iceCandidates && peerConnection.remoteDescription) {
+        const lastCandidate = data.iceCandidates[data.iceCandidates.length - 1];
+        if (lastCandidate) {
+          peerConnection.addIceCandidate(new RTCIceCandidate(lastCandidate)).catch(console.error);
+        }
+      }
+    });
+
+    openCallUI(callId, callType, isCaller);
+  }
+
+  // ---------- Стильный интерфейс звонка ----------
+  function openCallUI(callId, callType, isCaller) {
+    const existing = document.getElementById('call-ui-overlay');
+    if (existing) existing.remove();
+
+    const otherUid = activeChat ? activeChat.id : (currentCallDoc?.participants?.find(u => u !== me.uid) || '');
+    const otherUser = usersCache.get(otherUid);
+    const avatarUrl = otherUser?.avatar || '😊';
+
+    const overlay = document.createElement('div');
+    overlay.id = 'call-ui-overlay';
+    overlay.className = 'call-overlay';
+
+    // Фоновое изображение (если аватар - эмодзи, то без фона)
+    const bgDiv = document.createElement('div');
+    bgDiv.className = 'call-background';
+    if (avatarUrl.startsWith('http') || avatarUrl.startsWith('data:')) {
+      bgDiv.style.backgroundImage = `url(${avatarUrl})`;
+    }
+    overlay.appendChild(bgDiv);
+
+    const content = document.createElement('div');
+    content.className = 'call-content';
+
+    // Аватар
+    const avatar = document.createElement('div');
+    avatar.className = 'call-avatar';
+    avatar.innerHTML = avatarHtml(avatarUrl);
+    content.appendChild(avatar);
+
+    // Имя
+    const name = document.createElement('div');
+    name.className = 'call-name';
+    name.textContent = otherUser ? getDisplayName(otherUid) : 'Собеседник';
+    content.appendChild(name);
+
+    // Статус / таймер
+    const status = document.createElement('div');
+    status.className = 'call-status';
+    status.textContent = isCaller ? 'Вызов...' : 'Входящий...';
+    content.appendChild(status);
+
+    const timer = document.createElement('div');
+    timer.className = 'call-timer';
+    timer.textContent = '00:00';
+    content.appendChild(timer);
+
+    // Кнопки управления
+    const actions = document.createElement('div');
+    actions.className = 'call-actions';
+
+    let micMuted = false;
+    const micBtn = document.createElement('button');
+    micBtn.className = 'call-btn call-btn-mute';
+    micBtn.innerHTML = '🎙️';
+    micBtn.onclick = () => {
+      micMuted = !micMuted;
+      if (localStream) {
+        localStream.getAudioTracks().forEach(track => track.enabled = !micMuted);
+      }
+      micBtn.classList.toggle('active', micMuted);
+    };
+    actions.appendChild(micBtn);
+
+    if (callType === 'video') {
+      let videoMuted = false;
+      const videoBtn = document.createElement('button');
+      videoBtn.className = 'call-btn call-btn-video';
+      videoBtn.innerHTML = '📹';
+      videoBtn.onclick = () => {
+        videoMuted = !videoMuted;
+        if (localStream) {
+          localStream.getVideoTracks().forEach(track => track.enabled = !videoMuted);
+        }
+        videoBtn.classList.toggle('active', videoMuted);
+        const localVid = document.getElementById('local-video');
+        if (localVid) localVid.style.display = videoMuted ? 'none' : 'block';
+      };
+      actions.appendChild(videoBtn);
+    }
+
+    const endBtn = document.createElement('button');
+    endBtn.className = 'call-btn call-btn-end';
+    endBtn.innerHTML = '📵';
+    endBtn.onclick = endCall;
+    actions.appendChild(endBtn);
+
+    content.appendChild(actions);
+    overlay.appendChild(content);
+
+    // Видео контейнеры
+    if (callType === 'video') {
+      const remoteVideo = document.createElement('video');
+      remoteVideo.id = 'remote-video';
+      remoteVideo.autoplay = true;
+      remoteVideo.playsInline = true;
+      remoteVideo.className = 'call-remote-video';
+      overlay.appendChild(remoteVideo);
+
+      const localContainer = document.createElement('div');
+      localContainer.className = 'call-video-container';
+      localContainer.style.display = 'block';
+      const localVideo = document.createElement('video');
+      localVideo.id = 'local-video';
+      localVideo.autoplay = true;
+      localVideo.playsInline = true;
+      localVideo.muted = true;
+      localContainer.appendChild(localVideo);
+      overlay.appendChild(localContainer);
+      if (localStream) localVideo.srcObject = localStream;
+    }
+
+    document.body.appendChild(overlay);
+
+    // Запуск таймера при активации звонка
+    callStartTime = Date.now();
+    callTimerInterval = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - callStartTime) / 1000);
+      const mins = Math.floor(elapsed / 60).toString().padStart(2, '0');
+      const secs = (elapsed % 60).toString().padStart(2, '0');
+      timer.textContent = `${mins}:${secs}`;
+    }, 1000);
+
+    // Обновление статуса через 2 секунды
+    setTimeout(() => {
+      status.textContent = 'Разговор...';
+    }, 2000);
+  }
+
+  // ---------- Завершение звонка ----------
+  async function endCall() {
+    if (callTimerInterval) clearInterval(callTimerInterval);
+    const overlay = document.getElementById('call-ui-overlay');
+    if (overlay) overlay.remove();
+
+    if (localStream) {
+      localStream.getTracks().forEach(track => track.stop());
+      localStream = null;
+    }
+    if (peerConnection) {
+      peerConnection.close();
+      peerConnection = null;
+    }
+    if (currentCallDoc) {
+      try { await updateDoc(doc(db, 'calls', currentCallDoc.id), { status: 'ended' }); } catch(e) {}
+      const chatId = await getActiveChatId();
+      if (chatId) {
+        await addDoc(collection(db, 'messages'), {
+          chatId,
+          text: 'Звонок завершён',
+          timestamp: serverTimestamp(),
+          senderUid: me.uid,
+          isCallEvent: true,
+          callType: currentCallDoc.type || 'audio',
+          callStatus: 'ended'
+        });
+      }
+      setTimeout(() => deleteCallDoc(currentCallDoc.id), 3000);
+      currentCallDoc = null;
+    }
+  }
+
+  async function deleteCallDoc(callId) { try { await deleteDoc(doc(db, 'calls', callId)); } catch(e) {} }
+  async function updateCallStatus(callId, status) { await updateDoc(doc(db, 'calls', callId), { status }); }
+
+  // ---------- Переопределение openChat для добавления кнопок ----------
+  const origOpenChat = openChat;
+  openChat = async function(chat) {
+    await origOpenChat(chat);
+    addCallButtons();
+  };
+
+  // ---------- Запуск слушателей ----------
+  let callListenerStarted = false;
+  function tryStartCallListeners() {
+    if (!callListenerStarted && me) {
+      listenForIncomingCalls();
+      callListenerStarted = true;
+    }
+  }
+  if (me) tryStartCallListeners();
+  const interval = setInterval(() => { if (me) { tryStartCallListeners(); clearInterval(interval); } }, 500);
+})();
 </script>
 </body>
 </html>
