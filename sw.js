@@ -3,18 +3,22 @@ const urlsToCache = [
   '/',
   '/index.html',
   '/manifest.json',
-  '/icon-192.png',
-  '/icon-512.png'
 ];
 
-// Установка
 self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache))
+    caches.open(CACHE_NAME).then(async cache => {
+      // Пытаемся добавить каждый ресурс, пропуская ошибки
+      const promises = urlsToCache.map(url =>
+        cache.add(url).catch(err => {
+          console.warn('Не удалось закешировать ' + url + ': ' + err);
+        })
+      );
+      return Promise.all(promises);
+    })
   );
 });
 
-// Стратегия: кеш первый, потом сеть
 self.addEventListener('fetch', event => {
   event.respondWith(
     caches.match(event.request).then(cached => {
@@ -30,7 +34,6 @@ self.addEventListener('fetch', event => {
   );
 });
 
-// Очистка старого кеша
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys => Promise.all(
