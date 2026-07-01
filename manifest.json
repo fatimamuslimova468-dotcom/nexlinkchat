@@ -1,0 +1,21 @@
+{
+  "name": "NexLink Messenger",
+  "short_name": "NexLink",
+  "description": "Современный мессенджер с экосистемой",
+  "start_url": "https://nexlink.zapto.org",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#2AABEE",
+  "icons": [
+    {
+      "src": "https://pix-up.ru/uploads/img_6a454586032915.50119352_1782924678.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://pix-up.ru/uploads/img_6a454586032915.50119352_1782924678.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
