@@ -11367,6 +11367,203 @@ function openAppMenu() {
 
   console.log('✅ Авто-появление чатов и предупреждение «Не в контактах» активированы');
 })();
+   // ════════════════════════════════════════════════════════════════
+//  1. РАМКИ ДЛЯ ВСЕХ КНОПОК (кроме навигационных и служебных)
+// ════════════════════════════════════════════════════════════════
+(function() {
+  const style = document.createElement('style');
+  style.textContent = `
+    /* Добавляем рамку всем интерактивным элементам, кроме навигации и основных кнопок с градиентом */
+    button:not(.nav-btn):not(.auth-btn):not(.send-btn):not(.modal-close):not(.hdr-back):not(.hdr-btn):not(.upv-btn):not(.ci-btn):not(.folder-tab):not(.dropdown-item):not(.app-btn):not(.sticker-tab):not(.vp-send-btn):not(.vp-del-btn):not(.emoji-btn):not(.ib-btn):not(.reply-bar-close):not(.ctx-item):not(.modal-btn) {
+      border: 1.5px solid var(--border-medium) !important;
+      border-radius: var(--radius-sm) !important;
+      background: var(--bg-surface) !important;
+      padding: 6px 12px;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    button:not(.nav-btn):not(.auth-btn):not(.send-btn):not(.modal-close):not(.hdr-back):not(.hdr-btn):not(.upv-btn):not(.ci-btn):not(.folder-tab):not(.dropdown-item):not(.app-btn):not(.sticker-tab):not(.vp-send-btn):not(.vp-del-btn):not(.emoji-btn):not(.ib-btn):not(.reply-bar-close):not(.ctx-item):not(.modal-btn):hover {
+      border-color: var(--primary) !important;
+      background: var(--bg-elevated) !important;
+    }
+    /* Кнопки с опасным действием (красные) */
+    button.danger, button.red {
+      border-color: #E74C3C !important;
+    }
+    button.danger:hover, button.red:hover {
+      border-color: #c0392b !important;
+      background: #fef2f2 !important;
+    }
+    /* Основные кнопки (без рамки, сохраняем их стиль) */
+    .auth-btn, .send-btn, .upv-btn, .modal-btn, .vp-send-btn, .app-btn {
+      border: none !important;
+    }
+    /* Кнопки в навигации */
+    .nav-btn {
+      border: none !important;
+    }
+    /* Кнопки в шапке */
+    .hdr-btn, .hdr-back, .modal-close, .reply-bar-close, .ib-btn {
+      border: none !important;
+    }
+    /* Контекстное меню */
+    .ctx-item {
+      border: none !important;
+    }
+    /* Вкладки папок */
+    .folder-tab {
+      border: 1.5px solid var(--border-medium) !important;
+      border-radius: 20px !important;
+    }
+    .folder-tab.active {
+      border-color: var(--primary) !important;
+    }
+    /* Стикеры и т.п. */
+    .sticker-tab {
+      border: 1.5px solid var(--border-medium) !important;
+      border-radius: 20px !important;
+    }
+    .sticker-tab.active {
+      border-color: var(--primary) !important;
+    }
+    /* Кнопки действий в контактах */
+    .ci-btn {
+      border: 1.5px solid var(--border-medium) !important;
+      border-radius: var(--radius-sm) !important;
+      padding: 4px 10px !important;
+    }
+    .ci-btn.red {
+      border-color: #E74C3C !important;
+    }
+    /* Пункты выпадающего меню чата */
+    .dropdown-item {
+      border: none !important;
+    }
+    /* Кнопки в модалках */
+    .modal-btn {
+      border: none !important;
+    }
+    /* Убираем рамку у изображений-кнопок */
+    .voice-play-btn, .vp-play-btn, .app-icon {
+      border: none !important;
+    }
+  `;
+  document.head.appendChild(style);
+  console.log('✅ Рамки для кнопок добавлены');
+})();
+
+// ════════════════════════════════════════════════════════════════
+//  2. АВТО-ДОБАВЛЕНИЕ ЧАТА ПРИ ПЕРВОМ СООБЩЕНИИ И ПРЕДУПРЕЖДЕНИЕ
+// ════════════════════════════════════════════════════════════════
+(function() {
+  // ---- Автоматическое добавление чата при получении сообщения ----
+  // Уже есть функция listenForNewChats, но добавим дополнительную проверку
+  // и улучшим её, чтобы при первом сообщении от незнакомца чат появлялся
+  // с пометкой "Осторожно: его нет в ваших контактах"
+
+  // Переопределяем функцию, которая обрабатывает новые сообщения
+  const origListenForNewChats = window.listenForNewChats;
+  if (typeof origListenForNewChats === 'function') {
+    // Дополняем существующую функцию
+    window.listenForNewChats = function() {
+      origListenForNewChats();
+      // Добавляем дополнительный слушатель для новых сообщений
+      if (me) {
+        onSnapshot(collection(db, 'messages'), async (snapshot) => {
+          snapshot.docChanges().forEach(async (change) => {
+            if (change.type === 'added') {
+              const data = change.doc.data();
+              const chatId = data.chatId;
+              // Проверяем, что это приватный чат
+              if (!chatId || !chatId.startsWith('chat_')) return;
+              const parts = chatId.split('_');
+              const otherUid = parts.find(p => p !== me.uid && p !== 'chat');
+              if (!otherUid || otherUid === me.uid) return;
+              // Проверяем, есть ли уже этот чат в списке
+              const exists = chatList.some(c => c.id === otherUid && c.type === 'private');
+              if (!exists) {
+                // Добавляем чат
+                const user = usersCache.get(otherUid);
+                if (user) {
+                  const newChat = {
+                    id: otherUid,
+                    name: getDisplayName(otherUid),
+                    avatar: user.avatar,
+                    type: 'private',
+                    lastMsg: data.text?.slice(0, 50) || '',
+                    lastMsgTime: data.timestamp?.toDate()?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) || '',
+                    unreadCount: 1,
+                    isNew: true // пометка, что чат новый
+                  };
+                  chatList.push(newChat);
+                  // Сортировка
+                  chatList.sort((a, b) => {
+                    const ta = a.lastMsgTime || '00:00';
+                    const tb = b.lastMsgTime || '00:00';
+                    return tb.localeCompare(ta);
+                  });
+                  renderChatList();
+                  showToast(`Новое сообщение от ${newChat.name}`);
+                }
+              }
+            }
+          });
+        });
+      }
+    };
+    // Запускаем обновлённую функцию
+    if (me) window.listenForNewChats();
+  }
+
+  // ---- Предупреждение в шапке чата, если собеседник не в контактах ----
+  // Дополняем updateChatHeaderWithProfile
+  const origUpdateHeader = updateChatHeaderWithProfile;
+  updateChatHeaderWithProfile = function() {
+    origUpdateHeader();
+    // Проверяем, приватный ли чат
+    if (!activeChat || activeChat.type !== 'private') return;
+    const uid = activeChat.id;
+    const contacts = myProfile?.contacts || [];
+    const inContacts = contacts.includes(uid);
+    const statusEl = document.getElementById('chat-hdr-status');
+    if (!statusEl) return;
+    if (!inContacts) {
+      // Добавляем предупреждение перед статусом
+      const warning = document.createElement('span');
+      warning.style.cssText = 'color: #E74C3C; font-weight: 600; font-size: 12px; display: block; margin-top: 2px;';
+      warning.textContent = '⚠️ Осторожно: его нет в ваших контактах';
+      // Если уже есть такой элемент, не дублируем
+      const existing = statusEl.parentNode.querySelector('.contact-warning');
+      if (!existing) {
+        const wrap = document.createElement('div');
+        wrap.className = 'contact-warning';
+        wrap.appendChild(warning);
+        // Вставляем после statusEl
+        statusEl.parentNode.insertBefore(wrap, statusEl.nextSibling);
+      }
+    } else {
+      // Удаляем предупреждение, если оно есть
+      const existing = statusEl.parentNode.querySelector('.contact-warning');
+      if (existing) existing.remove();
+    }
+  };
+
+  // Также при открытии чата обновляем
+  const origOpenChat = openChat;
+  openChat = async function(chat) {
+    await origOpenChat(chat);
+    // Если чат приватный и собеседник не в контактах, обновим статус
+    if (chat.type === 'private') {
+      const uid = chat.id;
+      const contacts = myProfile?.contacts || [];
+      if (!contacts.includes(uid)) {
+        // Добавим предупреждение в шапку (вызовем updateChatHeaderWithProfile)
+        updateChatHeaderWithProfile();
+      }
+    }
+  };
+
+  console.log('✅ Авто-добавление чатов и предупреждение о не-контакте активированы');
+})();
 </script>
 </body>
 </html>
