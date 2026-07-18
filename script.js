@@ -7448,3 +7448,412 @@ if (typeof onAuthStateChanged !== 'undefined') {
 
   console.log('✅ Кнопка "Загрузить из галереи" добавлена в профиль');
 })();
+// ============================================================
+//  МИНИ-ПРИЛОЖЕНИЯ: КАЛЕНДАРЬ, ПЕРЕВОДЧИК, ВЕРИФИКАЦИЯ
+// ============================================================
+
+// --- 1. КАЛЕНДАРЬ С ВАЖНЫМИ ДНЯМИ ---
+async function openCalendarApp() {
+  // Создаём/получаем модалку
+  let modal = document.getElementById('app-calendar-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'app-calendar-modal';
+    modal.className = 'modal-ov app-modal';
+    modal.innerHTML = `
+      <div class="modal-sheet">
+        <div class="modal-pill"></div>
+        <div class="modal-hdr">
+          <h3>📅 Календарь</h3>
+          <button class="modal-close">✕</button>
+        </div>
+        <div class="modal-body" id="calendar-body">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+            <button id="cal-prev"><i class="fas fa-chevron-left"></i></button>
+            <span id="cal-month-year" style="font-weight:600; font-size:18px;"></span>
+            <button id="cal-next"><i class="fas fa-chevron-right"></i></button>
+          </div>
+          <div id="cal-grid" style="display:grid; grid-template-columns:repeat(7,1fr); gap:4px; text-align:center;">
+            <div style="font-weight:600;">Пн</div><div style="font-weight:600;">Вт</div><div style="font-weight:600;">Ср</div>
+            <div style="font-weight:600;">Чт</div><div style="font-weight:600;">Пт</div><div style="font-weight:600;">Сб</div>
+            <div style="font-weight:600;">Вс</div>
+          </div>
+          <div id="cal-dates" style="display:grid; grid-template-columns:repeat(7,1fr); gap:4px; margin-top:4px;"></div>
+          <div id="cal-events" style="margin-top:12px; max-height:150px; overflow-y:auto; font-size:14px; color:var(--text-secondary);"></div>
+          <div style="margin-top:8px; display:flex; gap:6px;">
+            <input type="text" id="cal-event-input" placeholder="Важное событие..." style="flex:1; padding:8px; border-radius:8px; border:1px solid var(--border);">
+            <button id="cal-add-event" class="app-btn">Добавить</button>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+    modal.querySelector('.modal-close').onclick = () => closeModal('app-calendar-modal');
+    modal.addEventListener('click', (e) => { if (e.target === modal) closeModal('app-calendar-modal'); });
+  }
+
+  openModal('app-calendar-modal');
+
+  // Состояние календаря
+  let currentDate = new Date();
+  let selectedDate = null;
+
+  // Загрузка событий из Firestore
+  async function loadEvents(year, month) {
+    if (!me) return [];
+    const start = new Date(year, month, 1);
+    const end = new Date(year, month + 1, 1);
+    const startStr = start.toISOString().slice(0,10);
+    const endStr = end.toISOString().slice(0,10);
+    const q = query(
+      collection(db, 'calendar_events'),
+      where('userId', '==', me.uid),
+      where('date', '>=', startStr),
+      where('date', '<', endStr)
+    );
+    const snap = await getDocs(q);
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  }
+
+  // Сохранение события
+  async function addEvent(dateStr, text) {
+    if (!me || !text.trim()) return;
+    await addDoc(collection(db, 'calendar_events'), {
+      userId: me.uid,
+      date: dateStr,
+      text: text.trim(),
+      createdAt: serverTimestamp()
+    });
+  }
+
+  // Удаление события
+  async function deleteEvent(eventId) {
+    if (!me || !eventId) return;
+    await deleteDoc(doc(db, 'calendar_events', eventId));
+  }
+
+  // Рендер календаря
+  async function renderCalendar(year, month) {
+    const monthNames = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+    document.getElementById('cal-month-year').textContent = `${monthNames[month]} ${year}`;
+
+    const firstDay = new Date(year, month, 1).getDay(); // 0=воскр
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const today = new Date();
+    const todayStr = today.toISOString().slice(0,10);
+
+    // Загружаем события
+    const events = await loadEvents(year, month);
+    const eventsByDate = {};
+    events.forEach(ev => {
+      if (!eventsByDate[ev.date]) eventsByDate[ev.date] = [];
+      eventsByDate[ev.date].push(ev);
+    });
+
+    const grid = document.getElementById('cal-dates');
+    grid.innerHTML = '';
+    // Заполняем пустые дни до первого дня (пн=1, вс=0)
+    let startOffset = (firstDay === 0) ? 6 : firstDay - 1;
+    for (let i = 0; i < startOffset; i++) {
+      const empty = document.createElement('div');
+      grid.appendChild(empty);
+    }
+
+    for (let day = 1; day <= daysInMonth; day++) {
+      const dateObj = new Date(year, month, day);
+      const dateStr = dateObj.toISOString().slice(0,10);
+      const div = document.createElement('div');
+      div.textContent = day;
+      div.style.cssText = 'padding:6px 0; border-radius:6px; cursor:pointer; transition:0.1s;';
+      if (dateStr === todayStr) {
+        div.style.border = '2px solid var(--primary)';
+      }
+      if (selectedDate === dateStr) {
+        div.style.background = 'var(--primary)';
+        div.style.color = '#fff';
+      }
+      // Если есть события — точка
+      if (eventsByDate[dateStr] && eventsByDate[dateStr].length > 0) {
+        div.style.position = 'relative';
+        const dot = document.createElement('span');
+        dot.style.cssText = 'position:absolute; bottom:2px; left:50%; transform:translateX(-50%); width:5px; height:5px; border-radius:50%; background:var(--primary);';
+        div.appendChild(dot);
+      }
+      div.addEventListener('click', () => {
+        selectedDate = dateStr;
+        renderCalendar(year, month); // перерисовать
+        showEventsForDate(dateStr, eventsByDate[dateStr] || []);
+      });
+      grid.appendChild(div);
+    }
+
+    // Показать события для выбранной даты или сегодня
+    const defaultDate = selectedDate || todayStr;
+    const evs = eventsByDate[defaultDate] || [];
+    showEventsForDate(defaultDate, evs);
+  }
+
+  function showEventsForDate(dateStr, events) {
+    const container = document.getElementById('cal-events');
+    if (!events || events.length === 0) {
+      container.innerHTML = `<div style="color:var(--text-hint);">Нет событий на ${dateStr}</div>`;
+      return;
+    }
+    container.innerHTML = events.map(ev => `
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:4px 0; border-bottom:1px solid var(--border-light);">
+        <span>${esc(ev.text)}</span>
+        <button class="app-icon-btn" data-id="${ev.id}" style="color:var(--red);">✕</button>
+      </div>
+    `).join('');
+    container.querySelectorAll('button[data-id]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = btn.dataset.id;
+        await deleteEvent(id);
+        // Перерисовываем календарь
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth();
+        renderCalendar(year, month);
+      });
+    });
+  }
+
+  // Обработчики навигации
+  document.getElementById('cal-prev').addEventListener('click', () => {
+    currentDate.setMonth(currentDate.getMonth() - 1);
+    renderCalendar(currentDate.getFullYear(), currentDate.getMonth());
+  });
+  document.getElementById('cal-next').addEventListener('click', () => {
+    currentDate.setMonth(currentDate.getMonth() + 1);
+    renderCalendar(currentDate.getFullYear(), currentDate.getMonth());
+  });
+
+  // Добавление события
+  document.getElementById('cal-add-event').addEventListener('click', async () => {
+    const input = document.getElementById('cal-event-input');
+    const text = input.value.trim();
+    if (!text) return;
+    const dateStr = selectedDate || new Date().toISOString().slice(0,10);
+    await addEvent(dateStr, text);
+    input.value = '';
+    // Перерисовываем
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    renderCalendar(year, month);
+    showToast('✅ Событие добавлено');
+  });
+
+  // Инициализация
+  const now = new Date();
+  currentDate = new Date(now.getFullYear(), now.getMonth(), 1);
+  renderCalendar(currentDate.getFullYear(), currentDate.getMonth());
+}
+
+// --- 2. ПЕРЕВОДЧИК ---
+function openTranslatorApp() {
+  let modal = document.getElementById('app-translator-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'app-translator-modal';
+    modal.className = 'modal-ov app-modal';
+    modal.innerHTML = `
+      <div class="modal-sheet">
+        <div class="modal-pill"></div>
+        <div class="modal-hdr">
+          <h3>🌐 Переводчик</h3>
+          <button class="modal-close">✕</button>
+        </div>
+        <div class="modal-body">
+          <div style="display:flex; gap:8px; margin-bottom:8px;">
+            <select id="src-lang" class="app-select" style="flex:1;">
+              <option value="ru">Русский</option>
+              <option value="en">Английский</option>
+              <option value="de">Немецкий</option>
+              <option value="fr">Французский</option>
+              <option value="es">Испанский</option>
+              <option value="it">Итальянский</option>
+            </select>
+            <button id="swap-lang-btn" class="app-btn secondary" style="padding:6px 12px;">⇄</button>
+            <select id="tgt-lang" class="app-select" style="flex:1;">
+              <option value="en">Английский</option>
+              <option value="ru">Русский</option>
+              <option value="de">Немецкий</option>
+              <option value="fr">Французский</option>
+              <option value="es">Испанский</option>
+              <option value="it">Итальянский</option>
+            </select>
+          </div>
+          <textarea id="src-text" class="app-textarea" placeholder="Введите текст для перевода..." rows="3"></textarea>
+          <button id="translate-btn" class="app-btn" style="width:100%; margin:8px 0;">Перевести</button>
+          <textarea id="tgt-text" class="app-textarea" placeholder="Перевод..." rows="3" readonly style="background:var(--bg-secondary);"></textarea>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+    modal.querySelector('.modal-close').onclick = () => closeModal('app-translator-modal');
+    modal.addEventListener('click', (e) => { if (e.target === modal) closeModal('app-translator-modal'); });
+  }
+
+  openModal('app-translator-modal');
+
+  // Обработчики
+  document.getElementById('translate-btn').addEventListener('click', async () => {
+    const srcLang = document.getElementById('src-lang').value;
+    const tgtLang = document.getElementById('tgt-lang').value;
+    const text = document.getElementById('src-text').value.trim();
+    if (!text) { showToast('Введите текст'); return; }
+    try {
+      // Используем MyMemory API (бесплатно, без ключа)
+      const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${srcLang}|${tgtLang}`;
+      const res = await fetch(url);
+      const data = await res.json();
+      if (data.responseStatus === 200) {
+        document.getElementById('tgt-text').value = data.responseData.translatedText;
+      } else {
+        showToast('Ошибка перевода: ' + (data.responseDetails || 'неизвестная'));
+      }
+    } catch (err) {
+      showToast('Ошибка сети: ' + err.message);
+    }
+  });
+
+  document.getElementById('swap-lang-btn').addEventListener('click', () => {
+    const src = document.getElementById('src-lang');
+    const tgt = document.getElementById('tgt-lang');
+    const tmp = src.value;
+    src.value = tgt.value;
+    tgt.value = tmp;
+    // Также можно обменять текст
+    const srcText = document.getElementById('src-text');
+    const tgtText = document.getElementById('tgt-text');
+    const tmpText = srcText.value;
+    srcText.value = tgtText.value;
+    tgtText.value = tmpText;
+  });
+}
+
+// --- 3. ВЕРИФИКАЦИЯ С ГАЛОЧКОЙ ---
+function openVerificationApp() {
+  let modal = document.getElementById('app-verification-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'app-verification-modal';
+    modal.className = 'modal-ov app-modal';
+    modal.innerHTML = `
+      <div class="modal-sheet">
+        <div class="modal-pill"></div>
+        <div class="modal-hdr">
+          <h3>✅ Верификация</h3>
+          <button class="modal-close">✕</button>
+        </div>
+        <div class="modal-body" id="verification-body">
+          <div style="text-align:center; padding:16px 0;">
+            <div id="verif-icon" style="font-size:64px; margin-bottom:12px;">🔒</div>
+            <div id="verif-status" style="font-size:18px; font-weight:600;"></div>
+            <div id="verif-detail" style="color:var(--text-secondary); margin-top:4px;"></div>
+            <div style="margin-top:16px; display:flex; flex-direction:column; gap:8px;">
+              <button id="verif-check-btn" class="app-btn">🔄 Проверить сейчас</button>
+              <button id="verif-resend-btn" class="app-btn secondary">📧 Отправить повторно</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+    modal.querySelector('.modal-close').onclick = () => closeModal('app-verification-modal');
+    modal.addEventListener('click', (e) => { if (e.target === modal) closeModal('app-verification-modal'); });
+  }
+
+  openModal('app-verification-modal');
+
+  // Функция обновления статуса
+  async function updateVerificationStatus() {
+    const user = auth.currentUser;
+    if (!user) {
+      document.getElementById('verif-icon').textContent = '⛔';
+      document.getElementById('verif-status').textContent = 'Не авторизован';
+      document.getElementById('verif-detail').textContent = 'Войдите в аккаунт';
+      return;
+    }
+    await user.reload();
+    const verified = user.emailVerified;
+    const icon = verified ? '✅' : '🔒';
+    const status = verified ? 'Email подтверждён' : 'Email не подтверждён';
+    const detail = verified ? 'Ваш аккаунт верифицирован' : 'Пожалуйста, подтвердите email, перейдя по ссылке в письме';
+    document.getElementById('verif-icon').textContent = icon;
+    document.getElementById('verif-status').textContent = status;
+    document.getElementById('verif-detail').textContent = detail;
+    // Если верифицирован, показываем галочку
+    if (verified) {
+      document.getElementById('verif-icon').style.color = '#2ECC71';
+    } else {
+      document.getElementById('verif-icon').style.color = '#E74C3C';
+    }
+  }
+
+  // Обработчики
+  document.getElementById('verif-check-btn').addEventListener('click', updateVerificationStatus);
+  document.getElementById('verif-resend-btn').addEventListener('click', async () => {
+    const user = auth.currentUser;
+    if (!user) { showToast('Войдите в аккаунт'); return; }
+    try {
+      await sendEmailVerification(user);
+      showToast('Письмо отправлено повторно');
+    } catch (err) {
+      showToast('Ошибка: ' + handleFirebaseError(err));
+    }
+  });
+
+  // Первоначальная загрузка
+  updateVerificationStatus();
+}
+
+// --- 4. ОБНОВЛЕНИЕ МЕНЮ ПРИЛОЖЕНИЙ (добавляем переводчик и верификацию) ---
+const originalOpenAppMenu = openAppMenu;
+openAppMenu = function() {
+  // Вызываем оригинальную функцию, которая создаёт модалку
+  // Но мы хотим добавить карточки в уже существующую модалку.
+  // Чтобы не дублировать код, мы можем переопределить её полностью.
+  // Вместо этого мы добавим свои карточки после создания модалки.
+  originalOpenAppMenu();
+
+  // Находим контейнер с карточками
+  const grid = document.getElementById('app-menu-body');
+  if (!grid) return;
+
+  // Проверяем, нет ли уже карточек переводчика и верификации
+  if (document.getElementById('app-translator')) return;
+
+  // Добавляем карточки
+  const translatorCard = document.createElement('div');
+  translatorCard.className = 'app-card';
+  translatorCard.id = 'app-translator';
+  translatorCard.innerHTML = `
+    <div class="app-icon"><i class="fas fa-language"></i></div>
+    <div class="app-name">Переводчик</div>
+    <div class="app-desc">Перевод текста</div>
+  `;
+  translatorCard.addEventListener('click', () => {
+    closeModal('modal-app-menu');
+    openTranslatorApp();
+  });
+  grid.appendChild(translatorCard);
+
+  const verifCard = document.createElement('div');
+  verifCard.className = 'app-card';
+  verifCard.id = 'app-verification';
+  verifCard.innerHTML = `
+    <div class="app-icon"><i class="fas fa-check-circle"></i></div>
+    <div class="app-name">Верификация</div>
+    <div class="app-desc">Статус и проверка</div>
+  `;
+  verifCard.addEventListener('click', () => {
+    closeModal('modal-app-menu');
+    openVerificationApp();
+  });
+  grid.appendChild(verifCard);
+};
+
+// Переопределяем также openAppMenu для случая, если оригинал не вызван (подстраховка)
+// Но в текущем коде оригинал уже определён, мы его переопределили выше.
+
+console.log('✅ Мини-приложения: Календарь, Переводчик, Верификация добавлены');
