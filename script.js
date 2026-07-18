@@ -7075,3 +7075,245 @@ if (typeof onAuthStateChanged !== 'undefined') {
 
   console.log('✅ Кнопка "Загрузить из галереи" добавлена в профиль');
 })();
+// ============================================================
+//  АДАПТИВНЫЕ КНОПКИ И НАСТРОЙКИ ВНЕШНЕГО ВИДА СООБЩЕНИЙ
+// ============================================================
+
+(function() {
+  "use strict";
+
+  // ---------- 1. Стили для адаптивных кнопок ----------
+  const adaptiveStyles = document.createElement('style');
+  adaptiveStyles.id = 'adaptive-button-styles';
+  adaptiveStyles.textContent = `
+    /* Все кнопки не выходят за границы родителя */
+    button, .btn, .auth-btn, .send-btn, .hdr-btn, .nav-btn, .upv-btn, .ci-btn,
+    .modal-btn, .app-btn, .vp-send-btn, .vp-del-btn, .ib-btn, .reply-bar-close,
+    .folder-tab, .sticker-tab, .emoji-btn, .ctx-item {
+      max-width: 100% !important;
+      box-sizing: border-box !important;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Для кнопок с иконками и текстом */
+    .nav-btn, .hdr-btn, .upv-btn, .ci-btn {
+      display: inline-flex !important;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+
+    /* Для мобильных устройств уменьшаем отступы */
+    @media (max-width: 480px) {
+      .auth-btn, .modal-btn, .upv-btn, .ci-btn {
+        padding: 8px 12px !important;
+        font-size: 14px !important;
+      }
+      .nav-btn .nav-label {
+        font-size: 9px !important;
+      }
+      .hdr-btn {
+        width: 32px !important;
+        height: 32px !important;
+        font-size: 16px !important;
+      }
+    }
+
+    /* Общие стили для поля ввода и других элементов */
+    input, textarea, select {
+      max-width: 100%;
+      box-sizing: border-box;
+    }
+
+    /* Контейнеры не должны обрезать кнопки */
+    .hdr, .input-wrap, .modal-hdr, .upv-actions {
+      flex-wrap: wrap;
+    }
+
+    /* Настройка скругления сообщений – будет переопределяться через JS */
+    .bubble {
+      transition: border-radius 0.2s, font-size 0.2s;
+    }
+  `;
+  document.head.appendChild(adaptiveStyles);
+
+  // ---------- 2. Настройки внешнего вида сообщений ----------
+  // Ключи для localStorage
+  const STORAGE_KEYS = {
+    BUBBLE_RADIUS: 'nexlink_bubble_radius',
+    BUBBLE_FONT_SIZE: 'nexlink_bubble_font_size',
+  };
+
+  // Значения по умолчанию
+  const DEFAULTS = {
+    radius: 16,    // px
+    fontSize: 15,  // px
+  };
+
+  // Загрузка сохранённых значений
+  function getStoredValue(key, defaultValue) {
+    try {
+      const val = localStorage.getItem(key);
+      return val !== null ? parseInt(val, 10) : defaultValue;
+    } catch {
+      return defaultValue;
+    }
+  }
+
+  // Применение настроек к сообщениям
+  function applyMessageStyles(radius, fontSize) {
+    const bubbles = document.querySelectorAll('.bubble');
+    bubbles.forEach(el => {
+      el.style.borderRadius = radius + 'px';
+      el.style.fontSize = fontSize + 'px';
+      // Также корректируем внутренние элементы для согласованности
+      const text = el.querySelector('.bubble-text');
+      if (text) {
+        text.style.fontSize = fontSize + 'px';
+      }
+    });
+    // Для новых сообщений используем MutationObserver (см. ниже)
+  }
+
+  // Сохранение и применение
+  function saveAndApplyRadius(value) {
+    localStorage.setItem(STORAGE_KEYS.BUBBLE_RADIUS, value);
+    applyMessageStyles(value, getStoredValue(STORAGE_KEYS.BUBBLE_FONT_SIZE, DEFAULTS.fontSize));
+  }
+
+  function saveAndApplyFontSize(value) {
+    localStorage.setItem(STORAGE_KEYS.BUBBLE_FONT_SIZE, value);
+    applyMessageStyles(getStoredValue(STORAGE_KEYS.BUBBLE_RADIUS, DEFAULTS.radius), value);
+  }
+
+  // Инициализация при загрузке
+  function initMessageStyles() {
+    const radius = getStoredValue(STORAGE_KEYS.BUBBLE_RADIUS, DEFAULTS.radius);
+    const fontSize = getStoredValue(STORAGE_KEYS.BUBBLE_FONT_SIZE, DEFAULTS.fontSize);
+    applyMessageStyles(radius, fontSize);
+  }
+
+  // Следим за новыми сообщениями (если они добавляются динамически)
+  function observeNewMessages() {
+    const messagesWrap = document.getElementById('messages-wrap');
+    if (!messagesWrap) return;
+    const observer = new MutationObserver(() => {
+      const radius = getStoredValue(STORAGE_KEYS.BUBBLE_RADIUS, DEFAULTS.radius);
+      const fontSize = getStoredValue(STORAGE_KEYS.BUBBLE_FONT_SIZE, DEFAULTS.fontSize);
+      applyMessageStyles(radius, fontSize);
+    });
+    observer.observe(messagesWrap, { childList: true, subtree: true });
+  }
+
+  // Запускаем инициализацию и наблюдение
+  initMessageStyles();
+  setTimeout(observeNewMessages, 500); // даём время на рендер
+
+  // ---------- 3. Добавляем пункты в настройки ----------
+  function addAppearanceSettings() {
+    const settingsBody = document.getElementById('settings-body');
+    if (!settingsBody) return;
+
+    // Проверяем, не добавлены ли уже
+    if (document.getElementById('appearance-settings-section')) return;
+
+    // Находим раздел "Дополнительно" или создаём новый
+    let targetSection = null;
+    const sections = settingsBody.querySelectorAll('.settings-section');
+    for (const sec of sections) {
+      const label = sec.querySelector('.settings-label');
+      if (label && label.textContent.trim() === 'Дополнительно') {
+        targetSection = sec;
+        break;
+      }
+    }
+    // Если не нашли, создаём новый раздел перед последним элементом (обычно это выход)
+    if (!targetSection) {
+      const newSection = document.createElement('div');
+      newSection.className = 'settings-section';
+      newSection.id = 'appearance-settings-section';
+      const label = document.createElement('div');
+      label.className = 'settings-label';
+      label.textContent = 'Оформление';
+      newSection.appendChild(label);
+      // Вставляем перед последним .settings-section или в конец
+      const lastSection = settingsBody.querySelector('.settings-section:last-child');
+      if (lastSection) {
+        settingsBody.insertBefore(newSection, lastSection);
+      } else {
+        settingsBody.appendChild(newSection);
+      }
+      targetSection = newSection;
+    }
+
+    // Если раздел существует, но мы его создали, добавим элементы
+    // Проверяем, есть ли уже элементы управления
+    if (targetSection.querySelector('.appearance-controls')) return;
+
+    const controls = document.createElement('div');
+    controls.className = 'appearance-controls';
+    controls.style.cssText = 'padding: 0 16px 12px;';
+
+    // Текущие значения
+    const currentRadius = getStoredValue(STORAGE_KEYS.BUBBLE_RADIUS, DEFAULTS.radius);
+    const currentFontSize = getStoredValue(STORAGE_KEYS.BUBBLE_FONT_SIZE, DEFAULTS.fontSize);
+
+    // Ползунок скругления
+    const radiusWrap = document.createElement('div');
+    radiusWrap.style.cssText = 'display: flex; align-items: center; gap: 12px; margin-bottom: 12px;';
+    radiusWrap.innerHTML = `
+      <label style="font-size:14px; font-weight:500; min-width:140px;">Скругление сообщений</label>
+      <input type="range" id="bubble-radius-slider" min="4" max="32" value="${currentRadius}" step="1" style="flex:1; accent-color: var(--accent);">
+      <span id="bubble-radius-value" style="font-size:14px; font-weight:600; min-width:30px;">${currentRadius}px</span>
+    `;
+    controls.appendChild(radiusWrap);
+
+    // Ползунок размера шрифта
+    const fontSizeWrap = document.createElement('div');
+    fontSizeWrap.style.cssText = 'display: flex; align-items: center; gap: 12px; margin-bottom: 8px;';
+    fontSizeWrap.innerHTML = `
+      <label style="font-size:14px; font-weight:500; min-width:140px;">Размер шрифта</label>
+      <input type="range" id="bubble-fontsize-slider" min="12" max="22" value="${currentFontSize}" step="1" style="flex:1; accent-color: var(--accent);">
+      <span id="bubble-fontsize-value" style="font-size:14px; font-weight:600; min-width:30px;">${currentFontSize}px</span>
+    `;
+    controls.appendChild(fontSizeWrap);
+
+    targetSection.appendChild(controls);
+
+    // Обработчики
+    const radiusSlider = document.getElementById('bubble-radius-slider');
+    const radiusDisplay = document.getElementById('bubble-radius-value');
+    radiusSlider.addEventListener('input', () => {
+      const val = parseInt(radiusSlider.value, 10);
+      radiusDisplay.textContent = val + 'px';
+      saveAndApplyRadius(val);
+    });
+
+    const fontSizeSlider = document.getElementById('bubble-fontsize-slider');
+    const fontSizeDisplay = document.getElementById('bubble-fontsize-value');
+    fontSizeSlider.addEventListener('input', () => {
+      const val = parseInt(fontSizeSlider.value, 10);
+      fontSizeDisplay.textContent = val + 'px';
+      saveAndApplyFontSize(val);
+    });
+  }
+
+  // Внедряем в renderSettings
+  const originalRenderSettings = window.renderSettings || renderSettings;
+  window.renderSettings = function() {
+    if (typeof originalRenderSettings === 'function') {
+      originalRenderSettings.apply(this, arguments);
+    }
+    // Добавляем настройки внешнего вида после рендера
+    setTimeout(addAppearanceSettings, 100);
+  };
+
+  // Если настройки уже отрендерены, добавляем сейчас
+  if (document.getElementById('settings-body')) {
+    setTimeout(addAppearanceSettings, 200);
+  }
+
+  console.log('✅ Адаптивные кнопки и настройки скругления/размера сообщений активированы');
+})();
