@@ -6,24 +6,25 @@ if (!admin.apps.length) admin.initializeApp();
 const XAMCHAT_CLIENT_ID = 'xam_xTiS5LUIuWTrEPx2qcqHA';
 
 exports.xamChatAuth = functions.https.onRequest(async (req, res) => {
-  // Устанавливаем CORS заголовки для всех ответов
-  res.set('Access-Control-Allow-Origin', '*'); // в проде укажите ваш домен
+  // Устанавливаем CORS-заголовки для всех ответов
+  res.set('Access-Control-Allow-Origin', '*');
   res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.set('Access-Control-Allow-Headers', 'Content-Type');
 
-  // Обработка preflight (OPTIONS)
+  // Обрабатываем предварительный OPTIONS-запрос
   if (req.method === 'OPTIONS') {
     res.status(204).send('');
     return;
   }
 
+  // Разрешаем только POST
   if (req.method !== 'POST') {
-    res.status(405).json({ error: 'method not allowed' });
+    res.status(405).json({ error: 'Method not allowed' });
     return;
   }
 
   try {
-    const { code, redirect_uri, code_verifier } = req.body || {};
+    const { code, redirect_uri, code_verifier } = req.body;
     if (!code || !redirect_uri || !code_verifier) {
       res.status(400).json({ error: 'code, redirect_uri и code_verifier обязательны' });
       return;
@@ -38,7 +39,7 @@ exports.xamChatAuth = functions.https.onRequest(async (req, res) => {
         code,
         redirect_uri,
         client_id: XAMCHAT_CLIENT_ID,
-        code_verifier: code_verifier
+        code_verifier
       })
     });
 
