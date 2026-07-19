@@ -6503,16 +6503,16 @@ if (typeof onAuthStateChanged !== 'undefined') {
   }, 300);
 }
 // ════════════════════════════════════════════════════
-//  XAM CHAT OAUTH — с PKCE (S256) + crypto-js fallback
+//  XAM CHAT OAUTH — с поддержкой PKCE (S256)
 // ════════════════════════════════════════════════════
 
 const XAMCHAT_CLIENT_ID = 'xam_xTiS5LUIuWTrEPx2qcqHA';
 const XAMCHAT_REDIRECT_URI = 'http://nexchat.zapto.org/'; // Укажите ваш точный URI
 const XAMCHAT_TOKEN_EXCHANGE_URL = 'https://us-central1-quickchat-f5012.cloudfunctions.net/xamChatAuth';
 
-// --- Генерация code_verifier и code_challenge (всегда S256) ---
+// --- Генерация code_verifier и code_challenge (SHA-256) ---
 async function generatePKCE() {
-  // Генерируем случайный verifier (64 символа, безопасные для URL)
+  // Генерируем случайный verifier (длина 64 символа, безопасные для URL)
   const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
   let verifier = '';
   for (let i = 0; i < 64; i++) {
@@ -6530,61 +6530,55 @@ async function generatePKCE() {
         .replace(/\+/g, '-')
         .replace(/\//g, '_')
         .replace(/=+$/, '');
-      return { verifier, challenge, method: 'S256' };
+      return { verifier, challenge };
     } catch (e) {
       // fallback на crypto-js
     }
   }
 
-  // Используем crypto-js как fallback (должен быть подключен ранее)
+  // Используем crypto-js как fallback (убедитесь, что библиотека подключена)
   if (typeof CryptoJS !== 'undefined') {
     const wordArray = CryptoJS.enc.Utf8.parse(verifier);
     const hash = CryptoJS.SHA256(wordArray);
     const base64 = hash.toString(CryptoJS.enc.Base64);
     challenge = base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-    return { verifier, challenge, method: 'S256' };
+    return { verifier, challenge };
   }
 
   throw new Error('Не удалось вычислить SHA-256. Установите crypto-js или перейдите на HTTPS.');
 }
 
 // --- Обработчик кнопки «Войти через Xam Chat» ---
-const xamBtn = document.getElementById('xamchat-btn');
-if (xamBtn) {
-  xamBtn.addEventListener('click', async () => {
-    try {
-      const { verifier, challenge, method } = await generatePKCE();
-      const state = Math.random().toString(36).slice(2);
-      
-      sessionStorage.setItem('xamchat_verifier', verifier);
-      sessionStorage.setItem('xamchat_state', state);
-      
-      const authUrl = new URL('https://xamchat.ru/oauth/authorize');
-      authUrl.searchParams.set('client_id', XAMCHAT_CLIENT_ID);
-      authUrl.searchParams.set('redirect_uri', XAMCHAT_REDIRECT_URI);
-      authUrl.searchParams.set('response_type', 'code');
-      authUrl.searchParams.set('state', state);
-      authUrl.searchParams.set('code_challenge', challenge);
-      authUrl.searchParams.set('code_challenge_method', method); // всегда 'S256'
-      
-      console.log('Redirect URI:', XAMCHAT_REDIRECT_URI);
-      console.log('code_challenge:', challenge);
-      console.log('code_challenge_method:', method);
-      
-      window.location.href = authUrl.toString();
-    } catch (err) {
-      showToast('❌ Ошибка генерации ключей: ' + err.message);
-    }
-  });
-}
+document.getElementById('xamchat-btn')?.addEventListener('click', async () => {
+  try {
+    const { verifier, challenge } = await generatePKCE();
+    const state = Math.random().toString(36).slice(2);
+    
+    sessionStorage.setItem('xamchat_verifier', verifier);
+    sessionStorage.setItem('xamchat_state', state);
+    
+    const authUrl = new URL('https://xamchat.ru/oauth/authorize');
+    authUrl.searchParams.set('client_id', XAMCHAT_CLIENT_ID);
+    authUrl.searchParams.set('redirect_uri', XAMCHAT_REDIRECT_URI);
+    authUrl.searchParams.set('response_type', 'code');
+    authUrl.searchParams.set('state', state);
+    authUrl.searchParams.set('code_challenge', challenge);
+    authUrl.searchParams.set('code_challenge_method', 'S256'); // обязательно S256
+    
+    window.location.href = authUrl.toString();
+  } catch (err) {
+    showToast('❌ Ошибка: ' + err.message);
+  }
+});
 
-// --- Обработка callback ---
+// --- Обработка callback (редирект) ---
 async function handleXamChatCallback() {
   const params = new URLSearchParams(window.location.search);
   const code = params.get('code');
   const state = params.get('state');
   if (!code) return;
 
+  // Убираем параметры из URL
   window.history.replaceState({}, '', window.location.pathname);
 
   const savedState = sessionStorage.getItem('xamchat_state');
@@ -6616,6 +6610,7 @@ async function handleXamChatCallback() {
     if (!resp.ok || !data.firebaseToken) {
       throw new Error(data.error || 'ошибка авторизации');
     }
+    // Вход через Firebase Custom Token
     await signInWithCustomToken(auth, data.firebaseToken);
     showToast('✅ Вход через Xam Chat выполнен');
   } catch (e) {
