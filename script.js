@@ -6507,14 +6507,12 @@ if (typeof onAuthStateChanged !== 'undefined') {
 // ════════════════════════════════════════════════════════════════
 
 (function() {
-  // Конфигурация Xam Chat
   const XAMCHAT = {
     clientId: 'xam_xTiS5LUIuWTrEPx2qcqHA',
     authorizeUrl: 'https://xamchat.ru/oauth/authorize',
     tokenUrl: 'https://xamchat.ru/oauth/token',
     userInfoUrl: 'https://xamchat.ru/oauth/userinfo',
-    // Адрес нашей Cloud Function для обмена кода на Firebase токен
-    // Замените на актуальный URL после деплоя функции
+    // Адрес вашей Cloud Function
     exchangeUrl: 'https://us-central1-quickchat-f5012.cloudfunctions.net/xamChatAuth'
   };
 
@@ -6526,10 +6524,20 @@ if (typeof onAuthStateChanged !== 'undefined') {
   }
 
   async function generateCodeChallenge(verifier) {
-    const encoder = new TextEncoder();
-    const data = encoder.encode(verifier);
-    const hash = await crypto.subtle.digest('SHA-256', data);
-    return base64UrlEncode(new Uint8Array(hash));
+    // Если crypto.subtle недоступен, используем полифилл (js-sha256)
+    if (window.crypto && window.crypto.subtle) {
+      const encoder = new TextEncoder();
+      const data = encoder.encode(verifier);
+      const hash = await crypto.subtle.digest('SHA-256', data);
+      return base64UrlEncode(new Uint8Array(hash));
+    }
+    // Полифилл (подключите js-sha256 в HTML)
+    if (typeof sha256 !== 'undefined') {
+      const hash = sha256(verifier);
+      const bytes = new Uint8Array(hash.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
+      return base64UrlEncode(bytes);
+    }
+    throw new Error('crypto.subtle недоступен и библиотека sha256 не загружена');
   }
 
   function base64UrlEncode(buffer) {
@@ -6544,113 +6552,91 @@ if (typeof onAuthStateChanged !== 'undefined') {
       .replace(/=+$/, '');
   }
 
-  // ---- Сохранение/чтение verifier ----
   function saveVerifier(verifier) {
     sessionStorage.setItem('xamchat_code_verifier', verifier);
   }
-
   function getVerifier() {
     return sessionStorage.getItem('xamchat_code_verifier');
   }
-
   function clearVerifier() {
     sessionStorage.removeItem('xamchat_code_verifier');
   }
 
-  // ---- Обработчик кнопки "Войти через Xam Chat" ----
+  // ---- Обработчик кнопки ----
   const xamBtn = document.getElementById('xamchat-btn');
   if (xamBtn) {
     xamBtn.addEventListener('click', async () => {
       try {
-        // 1. Генерируем code_verifier и code_challenge
         const verifier = generateCodeVerifier();
         const challenge = await generateCodeChallenge(verifier);
         saveVerifier(verifier);
 
-        // 2. Строим URL для редиректа
         const redirectUri = window.location.origin + window.location.pathname;
         const params = new URLSearchParams({
           client_id: XAMCHAT.clientId,
           redirect_uri: redirectUri,
           response_type: 'code',
-          scope: 'profile',
+          scope: 'profile_basic',   // ← ИСПРАВЛЕНО!
           code_challenge: challenge,
           code_challenge_method: 'S256'
         });
-        const authUrl = `${XAMCHAT.authorizeUrl}?${params.toString()}`;
-
-        // 3. Перенаправляем пользователя на Xam Chat
-        window.location.href = authUrl;
+        window.location.href = `${XAMCHAT.authorizeUrl}?${params.toString()}`;
       } catch (err) {
-        showToast('Ошибка инициализации входа через Xam Chat: ' + err.message);
+        showToast('Ошибка инициализации входа: ' + err.message);
       }
     });
   }
 
-  // ---- Обработка редиректа после авторизации ----
+  // ---- Обработка редиректа ----
   async function handleXamChatRedirect() {
     const urlParams = new URLSearchParams(window.location.search);
     const code = urlParams.get('code');
+    const error = urlParams.get('error');
+    
+    if (error) {
+      showToast('Авторизация отклонена: ' + error);
+      clearVerifier();
+      return;
+    }
     if (!code) return;
 
-    // Проверяем, есть ли сохранённый verifier
     const verifier = getVerifier();
     if (!verifier) {
-      showToast('Сессия Xam Chat истекла, попробуйте ещё раз');
+      showToast('Сессия истекла, попробуйте снова');
       return;
     }
 
-    // Очищаем URL от параметров, чтобы не мешали
     const cleanUrl = window.location.origin + window.location.pathname;
     window.history.replaceState({}, document.title, cleanUrl);
-
-    // Показываем загрузку
     showToast('⏳ Вход через Xam Chat...');
 
     try {
-      const redirectUri = cleanUrl;
       const response = await fetch(XAMCHAT.exchangeUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           code,
-          redirect_uri: redirectUri,
+          redirect_uri: cleanUrl,
           code_verifier: verifier
         })
       });
-
       const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || 'Ошибка обмена кода');
-      }
+      if (!response.ok) throw new Error(data.error || 'Ошибка обмена');
+      if (!data.firebaseToken) throw new Error('Firebase токен не получен');
 
-      if (!data.firebaseToken) {
-        throw new Error('Firebase токен не получен');
-      }
-
-      // Входим через Firebase с кастомным токеном
       await signInWithCustomToken(auth, data.firebaseToken);
       clearVerifier();
-      showToast('✅ Вход через Xam Chat выполнен');
+      showToast('✅ Вход выполнен');
     } catch (err) {
-      showToast('❌ Ошибка входа: ' + err.message);
+      showToast('❌ Ошибка: ' + err.message);
       clearVerifier();
     }
   }
 
-  // Запускаем обработку редиректа при загрузке страницы,
-  // если пользователь ещё не авторизован (т.е. не залогинен)
-  // Но мы можем вызывать всегда, потому что если код есть, то обработаем.
-  // Важно: выполнять после инициализации Firebase, но до полной загрузки.
-  // Вызовем в конце, когда всё готово.
+  // Запуск после загрузки
   if (document.readyState === 'complete') {
     handleXamChatRedirect();
   } else {
     window.addEventListener('load', handleXamChatRedirect);
   }
-
-  // Также если пользователь уже залогинен, но код пришёл, мы всё равно обработаем
-  // и войдём заново (можно добавить проверку, но это не критично).
-
-  console.log('✅ Интеграция Xam Chat активирована');
 })();
