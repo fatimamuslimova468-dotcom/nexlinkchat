@@ -7317,3 +7317,60 @@ if (typeof onAuthStateChanged !== 'undefined') {
 
   console.log('✅ Адаптивные кнопки и настройки скругления/размера сообщений активированы');
 })();
+function startGlobalMessageListener() {
+  if (!me) return;
+
+  // Подписываемся на все новые сообщения, где chatId начинается с 'chat_' (приватные чаты)
+  onSnapshot(
+    query(collection(db, 'messages'), where('chatId', '>=', 'chat_'), where('chatId', '<=', 'chat_\uf8ff')),
+    (snapshot) => {
+      snapshot.docChanges().forEach((change) => {
+        if (change.type === 'added') {
+          const data = change.doc.data();
+          const chatId = data.chatId;
+          if (!chatId || !chatId.startsWith('chat_')) return;
+
+          // Извлекаем UID собеседника
+          const parts = chatId.split('_');
+          const otherUid = parts.find(p => p !== me.uid && p !== 'chat');
+          if (!otherUid || otherUid === me.uid) return;
+
+          // Проверяем, есть ли уже такой чат в списке
+          const exists = chatList.some(c => c.id === otherUid && c.type === 'private');
+          if (exists) return;
+
+          // Получаем данные пользователя из кэша (или загружаем)
+          const user = usersCache.get(otherUid);
+          if (!user) {
+            // Если пользователь ещё не в кэше – загрузим его
+            getUserDoc(otherUid).then((u) => {
+              if (u) {
+                usersCache.set(otherUid, u);
+                addChatToList(otherUid, u, data);
+              }
+            });
+            return;
+          }
+          addChatToList(otherUid, user, data);
+        }
+      });
+    }
+  );
+}
+
+function addChatToList(uid, user, msgData) {
+  const newChat = {
+    id: uid,
+    name: getDisplayName(uid),
+    avatar: user.avatar || '😊',
+    type: 'private',
+    lastMsg: msgData.text?.slice(0, 50) || 'Новое сообщение',
+    lastMsgTime: msgData.timestamp?.toDate?.()?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) || '',
+    unreadCount: 1,
+    isNew: true
+  };
+  chatList.push(newChat);
+  chatList.sort((a, b) => (b.lastMsgTime || '00:00').localeCompare(a.lastMsgTime || '00:00'));
+  renderChatList();
+  showToast(`📩 Новый чат: ${newChat.name}`);
+}
