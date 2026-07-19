@@ -2,7 +2,7 @@ const functions = require('firebase-functions');
 const admin = require('firebase-admin');
 if (!admin.apps.length) admin.initializeApp();
 
-const XAMCHAT_CLIENT_ID = 'xam_xTiS5LUIuWTrEPx2qcqHA';
+const XAMCHAT_CLIENT_ID = 'xam_pOwUsNRoU0kcpYf3i31FXQ';  // ← новый
 
 exports.xamChatAuth = functions
   .https.onRequest(async (req, res) => {
