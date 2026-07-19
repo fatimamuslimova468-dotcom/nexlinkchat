@@ -6508,13 +6508,12 @@ if (typeof onAuthStateChanged !== 'undefined') {
 
 (function() {
   const XAMCHAT = {
-    clientId: 'xam_xTiS5LUIuWTrEPx2qcqHA',
-    authorizeUrl: 'https://xamchat.ru/oauth/authorize',
-    tokenUrl: 'https://xamchat.ru/oauth/token',
-    userInfoUrl: 'https://xamchat.ru/oauth/userinfo',
-    // Адрес вашей Cloud Function
-    exchangeUrl: 'https://us-central1-quickchat-f5012.cloudfunctions.net/xamChatAuth'
-  };
+  clientId: 'xam_pOwUsNRoU0kcpYf3i31FXQ',   // ← новый
+  authorizeUrl: 'https://xamchat.ru/oauth/authorize',
+  tokenUrl: 'https://xamchat.ru/oauth/token',
+  userInfoUrl: 'https://xamchat.ru/oauth/userinfo',
+  exchangeUrl: 'https://us-central1-quickchat-f5012.cloudfunctions.net/xamChatAuth'
+};
 
   // ---- PKCE утилиты ----
   function generateCodeVerifier() {
