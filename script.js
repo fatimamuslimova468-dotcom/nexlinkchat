@@ -6503,14 +6503,14 @@ if (typeof onAuthStateChanged !== 'undefined') {
   }, 300);
 }
 // ════════════════════════════════════════════════════
-//  XAM CHAT OAUTH — с PKCE (S256) + fallback на crypto-js
+//  XAM CHAT OAUTH — с PKCE (S256) + crypto-js fallback
 // ════════════════════════════════════════════════════
 
 const XAMCHAT_CLIENT_ID = 'xam_xTiS5LUIuWTrEPx2qcqHA';
 const XAMCHAT_REDIRECT_URI = 'http://nexchat.zapto.org/'; // Укажите ваш точный URI
 const XAMCHAT_TOKEN_EXCHANGE_URL = 'https://us-central1-quickchat-f5012.cloudfunctions.net/xamChatAuth';
 
-// --- Генерация code_verifier и code_challenge ---
+// --- Генерация code_verifier и code_challenge (всегда S256) ---
 async function generatePKCE() {
   // Генерируем случайный verifier (64 символа, безопасные для URL)
   const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
@@ -6532,11 +6532,11 @@ async function generatePKCE() {
         .replace(/=+$/, '');
       return { verifier, challenge, method: 'S256' };
     } catch (e) {
-      // fallback на crypto-js, если что-то пошло не так
+      // fallback на crypto-js
     }
   }
 
-  // Используем crypto-js как fallback
+  // Используем crypto-js как fallback (должен быть подключен ранее)
   if (typeof CryptoJS !== 'undefined') {
     const wordArray = CryptoJS.enc.Utf8.parse(verifier);
     const hash = CryptoJS.SHA256(wordArray);
@@ -6545,7 +6545,6 @@ async function generatePKCE() {
     return { verifier, challenge, method: 'S256' };
   }
 
-  // Если ничего не работает – выбрасываем ошибку
   throw new Error('Не удалось вычислить SHA-256. Установите crypto-js или перейдите на HTTPS.');
 }
 
@@ -6566,7 +6565,11 @@ if (xamBtn) {
       authUrl.searchParams.set('response_type', 'code');
       authUrl.searchParams.set('state', state);
       authUrl.searchParams.set('code_challenge', challenge);
-      authUrl.searchParams.set('code_challenge_method', method); // всегда S256
+      authUrl.searchParams.set('code_challenge_method', method); // всегда 'S256'
+      
+      console.log('Redirect URI:', XAMCHAT_REDIRECT_URI);
+      console.log('code_challenge:', challenge);
+      console.log('code_challenge_method:', method);
       
       window.location.href = authUrl.toString();
     } catch (err) {
@@ -6575,14 +6578,13 @@ if (xamBtn) {
   });
 }
 
-// --- Обработка callback (редирект) ---
+// --- Обработка callback ---
 async function handleXamChatCallback() {
   const params = new URLSearchParams(window.location.search);
   const code = params.get('code');
   const state = params.get('state');
   if (!code) return;
 
-  // Убираем параметры из URL
   window.history.replaceState({}, '', window.location.pathname);
 
   const savedState = sessionStorage.getItem('xamchat_state');
