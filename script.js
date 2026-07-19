@@ -6502,120 +6502,155 @@ if (typeof onAuthStateChanged !== 'undefined') {
     }
   }, 300);
 }
-// ════════════════════════════════════════════════════
-//  XAM CHAT OAUTH — с поддержкой PKCE (S256)
-// ════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════
+//  АВТОРИЗАЦИЯ ЧЕРЕЗ XAM CHAT (OAuth 2.0 + PKCE)
+// ════════════════════════════════════════════════════════════════
 
-const XAMCHAT_CLIENT_ID = 'xam_xTiS5LUIuWTrEPx2qcqHA';
-const XAMCHAT_REDIRECT_URI = 'http://nexchat.zapto.org/'; // Укажите ваш точный URI
-const XAMCHAT_TOKEN_EXCHANGE_URL = 'https://us-central1-quickchat-f5012.cloudfunctions.net/xamChatAuth';
+(function() {
+  // Конфигурация Xam Chat
+  const XAMCHAT = {
+    clientId: 'xam_xTiS5LUIuWTrEPx2qcqHA',
+    authorizeUrl: 'https://xamchat.ru/oauth/authorize',
+    tokenUrl: 'https://xamchat.ru/oauth/token',
+    userInfoUrl: 'https://xamchat.ru/oauth/userinfo',
+    // Адрес нашей Cloud Function для обмена кода на Firebase токен
+    // Замените на актуальный URL после деплоя функции
+    exchangeUrl: 'https://us-central1-quickchat-f5012.cloudfunctions.net/xamChatAuth'
+  };
 
-// --- Генерация code_verifier и code_challenge (SHA-256) ---
-async function generatePKCE() {
-  // Генерируем случайный verifier (длина 64 символа, безопасные для URL)
-  const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
-  let verifier = '';
-  for (let i = 0; i < 64; i++) {
-    verifier += charset.charAt(Math.floor(Math.random() * charset.length));
+  // ---- PKCE утилиты ----
+  function generateCodeVerifier() {
+    const array = new Uint8Array(32);
+    crypto.getRandomValues(array);
+    return base64UrlEncode(array);
   }
 
-  let challenge;
-  // Пытаемся использовать Web Crypto API (только в HTTPS/localhost)
-  if (window.crypto && window.crypto.subtle && window.crypto.subtle.digest) {
-    try {
-      const encoder = new TextEncoder();
-      const data = encoder.encode(verifier);
-      const digest = await crypto.subtle.digest('SHA-256', data);
-      challenge = btoa(String.fromCharCode(...new Uint8Array(digest)))
-        .replace(/\+/g, '-')
-        .replace(/\//g, '_')
-        .replace(/=+$/, '');
-      return { verifier, challenge };
-    } catch (e) {
-      // fallback на crypto-js
+  async function generateCodeChallenge(verifier) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(verifier);
+    const hash = await crypto.subtle.digest('SHA-256', data);
+    return base64UrlEncode(new Uint8Array(hash));
+  }
+
+  function base64UrlEncode(buffer) {
+    const bytes = new Uint8Array(buffer);
+    let binary = '';
+    for (let i = 0; i < bytes.byteLength; i++) {
+      binary += String.fromCharCode(bytes[i]);
     }
+    return btoa(binary)
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '');
   }
 
-  // Используем crypto-js как fallback (убедитесь, что библиотека подключена)
-  if (typeof CryptoJS !== 'undefined') {
-    const wordArray = CryptoJS.enc.Utf8.parse(verifier);
-    const hash = CryptoJS.SHA256(wordArray);
-    const base64 = hash.toString(CryptoJS.enc.Base64);
-    challenge = base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-    return { verifier, challenge };
+  // ---- Сохранение/чтение verifier ----
+  function saveVerifier(verifier) {
+    sessionStorage.setItem('xamchat_code_verifier', verifier);
   }
 
-  throw new Error('Не удалось вычислить SHA-256. Установите crypto-js или перейдите на HTTPS.');
-}
-
-// --- Обработчик кнопки «Войти через Xam Chat» ---
-document.getElementById('xamchat-btn')?.addEventListener('click', async () => {
-  try {
-    const { verifier, challenge } = await generatePKCE();
-    const state = Math.random().toString(36).slice(2);
-    
-    sessionStorage.setItem('xamchat_verifier', verifier);
-    sessionStorage.setItem('xamchat_state', state);
-    
-    const authUrl = new URL('https://xamchat.ru/oauth/authorize');
-    authUrl.searchParams.set('client_id', XAMCHAT_CLIENT_ID);
-    authUrl.searchParams.set('redirect_uri', XAMCHAT_REDIRECT_URI);
-    authUrl.searchParams.set('response_type', 'code');
-    authUrl.searchParams.set('state', state);
-    authUrl.searchParams.set('code_challenge', challenge);
-    authUrl.searchParams.set('code_challenge_method', 'S256'); // обязательно S256
-    
-    window.location.href = authUrl.toString();
-  } catch (err) {
-    showToast('❌ Ошибка: ' + err.message);
-  }
-});
-
-// --- Обработка callback (редирект) ---
-async function handleXamChatCallback() {
-  const params = new URLSearchParams(window.location.search);
-  const code = params.get('code');
-  const state = params.get('state');
-  if (!code) return;
-
-  // Убираем параметры из URL
-  window.history.replaceState({}, '', window.location.pathname);
-
-  const savedState = sessionStorage.getItem('xamchat_state');
-  sessionStorage.removeItem('xamchat_state');
-  if (!savedState || state !== savedState) {
-    showToast('❌ Xam Chat: неверный state');
-    return;
+  function getVerifier() {
+    return sessionStorage.getItem('xamchat_code_verifier');
   }
 
-  const verifier = sessionStorage.getItem('xamchat_verifier');
-  sessionStorage.removeItem('xamchat_verifier');
-  if (!verifier) {
-    showToast('❌ Xam Chat: отсутствует verifier');
-    return;
+  function clearVerifier() {
+    sessionStorage.removeItem('xamchat_code_verifier');
   }
 
-  try {
-    showToast('⏳ Вход через Xam Chat…');
-    const resp = await fetch(XAMCHAT_TOKEN_EXCHANGE_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        code,
-        redirect_uri: XAMCHAT_REDIRECT_URI,
-        code_verifier: verifier
-      })
+  // ---- Обработчик кнопки "Войти через Xam Chat" ----
+  const xamBtn = document.getElementById('xamchat-btn');
+  if (xamBtn) {
+    xamBtn.addEventListener('click', async () => {
+      try {
+        // 1. Генерируем code_verifier и code_challenge
+        const verifier = generateCodeVerifier();
+        const challenge = await generateCodeChallenge(verifier);
+        saveVerifier(verifier);
+
+        // 2. Строим URL для редиректа
+        const redirectUri = window.location.origin + window.location.pathname;
+        const params = new URLSearchParams({
+          client_id: XAMCHAT.clientId,
+          redirect_uri: redirectUri,
+          response_type: 'code',
+          scope: 'profile',
+          code_challenge: challenge,
+          code_challenge_method: 'S256'
+        });
+        const authUrl = `${XAMCHAT.authorizeUrl}?${params.toString()}`;
+
+        // 3. Перенаправляем пользователя на Xam Chat
+        window.location.href = authUrl;
+      } catch (err) {
+        showToast('Ошибка инициализации входа через Xam Chat: ' + err.message);
+      }
     });
-    const data = await resp.json();
-    if (!resp.ok || !data.firebaseToken) {
-      throw new Error(data.error || 'ошибка авторизации');
-    }
-    // Вход через Firebase Custom Token
-    await signInWithCustomToken(auth, data.firebaseToken);
-    showToast('✅ Вход через Xam Chat выполнен');
-  } catch (e) {
-    showToast('❌ Xam Chat: ' + e.message);
   }
-}
 
-handleXamChatCallback();
+  // ---- Обработка редиректа после авторизации ----
+  async function handleXamChatRedirect() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+    if (!code) return;
+
+    // Проверяем, есть ли сохранённый verifier
+    const verifier = getVerifier();
+    if (!verifier) {
+      showToast('Сессия Xam Chat истекла, попробуйте ещё раз');
+      return;
+    }
+
+    // Очищаем URL от параметров, чтобы не мешали
+    const cleanUrl = window.location.origin + window.location.pathname;
+    window.history.replaceState({}, document.title, cleanUrl);
+
+    // Показываем загрузку
+    showToast('⏳ Вход через Xam Chat...');
+
+    try {
+      const redirectUri = cleanUrl;
+      const response = await fetch(XAMCHAT.exchangeUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code,
+          redirect_uri: redirectUri,
+          code_verifier: verifier
+        })
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Ошибка обмена кода');
+      }
+
+      if (!data.firebaseToken) {
+        throw new Error('Firebase токен не получен');
+      }
+
+      // Входим через Firebase с кастомным токеном
+      await signInWithCustomToken(auth, data.firebaseToken);
+      clearVerifier();
+      showToast('✅ Вход через Xam Chat выполнен');
+    } catch (err) {
+      showToast('❌ Ошибка входа: ' + err.message);
+      clearVerifier();
+    }
+  }
+
+  // Запускаем обработку редиректа при загрузке страницы,
+  // если пользователь ещё не авторизован (т.е. не залогинен)
+  // Но мы можем вызывать всегда, потому что если код есть, то обработаем.
+  // Важно: выполнять после инициализации Firebase, но до полной загрузки.
+  // Вызовем в конце, когда всё готово.
+  if (document.readyState === 'complete') {
+    handleXamChatRedirect();
+  } else {
+    window.addEventListener('load', handleXamChatRedirect);
+  }
+
+  // Также если пользователь уже залогинен, но код пришёл, мы всё равно обработаем
+  // и войдём заново (можно добавить проверку, но это не критично).
+
+  console.log('✅ Интеграция Xam Chat активирована');
+})();
