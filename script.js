@@ -6503,71 +6503,110 @@ if (typeof onAuthStateChanged !== 'undefined') {
   }, 300);
 }
 // ════════════════════════════════════════════════════
-//  XAM CHAT OAUTH
+//  XAM CHAT OAUTH — с поддержкой PKCE
 // ════════════════════════════════════════════════════
-const XAMCHAT_CLIENT_ID = 'xam_LfpgFlwX1xs6lVDgEkatA';
-// client_secret здесь НЕТ и не должно быть — это фронтенд, любой видит исходники.
-// Обмен code -> token и выдачу Firebase custom token делает облачная функция
-// (см. functions/xamchat-auth.js), где client_secret хранится как секрет сервера.
+
+// --- Конфигурация ---
+const XAMCHAT_CLIENT_ID = 'xam_LfpgFlwX1xs6lVDgEkatA';  // ваш client_id
+// URL вашей облачной функции (обмен code -> Firebase token)
 const XAMCHAT_TOKEN_EXCHANGE_URL = 'https://us-central1-quickchat-f5012.cloudfunctions.net/xamChatAuth';
 const XAMCHAT_REDIRECT_URI = window.location.origin + window.location.pathname;
 
-$('xamchat-btn')?.addEventListener('click', () => {
-  const state = Math.random().toString(36).slice(2);
-  sessionStorage.setItem('xamchat_state', state);
-  const authUrl = new URL('https://xamchat.ru/oauth/authorize');
-  authUrl.searchParams.set('client_id', XAMCHAT_CLIENT_ID);
-  authUrl.searchParams.set('redirect_uri', XAMCHAT_REDIRECT_URI);
-  authUrl.searchParams.set('response_type', 'code');
-  authUrl.searchParams.set('state', state);
-  window.location.href = authUrl.toString();
-});
+// --- PKCE: генерация code_verifier и code_challenge ---
+async function generatePKCE() {
+  // Генерируем случайную строку (43–128 символов)
+  const array = new Uint8Array(64);
+  crypto.getRandomValues(array);
+  const verifier = btoa(String.fromCharCode(...array))
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
+  
+  // Вычисляем SHA-256 хеш и превращаем в Base64URL
+  const encoder = new TextEncoder();
+  const data = encoder.encode(verifier);
+  const digest = await crypto.subtle.digest('SHA-256', data);
+  const challenge = btoa(String.fromCharCode(...new Uint8Array(digest)))
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
+  
+  return { verifier, challenge };
+}
 
+// --- Обработчик кнопки «Войти через Xam Chat» ---
+const xamBtn = document.getElementById('xamchat-btn');
+if (xamBtn) {
+  xamBtn.addEventListener('click', async () => {
+    // Генерируем PKCE
+    const { verifier, challenge } = await generatePKCE();
+    const state = Math.random().toString(36).slice(2);
+    
+    // Сохраняем verifier и state в sessionStorage
+    sessionStorage.setItem('xamchat_verifier', verifier);
+    sessionStorage.setItem('xamchat_state', state);
+    
+    // Строим URL авторизации
+    const authUrl = new URL('https://xamchat.ru/oauth/authorize');
+    authUrl.searchParams.set('client_id', XAMCHAT_CLIENT_ID);
+    authUrl.searchParams.set('redirect_uri', XAMCHAT_REDIRECT_URI);
+    authUrl.searchParams.set('response_type', 'code');
+    authUrl.searchParams.set('state', state);
+    authUrl.searchParams.set('code_challenge', challenge);
+    authUrl.searchParams.set('code_challenge_method', 'S256');
+    
+    window.location.href = authUrl.toString();
+  });
+}
+
+// --- Обработка callback (редирект после авторизации) ---
 async function handleXamChatCallback() {
   const params = new URLSearchParams(window.location.search);
   const code = params.get('code');
   const state = params.get('state');
-  if (!code) return;
+  if (!code) return; // нет кода — не обрабатываем
 
-  // убираем code/state из адресной строки
+  // Убираем code и state из адресной строки (чтобы не мозолили глаза)
   window.history.replaceState({}, '', window.location.pathname);
 
+  // Проверка CSRF (state)
   const savedState = sessionStorage.getItem('xamchat_state');
   sessionStorage.removeItem('xamchat_state');
-  if (!savedState || state !== savedState) { showToast('❌ Xam Chat: неверный state'); return; }
+  if (!savedState || state !== savedState) {
+    showToast('❌ Xam Chat: неверный state');
+    return;
+  }
+
+  // Получаем сохранённый verifier
+  const verifier = sessionStorage.getItem('xamchat_verifier');
+  sessionStorage.removeItem('xamchat_verifier');
+  if (!verifier) {
+    showToast('❌ Xam Chat: отсутствует verifier');
+    return;
+  }
 
   try {
-    showToast('Вход через Xam Chat…');
+    showToast('⏳ Вход через Xam Chat…');
     const resp = await fetch(XAMCHAT_TOKEN_EXCHANGE_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code, redirect_uri: XAMCHAT_REDIRECT_URI })
+      body: JSON.stringify({
+        code,
+        redirect_uri: XAMCHAT_REDIRECT_URI,
+        code_verifier: verifier   // <-- передаём verifier на сервер
+      })
     });
     const data = await resp.json();
-    if (!resp.ok || !data.firebaseToken) throw new Error(data.error || 'ошибка авторизации');
+    if (!resp.ok || !data.firebaseToken) {
+      throw new Error(data.error || 'ошибка авторизации');
+    }
+    // Вход через Firebase Custom Token
     await signInWithCustomToken(auth, data.firebaseToken);
     showToast('✅ Вход через Xam Chat выполнен');
   } catch (e) {
     showToast('❌ Xam Chat: ' + e.message);
   }
 }
+
+// Вызываем при загрузке страницы (если есть code)
 handleXamChatCallback();
-
-document.querySelectorAll('.auth-tab').forEach(t => t.onclick = () => {
-  document.querySelectorAll('.auth-tab').forEach(x => x.classList.remove('active'));
-  t.classList.add('active');
-  const isReg = t.dataset.tab === 'reg';
-  $('login-form').classList.toggle('hidden', isReg);
-  $('reg-form').classList.toggle('hidden', !isReg);
-});
-
-$('resend-btn').onclick = async () => {
-  if (auth.currentUser) { await sendEmailVerification(auth.currentUser); showToast('Письмо отправлено!'); }
-};
-$('check-verify-btn').onclick = async () => {
-  if (!auth.currentUser) return;
-  await auth.currentUser.reload();
-  if (auth.currentUser.emailVerified) { showToast('✅ Email подтверждён! Войдите снова.'); await signOut(auth); }
-  else showToast('❌ Email ещё не подтверждён.');
-};
-$('verify-logout-btn').onclick = () => signOut(auth);
