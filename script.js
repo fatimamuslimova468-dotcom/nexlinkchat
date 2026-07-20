@@ -6464,21 +6464,18 @@ if (typeof onAuthStateChanged !== 'undefined') {
   const CLIENT_ID = 'xam_xjsilFjNx6Zgi01xq6zGPQ';
   const REDIRECT_URI = 'https://nexchat.zapto.org/';
 
-  // Состояние входа
-  let isLoggedIn = false;
-
   // Обновление UI кнопки
   function updateXamUI(loggedIn) {
-    isLoggedIn = loggedIn;
     const btn = document.getElementById('xam-btn');
     if (!btn) return;
-
     if (loggedIn) {
       btn.innerHTML = `<span style="display:inline-flex;align-items:center;gap:6px;">🔓 Выйти из Xam</span>`;
       btn.onclick = () => {
         localStorage.removeItem('xam_access_token');
         localStorage.removeItem('xam_refresh_token');
         localStorage.removeItem('xam_id_token');
+        localStorage.removeItem('xam_pkce_verifier');
+        localStorage.removeItem('xam_oauth_state');
         showToast('Вы вышли из Xam');
         updateXamUI(false);
       };
@@ -6493,126 +6490,138 @@ if (typeof onAuthStateChanged !== 'undefined') {
     }
   }
 
-  // Запуск процесса входа через SDK
-  function startXamLogin() {
+  // Генерация PKCE
+  async function generatePKCE() {
+    const verifier = crypto.randomUUID() + crypto.randomUUID();
+    const encoder = new TextEncoder();
+    const data = encoder.encode(verifier);
+    const buffer = await crypto.subtle.digest('SHA-256', data);
+    const challenge = btoa(String.fromCharCode(...new Uint8Array(buffer)))
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '');
+    return { verifier, challenge };
+  }
+
+  // Запуск входа
+  async function startXamLogin() {
     if (typeof XamAuth === 'undefined') {
       showToast('❌ SDK Xam не загружен. Попробуйте позже.');
       return;
     }
 
-    // Если используется попап
-    if (XamAuth.login) {
+    // 1. Пробуем метод login (попап)
+    if (typeof XamAuth.login === 'function') {
       XamAuth.login({
         clientId: CLIENT_ID,
         redirectUri: REDIRECT_URI,
         scope: 'profile_basic',
         onSuccess: function(data) {
-          console.log('✅ Xam вход успешен:', data);
+          console.log('✅ Xam вход успешен (попап):', data);
           localStorage.setItem('xam_access_token', data.access_token);
           localStorage.setItem('xam_refresh_token', data.refresh_token || '');
           if (data.id_token) localStorage.setItem('xam_id_token', data.id_token);
           showToast('✅ Вход через Xam выполнен!');
           updateXamUI(true);
-          // Можно получить данные пользователя, если есть метод
-          if (XamAuth.getUser) {
-            XamAuth.getUser().then(user => {
-              console.log('👤 Пользователь Xam:', user);
-            }).catch(err => console.warn('Не удалось получить пользователя:', err));
+          if (typeof XamAuth.getUser === 'function') {
+            XamAuth.getUser().then(user => console.log('👤 Пользователь Xam:', user)).catch(() => {});
           }
         },
         onError: function(err) {
-          console.error('❌ Ошибка входа Xam:', err);
+          console.error('❌ Ошибка входа (попап):', err);
           showToast('❌ Ошибка входа: ' + (err.message || err));
-          updateXamUI(false);
         }
       });
-    } else {
-      // Если SDK использует редирект (без попапа)
-      const state = crypto.randomUUID();
-      localStorage.setItem('xam_oauth_state', state);
-      const { verifier, challenge } = generatePKCE();
-      localStorage.setItem('xam_code_verifier', verifier);
-
-      const params = new URLSearchParams({
-        client_id: CLIENT_ID,
-        redirect_uri: REDIRECT_URI,
-        response_type: 'code',
-        scope: 'profile_basic',
-        state: state,
-        code_challenge: challenge,
-        code_challenge_method: 'S256'
-      });
-      window.location.href = `https://xamchat.ru/oauth/authorize?${params.toString()}`;
+      return;
     }
-  }
 
-  // Генерация PKCE (для случая редиректа)
-  function generatePKCE() {
-    const verifier = crypto.randomUUID() + crypto.randomUUID();
-    const encoder = new TextEncoder();
-    const data = encoder.encode(verifier);
-    return crypto.subtle.digest('SHA-256', data).then(buffer => {
-      const challenge = btoa(String.fromCharCode(...new Uint8Array(buffer)))
-        .replace(/\+/g, '-')
-        .replace(/\//g, '_')
-        .replace(/=+$/, '');
-      return { verifier, challenge };
+    // 2. Если login отсутствует, используем редирект
+    console.log('ℹ️ XamAuth.login не найден, используем редирект');
+    const state = crypto.randomUUID();
+    const { verifier, challenge } = await generatePKCE();
+
+    // Сохраняем PKCE в ключи, которые ожидает SDK
+    localStorage.setItem('xam_oauth_state', state);
+    localStorage.setItem('xam_pkce_verifier', verifier); // ключ для SDK
+
+    const params = new URLSearchParams({
+      client_id: CLIENT_ID,
+      redirect_uri: REDIRECT_URI,
+      response_type: 'code',
+      scope: 'profile_basic',
+      state: state,
+      code_challenge: challenge,
+      code_challenge_method: 'S256'
     });
+    window.location.href = `https://xamchat.ru/oauth/authorize?${params.toString()}`;
   }
 
-  // Обработка редиректа после входа
+  // Обработка редиректа через SDK
   function handleXamRedirect() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const code = urlParams.get('code');
-    const state = urlParams.get('state');
-
-    if (!code || !state) return;
-
-    // Проверяем state
-    const savedState = localStorage.getItem('xam_oauth_state');
-    if (state !== savedState) {
-      showToast('Ошибка: неверный state');
-      localStorage.removeItem('xam_oauth_state');
-      localStorage.removeItem('xam_code_verifier');
-      return;
-    }
-    localStorage.removeItem('xam_oauth_state');
-
-    const verifier = localStorage.getItem('xam_code_verifier');
-    if (!verifier) {
-      showToast('Ошибка: отсутствует code_verifier');
+    if (typeof XamAuth === 'undefined') {
+      console.warn('XamAuth SDK ещё не загружен');
       return;
     }
 
-    // Если SDK умеет обрабатывать редирект — используем его
-    if (typeof XamAuth !== 'undefined' && XamAuth.handleRedirect) {
+    // Используем handleRedirect, если есть
+    if (typeof XamAuth.handleRedirect === 'function') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const code = urlParams.get('code');
+      if (!code) return;
+
+      console.log('🔄 Обработка редиректа через XamAuth.handleRedirect');
       XamAuth.handleRedirect({
         clientId: CLIENT_ID,
         redirectUri: REDIRECT_URI,
         cleanUrl: true
       }).then(data => {
         if (data) {
+          console.log('✅ Токен получен через редирект:', data);
           localStorage.setItem('xam_access_token', data.access_token);
           localStorage.setItem('xam_refresh_token', data.refresh_token || '');
           if (data.id_token) localStorage.setItem('xam_id_token', data.id_token);
           showToast('✅ Вход через Xam выполнен!');
           updateXamUI(true);
+          localStorage.removeItem('xam_pkce_verifier');
+          localStorage.removeItem('xam_oauth_state');
         }
       }).catch(err => {
         console.error('❌ Ошибка обработки редиректа:', err);
         showToast('❌ Ошибка: ' + err.message);
+        localStorage.removeItem('xam_pkce_verifier');
+        localStorage.removeItem('xam_oauth_state');
       });
     } else {
-      // Ручной обмен (используем старый код, но с правильным эндпоинтом)
-      // ВАЖНО: замените tokenUrl на правильный, если SDK не работает
-      exchangeCodeForToken(code, verifier);
+      // Если handleRedirect нет, пробуем ручной обмен (на случай, если SDK не завершит)
+      console.warn('XamAuth.handleRedirect не найден, пробуем ручной обмен');
+      manualExchange();
     }
   }
 
-  // Ручной обмен (если SDK не справляется)
-  async function exchangeCodeForToken(code, verifier) {
-    // ⚠️ Уточните у разработчика XamChat правильный tokenUrl
-    const TOKEN_URL = 'https://xamchat.ru/oauth/token'; // вероятно, неправильный
+  // Ручной обмен (запасной вариант)
+  async function manualExchange() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+    const state = urlParams.get('state');
+    if (!code || !state) return;
+
+    const savedState = localStorage.getItem('xam_oauth_state');
+    if (state !== savedState) {
+      showToast('Ошибка: неверный state');
+      localStorage.removeItem('xam_oauth_state');
+      localStorage.removeItem('xam_pkce_verifier');
+      return;
+    }
+    localStorage.removeItem('xam_oauth_state');
+
+    const verifier = localStorage.getItem('xam_pkce_verifier');
+    if (!verifier) {
+      showToast('Ошибка: отсутствует PKCE verifier');
+      return;
+    }
+
+    // ⚠️ Если этот URL не работает, уточните у разработчика Xam правильный tokenUrl
+    const TOKEN_URL = 'https://xamchat.ru/oauth/token';
     const params = new URLSearchParams({
       client_id: CLIENT_ID,
       code: code,
@@ -6635,26 +6644,24 @@ if (typeof onAuthStateChanged !== 'undefined') {
       showToast('✅ Вход через Xam выполнен!');
       updateXamUI(true);
       window.history.replaceState({}, document.title, window.location.pathname);
+      localStorage.removeItem('xam_pkce_verifier');
     } catch (err) {
       showToast('❌ Ошибка обмена токена: ' + err.message);
       console.error(err);
     }
   }
 
-  // Инициализация при загрузке
+  // Инициализация
   function initXam() {
-    // Проверяем наличие токена
     const token = localStorage.getItem('xam_access_token');
     if (token) {
       updateXamUI(true);
     } else {
       updateXamUI(false);
     }
-    // Обрабатываем редирект, если есть code
     handleXamRedirect();
   }
 
-  // Запуск
   if (document.readyState === 'complete') {
     initXam();
   } else {
