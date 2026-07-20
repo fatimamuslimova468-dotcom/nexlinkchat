@@ -26,7 +26,27 @@ const FB = {
 const fbApp = initializeApp(FB);
 const db = getFirestore(fbApp);
 const auth = getAuth(fbApp);
+// config.js
+export const XAM_CONFIG = {
+  clientId: 'xam_xjsilFjNx6Zgi01xq6zGPQ',
+  redirectUri: 'https://ваш-сайт.ru/oauth/callback',  // замените на свой
+  authorizeUrl: 'https://api.xam.chat/oauth/authorize',   // реальный эндпоинт авторизации
+  tokenUrl: 'https://api.xam.chat/oauth/token',           // реальный эндпоинт для токенов
+  userInfoUrl: 'https://api.xam.chat/api/user',           // реальный эндпоинт профиля
+  demoMode: false   // отключаем демо
+};
 
+  // Redirect URI – должен совпадать с указанным в XAM Developer
+  redirectUri: window.location.origin + '/oauth/callback',
+
+  // Реальные endpoint'ы XAM (замените, когда получите от XAM)
+  authorizeUrl: 'https://api.xam.chat/oauth/authorize',   // пример
+  tokenUrl: 'https://api.xam.chat/oauth/token',           // пример
+  userInfoUrl: 'https://api.xam.chat/api/user',           // пример
+
+  // Для тестирования без реального API можно включить демо-режим
+  demoMode: false  // установите true, если хотите имитировать вход
+};
 // ════════════════════════════════════════════════════
 //  STATE
 // ════════════════════════════════════════════════════
