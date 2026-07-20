@@ -2635,3 +2635,24 @@ body.reduce-animations #messages-wrap {
   background: var(--primary);
   border-radius: 8px;
 }
+.xam-btn {
+  width: 100%;
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 500;
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  border: 1.5px solid var(--border-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: var(--transition);
+}
+.xam-btn:active {
+  background: var(--bg-elevated);
+}
+.xam-btn svg {
+  flex-shrink: 0;
+}
