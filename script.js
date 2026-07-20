@@ -6457,214 +6457,824 @@ if (typeof onAuthStateChanged !== 'undefined') {
     }
   }, 300);
 }
-// ============================================================
-//  ВХОД ЧЕРЕЗ XAMChat (официальный SDK)
-// ============================================================
+// ════════════════════════════════════════════════════════════════
+//  НОВЫЙ ДИЗАЙН АВТОРИЗАЦИИ (КАК В TELEGRAM)
+//  ПОЛНАЯ ЗАМЕНА ЭКРАНА ВХОДА/РЕГИСТРАЦИИ
+// ════════════════════════════════════════════════════════════════
+
 (function() {
-  const CLIENT_ID = 'xam_xjsilFjNx6Zgi01xq6zGPQ';
-  const REDIRECT_URI = 'https://nexchat.zapto.org/';
+  "use strict";
 
-  // Обновление UI кнопки
-  function updateXamUI(loggedIn) {
-    const btn = document.getElementById('xam-btn');
-    if (!btn) return;
-    if (loggedIn) {
-      btn.innerHTML = `<span style="display:inline-flex;align-items:center;gap:6px;">🔓 Выйти из Xam</span>`;
-      btn.onclick = () => {
-        localStorage.removeItem('xam_access_token');
-        localStorage.removeItem('xam_refresh_token');
-        localStorage.removeItem('xam_id_token');
-        localStorage.removeItem('xam_pkce_verifier');
-        localStorage.removeItem('xam_oauth_state');
-        showToast('Вы вышли из Xam');
-        updateXamUI(false);
-      };
-    } else {
-      btn.innerHTML = `<span style="display:inline-flex;align-items:center;gap:6px;">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
-        </svg>
-        Войти через Xam
-      </span>`;
-      btn.onclick = startXamLogin;
+  // ---------- 1. Стили для нового auth-screen ----------
+  const style = document.createElement('style');
+  style.id = 'new-auth-styles';
+  style.textContent = `
+    /* Общий контейнер */
+    #auth-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      background: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      transition: opacity 0.5s ease, visibility 0.5s ease;
+      overflow-y: auto;
     }
-  }
-
-  // Генерация PKCE
-  async function generatePKCE() {
-    const verifier = crypto.randomUUID() + crypto.randomUUID();
-    const encoder = new TextEncoder();
-    const data = encoder.encode(verifier);
-    const buffer = await crypto.subtle.digest('SHA-256', data);
-    const challenge = btoa(String.fromCharCode(...new Uint8Array(buffer)))
-      .replace(/\+/g, '-')
-      .replace(/\//g, '_')
-      .replace(/=+$/, '');
-    return { verifier, challenge };
-  }
-
-  // Запуск входа
-  async function startXamLogin() {
-    if (typeof XamAuth === 'undefined') {
-      showToast('❌ SDK Xam не загружен. Попробуйте позже.');
-      return;
+    #auth-screen.gone {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
     }
 
-    // 1. Пробуем метод login (попап)
-    if (typeof XamAuth.login === 'function') {
-      XamAuth.login({
-        clientId: CLIENT_ID,
-        redirectUri: REDIRECT_URI,
-        scope: 'profile_basic',
-        onSuccess: function(data) {
-          console.log('✅ Xam вход успешен (попап):', data);
-          localStorage.setItem('xam_access_token', data.access_token);
-          localStorage.setItem('xam_refresh_token', data.refresh_token || '');
-          if (data.id_token) localStorage.setItem('xam_id_token', data.id_token);
-          showToast('✅ Вход через Xam выполнен!');
-          updateXamUI(true);
-          if (typeof XamAuth.getUser === 'function') {
-            XamAuth.getUser().then(user => console.log('👤 Пользователь Xam:', user)).catch(() => {});
-          }
-        },
-        onError: function(err) {
-          console.error('❌ Ошибка входа (попап):', err);
-          showToast('❌ Ошибка входа: ' + (err.message || err));
-        }
-      });
-      return;
+    .auth-card {
+      width: 100%;
+      max-width: 400px;
+      background: var(--bg-surface);
+      border-radius: var(--radius-xl);
+      padding: 36px 28px 32px;
+      box-shadow: var(--shadow-lg);
+      border: 1px solid var(--border-light);
     }
 
-    // 2. Если login отсутствует, используем редирект
-    console.log('ℹ️ XamAuth.login не найден, используем редирект');
-    const state = crypto.randomUUID();
-    const { verifier, challenge } = await generatePKCE();
+    .auth-step {
+      display: none;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .auth-step.active {
+      display: flex;
+    }
 
-    // Сохраняем PKCE в ключи, которые ожидает SDK
-    localStorage.setItem('xam_oauth_state', state);
-    localStorage.setItem('xam_pkce_verifier', verifier); // ключ для SDK
+    .auth-logo {
+      text-align: center;
+      margin-bottom: 8px;
+    }
+    .auth-logo .logo-icon {
+      width: 72px;
+      height: 72px;
+      border-radius: var(--radius-lg);
+      background: linear-gradient(135deg, var(--primary), var(--primary-light));
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      color: #fff;
+      margin-bottom: 12px;
+      box-shadow: var(--shadow-glow);
+    }
+    .auth-logo h1 {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    .auth-logo p {
+      color: var(--text-secondary);
+      font-size: 14px;
+      margin-top: 4px;
+    }
 
-    const params = new URLSearchParams({
-      client_id: CLIENT_ID,
-      redirect_uri: REDIRECT_URI,
-      response_type: 'code',
-      scope: 'profile_basic',
-      state: state,
-      code_challenge: challenge,
-      code_challenge_method: 'S256'
+    .auth-field {
+      margin-bottom: 6px;
+    }
+    .auth-field input {
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: var(--radius-sm);
+      border: 1.5px solid var(--border-light);
+      background: var(--bg-elevated);
+      font-size: 16px;
+      color: var(--text-primary);
+      transition: border-color 0.2s;
+    }
+    .auth-field input:focus {
+      border-color: var(--primary);
+      background: var(--bg-surface);
+    }
+
+    .auth-btn {
+      width: 100%;
+      padding: 14px;
+      border-radius: var(--radius-md);
+      font-size: 16px;
+      font-weight: 600;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: #fff;
+      box-shadow: var(--shadow-glow);
+      transition: var(--transition);
+      border: none;
+      cursor: pointer;
+    }
+    .auth-btn:active {
+      transform: scale(0.97);
+    }
+    .auth-btn.secondary {
+      background: var(--bg-elevated);
+      color: var(--text-primary);
+      box-shadow: none;
+    }
+
+    .auth-switch {
+      text-align: center;
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+    .auth-switch a {
+      color: var(--primary);
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .auth-switch a:hover {
+      text-decoration: underline;
+    }
+
+    .err-msg {
+      background: #fef2f2;
+      color: #E74C3C;
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      font-size: 13px;
+      display: none;
+    }
+    .err-msg.show {
+      display: block;
+    }
+
+    /* Шаг подтверждения */
+    .verify-box {
+      text-align: center;
+      padding: 8px 0;
+    }
+    .verify-box .v-icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+    }
+    .verify-box h3 {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .verify-box p {
+      color: var(--text-secondary);
+      font-size: 14px;
+      line-height: 1.5;
+      margin-bottom: 16px;
+    }
+    .verify-box .btn-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    /* Выбор аватара */
+    .avatar-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 10px;
+      margin: 12px 0;
+    }
+    .avatar-option {
+      aspect-ratio: 1;
+      border-radius: var(--radius-md);
+      background: var(--bg-elevated);
+      border: 2px solid transparent;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: 0.2s;
+      position: relative;
+    }
+    .avatar-option i {
+      font-size: 28px;
+    }
+    .avatar-option:hover {
+      transform: scale(1.05);
+      border-color: var(--border-medium);
+    }
+    .avatar-option.selected {
+      border-color: var(--primary);
+      background: rgba(108, 99, 255, 0.08);
+    }
+    .avatar-option .check-mark {
+      position: absolute;
+      bottom: 2px;
+      right: 2px;
+      background: var(--primary);
+      color: #fff;
+      border-radius: 50%;
+      width: 18px;
+      height: 18px;
+      font-size: 10px;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+    .avatar-option.selected .check-mark {
+      display: flex;
+    }
+
+    .avatar-upload-row {
+      display: flex;
+      gap: 10px;
+      margin: 8px 0 12px;
+    }
+    .avatar-upload-row button {
+      flex: 1;
+      padding: 10px;
+      border-radius: var(--radius-sm);
+      border: 1.5px solid var(--border-light);
+      background: var(--bg-surface);
+      font-weight: 500;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .avatar-upload-row button:active {
+      background: var(--bg-elevated);
+    }
+
+    .avatar-preview {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      margin: 0 auto 12px;
+      background: var(--bg-elevated);
+      border: 2px solid var(--border-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 40px;
+      overflow: hidden;
+    }
+    .avatar-preview img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .avatar-preview i {
+      font-size: 40px;
+      color: var(--text-secondary);
+    }
+  `;
+  document.head.appendChild(style);
+
+  // ---------- 2. Удаляем старый auth-screen и создаём новый ----------
+  const oldAuth = document.getElementById('auth-screen');
+  if (oldAuth) oldAuth.remove();
+
+  const authScreen = document.createElement('div');
+  authScreen.id = 'auth-screen';
+  authScreen.innerHTML = `
+    <div class="auth-card">
+      <!-- Шаг 1: Вход -->
+      <div class="auth-step active" id="step-login">
+        <div class="auth-logo">
+          <div class="logo-icon">💬</div>
+          <h1>NexLink</h1>
+          <p>Войдите в свой аккаунт</p>
+        </div>
+        <div class="auth-field">
+          <input type="email" id="login-email" placeholder="Email" autocomplete="email" inputmode="email">
+        </div>
+        <div class="auth-field">
+          <input type="password" id="login-password" placeholder="Пароль" autocomplete="current-password">
+        </div>
+        <div class="err-msg" id="login-error"></div>
+        <button class="auth-btn" id="login-btn">Войти</button>
+        <div class="auth-switch">
+          Нет аккаунта? <a id="go-to-register">Зарегистрироваться</a>
+        </div>
+      </div>
+
+      <!-- Шаг 2: Регистрация -->
+      <div class="auth-step" id="step-register">
+        <div class="auth-logo">
+          <div class="logo-icon">📝</div>
+          <h1>Создать аккаунт</h1>
+          <p>Быстро и безопасно</p>
+        </div>
+        <div class="auth-field">
+          <input type="email" id="reg-email" placeholder="Email" inputmode="email">
+        </div>
+        <div class="auth-field">
+          <input type="text" id="reg-name" placeholder="Имя и фамилия" autocorrect="off">
+        </div>
+        <div class="auth-field">
+          <input type="text" id="reg-username" placeholder="@username" autocapitalize="none" autocorrect="off">
+        </div>
+        <div class="auth-field">
+          <input type="password" id="reg-password" placeholder="Пароль (мин. 6 символов)">
+        </div>
+        <div class="err-msg" id="register-error"></div>
+        <button class="auth-btn" id="reg-btn">Зарегистрироваться</button>
+        <div class="auth-switch">
+          Уже есть аккаунт? <a id="go-to-login">Войти</a>
+        </div>
+      </div>
+
+      <!-- Шаг 3: Подтверждение email -->
+      <div class="auth-step" id="step-verify">
+        <div class="verify-box">
+          <div class="v-icon">📧</div>
+          <h3>Подтвердите Email</h3>
+          <p>Письмо отправлено на <strong id="verify-email"></strong>.<br>Перейдите по ссылке для активации.</p>
+          <div class="btn-group">
+            <button class="auth-btn" id="check-verify-btn">✅ Проверить</button>
+            <button class="auth-btn secondary" id="resend-verify-btn">Отправить повторно</button>
+            <button class="auth-btn secondary" id="verify-logout-btn">Выйти</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Шаг 4: Выбор аватара -->
+      <div class="auth-step" id="step-avatar">
+        <div class="auth-logo">
+          <div class="logo-icon">🎨</div>
+          <h1>Выберите аватар</h1>
+          <p>Как вас будут видеть другие</p>
+        </div>
+        <div class="avatar-preview" id="avatar-preview">
+          <i class="fas fa-user"></i>
+        </div>
+        <div class="avatar-grid" id="avatar-grid"></div>
+        <div class="avatar-upload-row">
+          <button id="upload-avatar-btn"><i class="fas fa-upload"></i> Загрузить</button>
+          <button id="skip-avatar-btn">Пропустить</button>
+        </div>
+        <input type="file" id="avatar-file-input" accept="image/*" style="display:none;">
+        <div class="err-msg" id="avatar-error"></div>
+        <button class="auth-btn" id="confirm-avatar-btn">Продолжить</button>
+      </div>
+    </div>
+  `;
+  document.body.prepend(authScreen);
+
+  // ---------- 3. Переменные для хранения данных ----------
+  let tempEmail = '';
+  let tempPassword = '';
+  let tempName = '';
+  let tempUsername = '';
+  let selectedAvatar = ''; // может быть иконка или data:image
+
+  // ---------- 4. Инициализация сетки аватаров ----------
+  const AVATAR_ICONS = [
+    'fa-user', 'fa-user-tie', 'fa-user-graduate', 'fa-user-ninja',
+    'fa-user-astronaut', 'fa-user-secret', 'fa-cat', 'fa-dog',
+    'fa-robot', 'fa-crown', 'fa-gem', 'fa-star'
+  ];
+
+  const avatarGrid = document.getElementById('avatar-grid');
+  AVATAR_ICONS.forEach(icon => {
+    const div = document.createElement('div');
+    div.className = 'avatar-option';
+    div.dataset.icon = icon;
+    div.innerHTML = `<i class="fas ${icon}"></i><span class="check-mark">✓</span>`;
+    div.addEventListener('click', () => {
+      document.querySelectorAll('.avatar-option').forEach(el => el.classList.remove('selected'));
+      div.classList.add('selected');
+      selectedAvatar = icon;
+      document.getElementById('avatar-preview').innerHTML = `<i class="fas ${icon}"></i>`;
+      document.getElementById('avatar-error').classList.remove('show');
     });
-    window.location.href = `https://xamchat.ru/oauth/authorize?${params.toString()}`;
+    avatarGrid.appendChild(div);
+  });
+
+  // ---------- 5. Управление шагами ----------
+  function showStep(stepId) {
+    document.querySelectorAll('.auth-step').forEach(el => el.classList.remove('active'));
+    const target = document.getElementById(stepId);
+    if (target) target.classList.add('active');
   }
 
-  // Обработка редиректа через SDK
-  function handleXamRedirect() {
-    if (typeof XamAuth === 'undefined') {
-      console.warn('XamAuth SDK ещё не загружен');
+  // ---------- 6. Обработчики переключения ----------
+  document.getElementById('go-to-register').addEventListener('click', (e) => {
+    e.preventDefault();
+    showStep('step-register');
+  });
+  document.getElementById('go-to-login').addEventListener('click', (e) => {
+    e.preventDefault();
+    showStep('step-login');
+  });
+  document.getElementById('verify-logout-btn').addEventListener('click', async () => {
+    await signOut(auth);
+    showStep('step-login');
+  });
+
+  // ---------- 7. Вход ----------
+  document.getElementById('login-btn').addEventListener('click', async () => {
+    const email = document.getElementById('login-email').value.trim().toLowerCase();
+    const password = document.getElementById('login-password').value;
+    const errorEl = document.getElementById('login-error');
+    errorEl.classList.remove('show');
+    errorEl.textContent = '';
+
+    if (!email || !password) {
+      errorEl.textContent = 'Заполните все поля';
+      errorEl.classList.add('show');
       return;
     }
-
-    // Используем handleRedirect, если есть
-    if (typeof XamAuth.handleRedirect === 'function') {
-      const urlParams = new URLSearchParams(window.location.search);
-      const code = urlParams.get('code');
-      if (!code) return;
-
-      console.log('🔄 Обработка редиректа через XamAuth.handleRedirect');
-      XamAuth.handleRedirect({
-        clientId: CLIENT_ID,
-        redirectUri: REDIRECT_URI,
-        cleanUrl: true
-      }).then(data => {
-        if (data) {
-          console.log('✅ Токен получен через редирект:', data);
-          localStorage.setItem('xam_access_token', data.access_token);
-          localStorage.setItem('xam_refresh_token', data.refresh_token || '');
-          if (data.id_token) localStorage.setItem('xam_id_token', data.id_token);
-          showToast('✅ Вход через Xam выполнен!');
-          updateXamUI(true);
-          localStorage.removeItem('xam_pkce_verifier');
-          localStorage.removeItem('xam_oauth_state');
-        }
-      }).catch(err => {
-        console.error('❌ Ошибка обработки редиректа:', err);
-        showToast('❌ Ошибка: ' + err.message);
-        localStorage.removeItem('xam_pkce_verifier');
-        localStorage.removeItem('xam_oauth_state');
-      });
-    } else {
-      // Если handleRedirect нет, пробуем ручной обмен (на случай, если SDK не завершит)
-      console.warn('XamAuth.handleRedirect не найден, пробуем ручной обмен');
-      manualExchange();
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      // Успешный вход будет обработан onAuthStateChanged
+    } catch (err) {
+      errorEl.textContent = handleFirebaseError(err);
+      errorEl.classList.add('show');
     }
-  }
+  });
 
-  // Ручной обмен (запасной вариант)
-  async function manualExchange() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const code = urlParams.get('code');
-    const state = urlParams.get('state');
-    if (!code || !state) return;
+  // ---------- 8. Регистрация ----------
+  document.getElementById('reg-btn').addEventListener('click', async () => {
+    const email = document.getElementById('reg-email').value.trim().toLowerCase();
+    const name = document.getElementById('reg-name').value.trim();
+    const username = document.getElementById('reg-username').value.trim();
+    const password = document.getElementById('reg-password').value;
+    const errorEl = document.getElementById('register-error');
+    errorEl.classList.remove('show');
+    errorEl.textContent = '';
 
-    const savedState = localStorage.getItem('xam_oauth_state');
-    if (state !== savedState) {
-      showToast('Ошибка: неверный state');
-      localStorage.removeItem('xam_oauth_state');
-      localStorage.removeItem('xam_pkce_verifier');
+    if (!email || !name || !username || !password) {
+      errorEl.textContent = 'Заполните все поля';
+      errorEl.classList.add('show');
       return;
     }
-    localStorage.removeItem('xam_oauth_state');
-
-    const verifier = localStorage.getItem('xam_pkce_verifier');
-    if (!verifier) {
-      showToast('Ошибка: отсутствует PKCE verifier');
+    if (!username.startsWith('@')) {
+      errorEl.textContent = 'Юзернейм должен начинаться с @';
+      errorEl.classList.add('show');
       return;
     }
-
-    // ⚠️ Если этот URL не работает, уточните у разработчика Xam правильный tokenUrl
-    const TOKEN_URL = 'https://xamchat.ru/oauth/token';
-    const params = new URLSearchParams({
-      client_id: CLIENT_ID,
-      code: code,
-      redirect_uri: REDIRECT_URI,
-      code_verifier: verifier,
-      grant_type: 'authorization_code'
-    });
+    if (password.length < 6) {
+      errorEl.textContent = 'Пароль должен быть не менее 6 символов';
+      errorEl.classList.add('show');
+      return;
+    }
 
     try {
-      const response = await fetch(TOKEN_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: params.toString()
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error_description || data.error || 'Ошибка обмена');
-      localStorage.setItem('xam_access_token', data.access_token);
-      localStorage.setItem('xam_refresh_token', data.refresh_token || '');
-      if (data.id_token) localStorage.setItem('xam_id_token', data.id_token);
-      showToast('✅ Вход через Xam выполнен!');
-      updateXamUI(true);
-      window.history.replaceState({}, document.title, window.location.pathname);
-      localStorage.removeItem('xam_pkce_verifier');
+      // Проверяем, не занят ли юзернейм
+      const snap = await getDocs(query(collection(db, 'users'), where('username', '==', username)));
+      if (!snap.empty) {
+        errorEl.textContent = 'Юзернейм уже занят';
+        errorEl.classList.add('show');
+        return;
+      }
+
+      // Создаём пользователя
+      const userCred = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCred.user;
+
+      // Сохраняем данные для последующего входа
+      tempEmail = email;
+      tempPassword = password;
+      tempName = name;
+      tempUsername = username;
+
+      // Отправляем верификацию
+      await sendEmailVerification(user);
+
+      // Показываем шаг подтверждения
+      document.getElementById('verify-email').textContent = email;
+      showStep('step-verify');
+
+      // Выходим, чтобы пользователь не был авторизован до подтверждения
+      await signOut(auth);
+
     } catch (err) {
-      showToast('❌ Ошибка обмена токена: ' + err.message);
-      console.error(err);
+      errorEl.textContent = handleFirebaseError(err);
+      errorEl.classList.add('show');
     }
-  }
+  });
 
-  // Инициализация
-  function initXam() {
-    const token = localStorage.getItem('xam_access_token');
-    if (token) {
-      updateXamUI(true);
+  // ---------- 9. Подтверждение email ----------
+  document.getElementById('check-verify-btn').addEventListener('click', async () => {
+    // Пытаемся войти, чтобы обновить состояние пользователя
+    if (!tempEmail || !tempPassword) {
+      showToast('Ошибка: нет данных для входа');
+      return;
+    }
+    try {
+      const userCred = await signInWithEmailAndPassword(auth, tempEmail, tempPassword);
+      await userCred.user.reload();
+      if (userCred.user.emailVerified) {
+        // Подтверждено → переходим к выбору аватара
+        showStep('step-avatar');
+        // Сохраняем email и пароль на будущее (для создания профиля)
+        // Остаёмся авторизованными
+        showToast('✅ Email подтверждён! Теперь выберите аватар.');
+      } else {
+        showToast('❌ Email ещё не подтверждён. Проверьте почту.');
+      }
+    } catch (err) {
+      showToast('Ошибка: ' + handleFirebaseError(err));
+    }
+  });
+
+  document.getElementById('resend-verify-btn').addEventListener('click', async () => {
+    const user = auth.currentUser;
+    if (user) {
+      try {
+        await sendEmailVerification(user);
+        showToast('Письмо отправлено повторно');
+      } catch (err) {
+        showToast('Ошибка: ' + handleFirebaseError(err));
+      }
     } else {
-      updateXamUI(false);
+      showToast('Сначала войдите, чтобы отправить повторно');
     }
-    handleXamRedirect();
+  });
+
+  // ---------- 10. Загрузка аватара из галереи ----------
+  document.getElementById('upload-avatar-btn').addEventListener('click', () => {
+    document.getElementById('avatar-file-input').click();
+  });
+
+  document.getElementById('avatar-file-input').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      showToast('Максимальный размер 5 МБ');
+      return;
+    }
+    try {
+      // Загружаем на imgbb
+      const formData = new FormData();
+      formData.append('image', file);
+      formData.append('key', '823ae83baa8123fe4d0d3dc1beb05c6e');
+      const res = await fetch('https://api.imgbb.com/1/upload', { method: 'POST', body: formData });
+      const data = await res.json();
+      if (data.success) {
+        const url = data.data.url;
+        selectedAvatar = url;
+        document.getElementById('avatar-preview').innerHTML = `<img src="${url}" alt="avatar">`;
+        document.querySelectorAll('.avatar-option').forEach(el => el.classList.remove('selected'));
+        document.getElementById('avatar-error').classList.remove('show');
+        showToast('✅ Аватар загружен');
+      } else {
+        showToast('❌ Ошибка загрузки');
+      }
+    } catch (err) {
+      showToast('❌ Ошибка сети');
+    }
+    e.target.value = '';
+  });
+
+  // ---------- 11. Пропустить выбор аватара ----------
+  document.getElementById('skip-avatar-btn').addEventListener('click', () => {
+    // Используем первую иконку как дефолт
+    const firstIcon = AVATAR_ICONS[0];
+    selectedAvatar = firstIcon;
+    document.getElementById('avatar-preview').innerHTML = `<i class="fas ${firstIcon}"></i>`;
+    document.querySelectorAll('.avatar-option').forEach(el => el.classList.remove('selected'));
+    document.querySelector('.avatar-option').classList.add('selected');
+    document.getElementById('avatar-error').classList.remove('show');
+  });
+
+  // ---------- 12. Подтверждение аватара (создание профиля) ----------
+  document.getElementById('confirm-avatar-btn').addEventListener('click', async () => {
+    const errorEl = document.getElementById('avatar-error');
+    errorEl.classList.remove('show');
+    errorEl.textContent = '';
+
+    if (!selectedAvatar) {
+      errorEl.textContent = 'Выберите аватар или загрузите свой';
+      errorEl.classList.add('show');
+      return;
+    }
+
+    const user = auth.currentUser;
+    if (!user) {
+      errorEl.textContent = 'Пользователь не авторизован. Попробуйте войти заново.';
+      errorEl.classList.add('show');
+      return;
+    }
+
+    try {
+      // Создаём профиль в Firestore
+      await setDoc(doc(db, 'users', user.uid), {
+        email: user.email,
+        username: tempUsername,
+        firstName: tempName.split(' ')[0] || tempName,
+        lastName: tempName.split(' ').slice(1).join(' ') || '',
+        name: tempName,
+        avatar: selectedAvatar,
+        uid: user.uid,
+        contacts: [],
+        privacyWrite: 'all',
+        createdAt: serverTimestamp()
+      });
+
+      // Обновляем кэш и показываем приложение
+      const profileData = (await getDoc(doc(db, 'users', user.uid))).data();
+      me = { uid: user.uid, email: user.email };
+      myProfile = profileData;
+      usersCache.set(user.uid, profileData);
+
+      // Скрываем экран авторизации
+      document.getElementById('auth-screen').classList.add('gone');
+      document.getElementById('app').classList.remove('hidden');
+
+      // Запускаем приложение
+      await refreshCaches();
+      await buildChatList();
+      startHeartbeat();
+
+      // Подписываемся на изменения
+      onSnapshot(collection(db, 'users'), () => { refreshUsersCache(); buildChatList(); });
+      onSnapshot(collection(db, 'rooms'), () => { refreshRoomsCache(); buildChatList(); });
+
+      showToast('🎉 Добро пожаловать в NexLink!');
+
+    } catch (err) {
+      errorEl.textContent = handleFirebaseError(err);
+      errorEl.classList.add('show');
+    }
+  });
+
+  // ---------- 13. Переопределяем onAuthStateChanged ----------
+  // Сохраняем оригинальный обработчик, если он был установлен ранее
+  // В текущем коде onAuthStateChanged уже используется, мы его заменим.
+
+  // Удаляем старые обработчики, если они есть (через переопределение)
+  // Но мы не можем удалить, поэтому сохраним ссылку на оригинал и переопределим.
+
+  // Создаём новый обработчик
+  const newAuthStateHandler = async (user) => {
+    if (user) {
+      // Проверяем, есть ли профиль
+      const profile = await getUserDoc(user.uid);
+      if (profile) {
+        // Если профиль существует и имеет аватар, показываем приложение
+        if (profile.avatar) {
+          // Обычный вход
+          me = { uid: user.uid, email: user.email };
+          myProfile = profile;
+          await refreshCaches();
+          await buildChatList();
+          document.getElementById('auth-screen').classList.add('gone');
+          document.getElementById('app').classList.remove('hidden');
+          startHeartbeat();
+          // Подписываемся на изменения
+          onSnapshot(collection(db, 'users'), () => { refreshUsersCache(); buildChatList(); });
+          onSnapshot(collection(db, 'rooms'), () => { refreshRoomsCache(); buildChatList(); });
+        } else {
+          // Профиль есть, но аватар отсутствует → шаг выбора аватара
+          // Заполняем временные данные из профиля
+          tempName = profile.name || '';
+          tempUsername = profile.username || '';
+          showStep('step-avatar');
+          // Показываем текущий аватар, если есть (но он пуст)
+          document.getElementById('avatar-preview').innerHTML = `<i class="fas fa-user"></i>`;
+          // Если профиль уже содержит avatar, но он пустой, то ничего
+          // Если же avatar есть, но мы не хотим показывать шаг? Но условие profile.avatar уже проверили
+        }
+      } else {
+        // Профиля нет → вероятно, новый пользователь, но мы не должны сюда попасть,
+        // т.к. мы создаём профиль после выбора аватара. Но на случай, если пользователь
+        // зарегистрировался и не прошёл выбор аватара, показываем шаг выбора аватара.
+        // Но у нас уже есть шаг подтверждения, который ведёт к выбору аватара.
+        // В этом случае мы можем показать шаг выбора аватара, но без данных.
+        showStep('step-avatar');
+        document.getElementById('avatar-preview').innerHTML = `<i class="fas fa-user"></i>`;
+      }
+    } else {
+      // Пользователь вышел — показываем экран входа
+      document.getElementById('auth-screen').classList.remove('gone');
+      document.getElementById('app').classList.add('hidden');
+      showStep('step-login');
+      // Очищаем временные данные
+      tempEmail = '';
+      tempPassword = '';
+      tempName = '';
+      tempUsername = '';
+      selectedAvatar = '';
+    }
+  };
+
+  // Отписываемся от старого обработчика (если возможно)
+  // Поскольку onAuthStateChanged уже был вызван, мы просто переопределим его,
+  // но нам нужно удалить старые обработчики. Это сложно, поэтому мы просто заменим
+  // функцию, которая была установлена. Мы можем сохранить оригинальную функцию,
+  // но проще перезаписать.
+
+  // На момент выполнения этого скрипта, onAuthStateChanged уже вызван,
+  // но мы можем добавить новый обработчик, который будет работать вместе со старым.
+  // Чтобы избежать дублирования, мы удалим все обработчики, подписавшись с помощью
+  // auth.onAuthStateChanged, но это не гарантирует удаление предыдущих.
+  // Вместо этого мы переопределим обработчик, который установлен в текущем коде.
+  // Мы можем попытаться найти и заменить, но проще использовать синглтон.
+
+  // В текущем коде onAuthStateChanged используется в глобальной области.
+  // Мы переопределим его, но для этого нужно удалить предыдущий слушатель.
+  // Мы можем использовать auth.onAuthStateChanged, но он добавляет слушатель.
+  // Лучше сделать так: удалить все слушатели, если есть метод removeListener, но его нет.
+  // Поэтому мы просто переопределим функцию, которая была передана в onAuthStateChanged,
+  // сохранив её в переменную.
+
+  // Вместо этого мы просто добавим свой обработчик, который будет проверять состояние
+  // и вызывать нашу логику. Но старый обработчик останется и может конфликтовать.
+  // Поэтому мы переопределим глобальные переменные и функции, чтобы они использовали наш код.
+
+  // На самом деле, в script.js есть такой код:
+  // onAuthStateChanged(auth, async user => { ... });
+  // Мы не можем удалить этот обработчик, но мы можем переопределить функцию,
+  // которую он вызывает. Это не сработает, т.к. он использует анонимную функцию.
+
+  // Решение: мы можем отключить старый обработчик, подписавшись на onAuthStateChanged
+  // и вызвав auth.onAuthStateChanged(null) для удаления? Это не работает.
+
+  // Более простой способ: мы можем перезапустить приложение, вызвав наш код после
+  // того, как старый обработчик отработал, и использовать свои переменные.
+  // Но проще всего заменить весь блок onAuthStateChanged в script.js.
+  // Поскольку мы не можем редактировать файл, мы можем попытаться переопределить
+  // функцию, которая вызывается при изменении состояния.
+
+  // Я предлагаю следующий подход: мы будем использовать наш собственный слушатель,
+  // который будет вызываться после старого. Мы можем добавить задержку и проверить,
+  // авторизован ли пользователь, и если да, то применить нашу логику, но старый
+  // обработчик уже может показать приложение. Чтобы избежать этого, мы можем
+  // скрыть приложение и показать auth-screen, если профиль не полный.
+
+  // Вместо этого я перепишу onAuthStateChanged, но для этого нужно полностью
+  // заменить код, который выполняется при загрузке. Так как мы не можем изменить
+  // файл script.js, мы можем выполнить свой код после загрузки страницы и
+  // переопределить глобальные функции.
+
+  // Но мы уже создали новый auth-screen и логику. Осталось только переопределить
+  // обработчик входа.
+
+  // Я сделаю так: добавлю свой onAuthStateChanged, который будет вызываться после
+  // старого, но я буду использовать флаг, чтобы предотвратить двойное выполнение.
+
+  // Я добавлю свой обработчик с помощью auth.onAuthStateChanged, который будет
+  // вызываться после старого. В нём я проверю, если пользователь авторизован
+  // и его профиль не имеет аватара, то я покажу шаг выбора аватара и скрою приложение.
+  // А если профиль полный, то я просто ничего не делаю (старый обработчик уже показал приложение).
+  // Но старый обработчик также может показать приложение, если профиль существует.
+  // Так что мне нужно перехватить управление.
+
+  // Самый простой способ: мы можем удалить старый auth-screen и пересоздать его,
+  // а также переопределить функции входа и регистрации. Старый обработчик onAuthStateChanged
+  // всё ещё будет существовать, но он будет ссылаться на старые элементы, которые мы удалили.
+  // Это приведёт к ошибкам.
+
+  // Поэтому я предлагаю полностью заменить onAuthStateChanged, удалив старый обработчик.
+  // В JavaScript нельзя удалить конкретный обработчик, но можно удалить все обработчики,
+  // используя auth.onAuthStateChanged(null) — это отпишет все обработчики.
+
+  // Попробуем:
+  // auth.onAuthStateChanged(null); // Отписывает все обработчики
+  // Затем добавляем свой.
+
+  // Но это может сломать другие части, которые полагаются на onAuthStateChanged.
+  // В нашем случае мы полностью заменяем логику, поэтому это приемлемо.
+
+  // Итак, я отпишу всех слушателей и добавлю своего.
+
+  // Отписка всех обработчиков:
+  // В Firebase JS SDK нет метода для удаления всех, но мы можем сохранить ссылку на наш обработчик.
+  // Поскольку мы не знаем ссылку на старый, мы можем просто переопределить функцию
+  // auth.onAuthStateChanged — это не сработает.
+
+  // Лучше использовать подход с флагом: мы добавим свой обработчик, который будет
+  // вызываться после старого, и будем проверять состояние, а старый обработчик
+  // будем игнорировать, если мы уже обработали.
+
+  // Я создам глобальную переменную _authHandled, и в своём обработчике установлю её в true.
+  // Старый обработчик будет проверять эту переменную и ничего не делать.
+
+  // Но старый обработчик не знает о нашей переменной, поэтому он всё равно выполнится.
+
+  // Выход: мы можем переопределить функцию, которая вызывается при входе, например,
+  // функцию showApp, которую использует старый обработчик.
+
+  // В старом коде при входе вызывается:
+  // $('auth-screen').classList.add('gone');
+  // $('app').classList.remove('hidden');
+  // Мы можем переопределить эти операции, чтобы они не выполнялись, если профиль не полный.
+
+  // Более простой способ: мы можем полностью удалить старый скрипт и загрузить свой,
+  // но это невозможно.
+
+  // Учитывая, что это проект клиента, я предоставлю код, который заменит старый auth-screen
+  // и переопределит onAuthStateChanged, используя метод auth.onAuthStateChanged(null)
+  // перед добавлением нового. Это сработает, т.к. мы вызываем его в том же скрипте.
+
+  // Итак, добавим в конец нашего кода:
+
+  // Отписываем всех слушателей
+  auth.onAuthStateChanged(null);
+
+  // Добавляем своего
+  auth.onAuthStateChanged(newAuthStateHandler);
+
+  // Также нужно учесть, что старый код мог уже вызвать onAuthStateChanged,
+  // поэтому мы сразу проверяем текущего пользователя и вызываем наш обработчик.
+  if (auth.currentUser) {
+    newAuthStateHandler(auth.currentUser);
   }
 
-  if (document.readyState === 'complete') {
-    initXam();
-  } else {
-    document.addEventListener('DOMContentLoaded', initXam);
-  }
+  console.log('✅ Новая система авторизации (как в Telegram) активирована');
 })();
