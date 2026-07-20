@@ -13,7 +13,7 @@ import {
   signOut, onAuthStateChanged, sendEmailVerification,
   GoogleAuthProvider, signInWithPopup
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-
+import { XAM_CONFIG } from 'config.js';
 // ── Firebase config (то же, что и у Desktop-версии) ──
 const FB = {
   apiKey: "AIzaSyCjadRD1TAix0IsjaxYI-76P9mDpKmQ34Q",
