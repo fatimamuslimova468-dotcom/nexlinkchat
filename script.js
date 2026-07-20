@@ -6464,10 +6464,9 @@ if (typeof onAuthStateChanged !== 'undefined') {
   const XAM_CONFIG = {
     clientId: 'xam_xjsilFjNx6Zgi01xq6zGPQ',
     redirectUri: 'https://nexchat.zapto.org/',
-    // ⚠️ Уточните у поддержки XamChat реальные эндпоинты, если стандартные не работают
     authorizeUrl: 'https://xamchat.ru/oauth/authorize',
     tokenUrl: 'https://xamchat.ru/oauth/token',
-    scope: 'profile_basic',  // <--- Единственный разрешённый scope
+    scope: 'profile_basic',
     storageKey: 'xam_oauth_state'
   };
 
@@ -6506,7 +6505,7 @@ if (typeof onAuthStateChanged !== 'undefined') {
     window.location.href = url;
   }
 
-  // Обмен кода на токен
+  // Обмен кода на токен (с детальным логированием)
   async function exchangeCodeForToken(code, verifier) {
     const params = new URLSearchParams({
       client_id: XAM_CONFIG.clientId,
@@ -6515,25 +6514,37 @@ if (typeof onAuthStateChanged !== 'undefined') {
       code_verifier: verifier,
       grant_type: 'authorization_code'
     });
+
+    console.log('📤 Xam Token Exchange Request:', XAM_CONFIG.tokenUrl);
+    console.log('📤 Params:', params.toString());
+
     const response = await fetch(XAM_CONFIG.tokenUrl, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Accept': 'application/json'
       },
       body: params.toString()
     });
+
+    const responseText = await response.text();
+    console.log('📥 Xam Token Response Status:', response.status);
+    console.log('📥 Xam Token Response Body:', responseText);
+
     if (!response.ok) {
-      throw new Error(`Token exchange failed: ${response.status}`);
+      let errorData;
+      try { errorData = JSON.parse(responseText); } catch {}
+      throw new Error(`Token exchange failed: ${response.status} ${response.statusText}${errorData ? ' - ' + JSON.stringify(errorData) : ''}`);
     }
-    const data = await response.json();
+
+    const data = JSON.parse(responseText);
     localStorage.setItem('xam_access_token', data.access_token);
     localStorage.setItem('xam_refresh_token', data.refresh_token || '');
-    // Сохраняем также данные пользователя, если они возвращаются в id_token или отдельно
     if (data.id_token) localStorage.setItem('xam_id_token', data.id_token);
     return data;
   }
 
-  // Проверка редиректа
+  // Обработка редиректа
   function handleXamRedirect() {
     const urlParams = new URLSearchParams(window.location.search);
     const code = urlParams.get('code');
@@ -6548,7 +6559,9 @@ if (typeof onAuthStateChanged !== 'undefined') {
 
     const savedState = localStorage.getItem(XAM_CONFIG.storageKey);
     if (state !== savedState) {
-      showToast('Ошибка: неверный state (CSRF)');
+      showToast('Ошибка: неверный state (CSRF). Попробуйте снова.');
+      localStorage.removeItem(XAM_CONFIG.storageKey);
+      localStorage.removeItem('xam_code_verifier');
       return;
     }
     localStorage.removeItem(XAM_CONFIG.storageKey);
@@ -6566,8 +6579,6 @@ if (typeof onAuthStateChanged !== 'undefined') {
         console.log('Xam токен:', tokenData);
         window.history.replaceState({}, document.title, window.location.pathname);
         updateXamUI(true);
-        // Здесь можно запросить /userinfo, если есть такой эндпоинт и scope позволяет
-        // fetchUserInfo(tokenData.access_token);
       })
       .catch(err => {
         showToast('❌ Ошибка обмена токена: ' + err.message);
