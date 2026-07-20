@@ -6672,3 +6672,21 @@ async function loginWithXAM(email, name, avatar) {
     showToast('❌ Ошибка входа: ' + error.message);
   }
 }
+// ============================================================
+//  ПРИВЯЗКА КНОПКИ И ОБРАБОТКА CALLBACK
+// ============================================================
+document.addEventListener('DOMContentLoaded', () => {
+  // Кнопка «Войти через XAM»
+  const xamBtn = document.getElementById('xam-btn');
+  if (xamBtn) {
+    xamBtn.addEventListener('click', initiateXAMLogin);
+    console.log('✅ Кнопка XAM привязана');
+  } else {
+    console.warn('⚠️ Кнопка #xam-btn не найдена в DOM');
+  }
+
+  // Если в URL есть параметр code – это возврат от XAM
+  if (window.location.search.includes('code=')) {
+    handleXAMCallback();
+  }
+});
