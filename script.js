@@ -6502,149 +6502,11 @@ if (typeof onAuthStateChanged !== 'undefined') {
     }
   }, 300);
 }
-// ════════════════════════════════════════════════════════════════
-//  АВТОРИЗАЦИЯ ЧЕРЕЗ XAM CHAT (OAuth 2.0 + PKCE)
-// ════════════════════════════════════════════════════════════════
+// ============================================================
+//  ВХОД ЧЕРЕЗ XAM (OAuth 2.0 + PKCE)
+// ============================================================
 
-(function() {
-  const XAMCHAT = {
-  clientId: 'xam_pOwUsNRoU0kcpYf3i31FXQ',   // ← новый
-  authorizeUrl: 'https://xamchat.ru/oauth/authorize',
-  tokenUrl: 'https://xamchat.ru/oauth/token',
-  userInfoUrl: 'https://xamchat.ru/oauth/userinfo',
-  exchangeUrl: 'https://us-central1-quickchat-f5012.cloudfunctions.net/xamChatAuth'
-};
-
-  // ---- PKCE утилиты ----
-  function generateCodeVerifier() {
-    const array = new Uint8Array(32);
-    crypto.getRandomValues(array);
-    return base64UrlEncode(array);
-  }
-
-  async function generateCodeChallenge(verifier) {
-    // Если crypto.subtle недоступен, используем полифилл (js-sha256)
-    if (window.crypto && window.crypto.subtle) {
-      const encoder = new TextEncoder();
-      const data = encoder.encode(verifier);
-      const hash = await crypto.subtle.digest('SHA-256', data);
-      return base64UrlEncode(new Uint8Array(hash));
-    }
-    // Полифилл (подключите js-sha256 в HTML)
-    if (typeof sha256 !== 'undefined') {
-      const hash = sha256(verifier);
-      const bytes = new Uint8Array(hash.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
-      return base64UrlEncode(bytes);
-    }
-    throw new Error('crypto.subtle недоступен и библиотека sha256 не загружена');
-  }
-
-  function base64UrlEncode(buffer) {
-    const bytes = new Uint8Array(buffer);
-    let binary = '';
-    for (let i = 0; i < bytes.byteLength; i++) {
-      binary += String.fromCharCode(bytes[i]);
-    }
-    return btoa(binary)
-      .replace(/\+/g, '-')
-      .replace(/\//g, '_')
-      .replace(/=+$/, '');
-  }
-
-  function saveVerifier(verifier) {
-    sessionStorage.setItem('xamchat_code_verifier', verifier);
-  }
-  function getVerifier() {
-    return sessionStorage.getItem('xamchat_code_verifier');
-  }
-  function clearVerifier() {
-    sessionStorage.removeItem('xamchat_code_verifier');
-  }
-
-  // ---- Обработчик кнопки ----
-  const xamBtn = document.getElementById('xamchat-btn');
-  if (xamBtn) {
-    xamBtn.addEventListener('click', async () => {
-      try {
-        const verifier = generateCodeVerifier();
-        const challenge = await generateCodeChallenge(verifier);
-        saveVerifier(verifier);
-
-        const redirectUri = window.location.origin + window.location.pathname;
-        const params = new URLSearchParams({
-          client_id: XAMCHAT.clientId,
-          redirect_uri: redirectUri,
-          response_type: 'code',
-          scope: 'profile_basic',   // ← ИСПРАВЛЕНО!
-          code_challenge: challenge,
-          code_challenge_method: 'S256'
-        });
-        window.location.href = `${XAMCHAT.authorizeUrl}?${params.toString()}`;
-      } catch (err) {
-        showToast('Ошибка инициализации входа: ' + err.message);
-      }
-    });
-  }
-
-  // ---- Обработка редиректа ----
-  async function handleXamChatRedirect() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const code = urlParams.get('code');
-    const error = urlParams.get('error');
-    
-    if (error) {
-      showToast('Авторизация отклонена: ' + error);
-      clearVerifier();
-      return;
-    }
-    if (!code) return;
-
-    const verifier = getVerifier();
-    if (!verifier) {
-      showToast('Сессия истекла, попробуйте снова');
-      return;
-    }
-
-    const cleanUrl = window.location.origin + window.location.pathname;
-    window.history.replaceState({}, document.title, cleanUrl);
-    showToast('⏳ Вход через Xam Chat...');
-
-    try {
-      const response = await fetch(XAMCHAT.exchangeUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          code,
-          redirect_uri: cleanUrl,
-          code_verifier: verifier
-        })
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'Ошибка обмена');
-      if (!data.firebaseToken) throw new Error('Firebase токен не получен');
-
-      await signInWithCustomToken(auth, data.firebaseToken);
-      clearVerifier();
-      showToast('✅ Вход выполнен');
-    } catch (err) {
-      showToast('❌ Ошибка: ' + err.message);
-      clearVerifier();
-    }
-  }
-
-  // Запуск после загрузки
-  if (document.readyState === 'complete') {
-    handleXamChatRedirect();
-  } else {
-    window.addEventListener('load', handleXamChatRedirect);
-  }
-})();
-// ==================== ИМПОРТ КОНФИГА ====================
-import { XAM_CONFIG } from './config.js';
-
-// ==================== OAuth 2.0 с PKCE ====================
-
-// Генерация code_verifier (случайная строка длиной 43-128 символов)
+// Генерация code_verifier
 function generateCodeVerifier() {
   const array = new Uint8Array(32);
   crypto.getRandomValues(array);
@@ -6666,18 +6528,16 @@ async function generateCodeChallenge(verifier) {
 }
 
 // Запуск OAuth-потока
-export async function initiateXAMLogin(clientId) {
+async function initiateXAMLogin() {
   const verifier = generateCodeVerifier();
   const challenge = await generateCodeChallenge(verifier);
-  
-  // Сохраняем верификатор в sessionStorage для последующего обмена
   sessionStorage.setItem('xam_code_verifier', verifier);
 
   const state = Math.random().toString(36).substring(2, 10);
   sessionStorage.setItem('xam_oauth_state', state);
 
   const params = new URLSearchParams({
-    client_id: clientId,
+    client_id: XAM_CONFIG.clientId,
     redirect_uri: XAM_CONFIG.redirectUri,
     response_type: 'code',
     scope: 'profile email',
@@ -6689,28 +6549,28 @@ export async function initiateXAMLogin(clientId) {
   window.location.href = `${XAM_CONFIG.authorizeUrl}?${params.toString()}`;
 }
 
-// Обработка возврата (callback)
-export async function handleXAMCallback() {
+// Обработка callback (редирект с code)
+async function handleXAMCallback() {
   const url = new URL(window.location.href);
   const code = url.searchParams.get('code');
   const state = url.searchParams.get('state');
   const storedState = sessionStorage.getItem('xam_oauth_state');
 
   if (!code || !state || state !== storedState) {
-    console.warn('Ошибка: некорректный callback');
+    console.warn('Некорректный callback');
     return;
   }
 
   const verifier = sessionStorage.getItem('xam_code_verifier');
   if (!verifier) {
-    console.warn('Ошибка: отсутствует code_verifier');
+    console.warn('Отсутствует code_verifier');
     return;
   }
 
   // Обмен кода на токен
   const tokenData = await exchangeCodeForToken(code, verifier);
   if (!tokenData || !tokenData.access_token) {
-    console.warn('Ошибка обмена кода на токен');
+    console.warn('Ошибка обмена кода');
     return;
   }
 
@@ -6723,6 +6583,7 @@ export async function handleXAMCallback() {
   // Очистка
   sessionStorage.removeItem('xam_code_verifier');
   sessionStorage.removeItem('xam_oauth_state');
+  // Убираем параметры из URL
   window.history.replaceState({}, document.title, window.location.pathname);
 }
 
@@ -6765,8 +6626,7 @@ async function getUserInfo(accessToken) {
   }
 }
 
-// ==================== ИНТЕГРАЦИЯ С FIREBASE ====================
-
+// Интеграция с Firebase (создание/вход)
 async function loginWithXAM(email, name, avatar) {
   if (!email) {
     showToast('❌ Ошибка: не получен email от XAM');
@@ -6779,22 +6639,19 @@ async function loginWithXAM(email, name, avatar) {
     let userExists = !userSnapshot.empty;
 
     if (userExists) {
-      // Если пользователь уже есть, предлагаем войти по паролю (или используем тот же пароль)
-      const password = prompt('Введите пароль от вашего аккаунта (или оставьте пустым для временного доступа):');
-      if (password && password.length > 0) {
-        await signInWithEmailAndPassword(auth, email, password);
-      } else {
-        // Если пароль не введён, можно отправить письмо для сброса или использовать временный пароль
-        // Здесь для простоты предложим сброс
-        showToast('Отправьте запрос на сброс пароля, чтобы войти');
-        await sendPasswordResetEmail(auth, email);
-        return;
-      }
+      // Если пользователь уже есть, используем существующий механизм входа
+      // В данном случае мы можем попросить ввести пароль (как при обычном входе)
+      // Либо отправить письмо для сброса. Упростим: покажем сообщение и предложим войти по паролю.
+      showToast('Пользователь с таким email уже существует. Войдите по паролю.');
+      // Можно автоматически переключить на форму входа
+      document.querySelector('.auth-tab[data-tab="login"]')?.click();
+      document.getElementById('l-email').value = email;
+      return;
     } else {
       // Регистрируем нового пользователя с временным паролем
       const tempPassword = Math.random().toString(36).slice(-8);
       const userCredential = await createUserWithEmailAndPassword(auth, email, tempPassword);
-      // Сохраняем профиль в Firestore
+      // Сохраняем профиль
       const names = (name || '').split(' ');
       await setDoc(doc(db, 'users', userCredential.user.uid), {
         email: email,
@@ -6808,32 +6665,10 @@ async function loginWithXAM(email, name, avatar) {
         privacyWrite: 'all'
       });
       showToast('✅ Аккаунт создан через XAM');
+      // После регистрации автоматически войдёт (onAuthStateChanged сработает)
     }
   } catch (error) {
     console.error('loginWithXAM:', error);
     showToast('❌ Ошибка входа: ' + error.message);
   }
 }
-
-// ==================== ОБРАБОТЧИК КНОПКИ ====================
-
-// Добавляем обработчик на кнопку (после загрузки DOM)
-document.addEventListener('DOMContentLoaded', () => {
-  const xamBtn = document.getElementById('xam-btn');
-  if (xamBtn) {
-    xamBtn.onclick = () => {
-      // Если demoMode включен, используем тестовые данные
-      if (XAM_CONFIG.demoMode) {
-        loginWithXAM('demo@xam.com', 'XAM Demo User', '🌟');
-        return;
-      }
-      // Иначе запускаем реальный OAuth
-      initiateXAMLogin(XAM_CONFIG.clientId);
-    };
-  }
-
-  // Проверяем, не вернулись ли с редиректа (callback)
-  if (window.location.search.includes('code=')) {
-    handleXAMCallback();
-  }
-});
