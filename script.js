@@ -6959,7 +6959,7 @@ if (auth.currentUser) {
 (function initXamChatAuth() {
   'use strict';
 
-  const XAM_CLIENT_ID = ' xam_YnDsXV3Fl58dbOaw8Tg';
+  const XAM_CLIENT_ID = 'xam_ETi48LOYyeV77jvCWcoPNg';
   const XAM_REDIRECT_URI = `${location.origin}/`;
   const XAM_SESSION_KEY = 'nexlink_xam_session';
   const XAM_LOGO_SVG = `
