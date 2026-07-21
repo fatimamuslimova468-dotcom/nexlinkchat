@@ -1,4 +1,4 @@
-/* ============================================================
+
    ROOT TOKENS — СОВРЕМЕННАЯ ЦВЕТОВАЯ СХЕМА
    ============================================================ */
 :root {
@@ -2655,4 +2655,123 @@ body.reduce-animations #messages-wrap {
 }
 .xam-btn svg {
   flex-shrink: 0;
+}
+/* ============================================================
+   ДИЗАЙН МИНИ-ПРИЛОЖЕНИЙ (в стиле NexLink)
+   ============================================================ */
+
+/* Модальное окно приложений */
+#apps-modal .modal-sheet {
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  background: var(--bg-surface);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+#apps-modal .modal-hdr h3 {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* Сетка карточек */
+#apps-modal .apps-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  padding: 20px 16px 30px;
+}
+
+/* Карточка приложения */
+#apps-modal .app-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: 24px 12px 18px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+#apps-modal .app-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-glow);
+  border-color: var(--primary);
+  background: rgba(108, 99, 255, 0.04);
+}
+
+#apps-modal .app-card:active {
+  transform: scale(0.94);
+}
+
+/* Иконка приложения */
+#apps-modal .app-card .app-icon {
+  font-size: 44px;
+  width: 72px;
+  height: 72px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, var(--primary), var(--primary-light));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  margin-bottom: 12px;
+  box-shadow: 0 8px 24px var(--primary-glow);
+  transition: 0.3s;
+}
+
+#apps-modal .app-card:hover .app-icon {
+  transform: scale(1.06) rotate(-2deg);
+}
+
+/* Название приложения */
+#apps-modal .app-card .app-name {
+  font-weight: 600;
+  font-size: 16px;
+  color: var(--text-primary);
+  margin-top: 2px;
+}
+/* ─── СПИНЕРЫ ДЛЯ ВСЕХ КНОПОК ──────────────────────────── */
+.auth-btn.loading,
+.modal-btn.loading,
+.send-btn.loading,
+.upv-btn.loading,
+.vp-send-btn.loading,
+.ci-btn.loading,
+.hdr-btn.loading {
+  pointer-events: none !important;
+  opacity: 0.8;
+  position: relative;
+  color: transparent !important;
+}
+.auth-btn.loading::after,
+.modal-btn.loading::after,
+.send-btn.loading::after,
+.upv-btn.loading::after,
+.vp-send-btn.loading::after,
+.ci-btn.loading::after,
+.hdr-btn.loading::after {
+  content: '';
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  top: 50%;
+  left: 50%;
+  margin: -11px 0 0 -11px;
+  border: 2.5px solid rgba(255,255,255,0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: btn-spin 0.7s linear infinite;
+}
+/* Для светлых кнопок (secondary) — тёмный спинер */
+.modal-btn.secondary.loading::after {
+  border-color: rgba(0,0,0,0.2);
+  border-top-color: #000;
+}
+
+@keyframes btn-spin {
+  to { transform: rotate(360deg); }
 }
