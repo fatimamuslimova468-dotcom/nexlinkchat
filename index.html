@@ -4,7 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>NexLink</title>
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="css/style.css">
+<!-- Для iOS Safari / PWA -->
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+
+<!-- Для Android Chrome и современных браузеров -->
+<meta name="theme-color" content="#ffffff">
 </head>
 <body>
 
@@ -97,20 +102,40 @@
       <button class="nav-btn" data-tab="settings"><span class="nav-icon">⚙️</span><span class="nav-label">Настройки</span></button>
     </div>
   </div>
-
+  
   <!-- ── PAGE: OPEN CHAT ── -->
   <div class="page" id="page-chat">
-    <div class="hdr" id="chat-hdr">
-      <button class="hdr-back" id="back-from-chat">←</button>
-      <div class="hdr-av" id="chat-hdr-av">😊</div>
-      <div class="hdr-info" id="chat-hdr-info">
-        <div class="hdr-name" id="chat-hdr-name">Чат</div>
-        <div class="hdr-status" id="chat-hdr-status"></div>
+
+    <!-- 👇 СТАРАЯ ШАПКА ЗАМЕНЕНА НА ЭТУ 👇 -->
+    <div class="chat-hdr">
+      <div class="chat-hdr-left" id="chat-hdr-left">
+        <button class="hdr-back" id="back-from-chat" title="Назад">←</button>
+        
+        <div class="hdr-av-wrap">
+          <div id="chat-hdr-av">😊</div>
+          <div class="online-dot" id="hdr-online-dot"></div>
+        </div>
+        
+        <div class="chat-hdr-info" id="chat-hdr-info">
+          <div class="hdr-name" id="chat-hdr-name">Чат</div>
+          <div class="hdr-status" id="chat-hdr-status"></div>
+        </div>
       </div>
+
+      <button class="hdr-menu-btn" id="chat-hdr-menu-btn" title="Меню">
+        <div class="three-dots">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      </button>
     </div>
+    <!-- 👆 КОНЕЦ НОВОЙ ШАПКИ 👆 -->
+
     <div id="messages-wrap">
       <div class="center-loader" id="msg-loader"><div class="loader"></div></div>
     </div>
+
     <div id="reply-bar">
       <div class="reply-bar-accent"></div>
       <div class="reply-bar-body">
@@ -119,6 +144,7 @@
       </div>
       <button class="reply-bar-close" id="cancel-reply">✕</button>
     </div>
+
     <div id="input-bar">
       <div class="input-wrap">
         <button class="ib-btn" id="attach-btn">📎</button>
@@ -128,10 +154,13 @@
       </div>
       <button class="send-btn" id="send-btn">➤</button>
     </div>
+
     <div id="emoji-dim"></div>
     <div id="emoji-picker"></div>
   </div>
 
+  
+  
   <!-- ── PAGE: CONTACTS ── -->
   <div class="page" id="page-contacts">
     <div class="hdr">
@@ -153,7 +182,6 @@
       <!-- clone nav -->
     </div>
   </div>
-
   <!-- ── PAGE: SETTINGS ── -->
   <div class="page" id="page-settings">
     <div class="hdr">
@@ -278,8 +306,95 @@
     </div>
   </div>
 </div>
+<!-- Панель закреплённого сообщения с узорами -->
+<div id="pinned-bar" class="pinned-bar">
+  <div class="pinned-content" id="pinned-content">
+    <div class="pinned-icon">📌</div>
+    <div class="pinned-info">
+      <div class="pinned-title">
+        <span>Закреплённое сообщение</span>
+        <span class="pinned-count" id="pinned-count" style="display:none;">1/1</span>
+      </div>
+      <div class="pinned-text" id="pinned-text">Загрузка...</div>
+    </div>
+  </div>
+  <button class="pinned-close" id="pinned-close-btn" title="Открепить">✕</button>
+</div>
+<!-- ══════════════ DEVELOPER MODALS ══════════════ -->
+
+<!-- Dev Portal Main Modal -->
+<div class="modal-ov" id="modal-dev-portal">
+  <div class="modal-sheet">
+    <div class="modal-pill"></div>
+    <div class="modal-hdr">
+      <h3>👨‍💻 Для разработчиков</h3>
+      <button class="modal-close">✕</button>
+    </div>
+    <div class="modal-body">
+      <!-- Раздел OAuth -->
+      <div class="dev-section-hdr">
+        <h4>🔐 OAuth Приложения</h4>
+        <button class="dev-add-btn" id="dev-create-oauth-btn">+ Создать</button>
+      </div>
+      <div id="dev-oauth-list" class="dev-list"></div>
+
+      <div class="auth-divider" style="margin:20px 0;"></div>
+
+      <!-- Раздел Ботов -->
+      <div class="dev-section-hdr">
+        <h4>🤖 Разработка Ботов</h4>
+        <button class="dev-add-btn" id="dev-create-bot-btn">+ Создать бота</button>
+      </div>
+      <div id="dev-bot-list" class="dev-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Create OAuth App -->
+<div class="modal-ov" id="modal-create-oauth">
+  <div class="modal-sheet">
+    <div class="modal-pill"></div>
+    <div class="modal-hdr">
+      <h3>Новое OAuth Приложение</h3>
+      <button class="modal-close">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-field">
+        <label>Название приложения</label>
+        <input type="text" id="oauth-name" placeholder="My Web App">
+      </div>
+      <div class="modal-field">
+        <label>Redirect URI (Callback URL)</label>
+        <input type="url" id="oauth-redirect" placeholder="https://myapp.com/callback">
+      </div>
+      <button class="modal-btn" id="save-oauth-btn">Зарегистрировать</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Create Bot -->
+<div class="modal-ov" id="modal-create-bot">
+  <div class="modal-sheet">
+    <div class="modal-pill"></div>
+    <div class="modal-hdr">
+      <h3>Создание Бота</h3>
+      <button class="modal-close">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-field">
+        <label>Имя бота</label>
+        <input type="text" id="bot-name" placeholder="Helper Bot">
+      </div>
+      <div class="modal-field">
+        <label>@Юзернейм (должен оканчиваться на _bot)</label>
+        <input type="text" id="bot-uname" placeholder="@my_helper_bot" autocapitalize="none" autocorrect="off">
+      </div>
+      <button class="modal-btn" id="save-bot-btn">Создать бота</button>
+    </div>
+  </div>
+</div>
 
 <script src="https://xamchat.ru/oauth/xam-auth.js"></script>
-<script type="module" src="script.js"></script>
+<script type="module" src="js/script.js"></script>
 </body>
 </html>
