@@ -1,5 +1,6 @@
 
 
+
 // ════════════════════════════════════════════════════
 //  Firebase (compat CDN) подключается ниже через ES modules
 // ════════════════════════════════════════════════════
@@ -130,98 +131,6 @@ $('emoji-dim').onclick = closeEmojiPicker;
 // Avatar grids
 renderAvGrid('reg-av-grid', '😊', v => regAvatar = v);
 
-// ════════════════════════════════════════════════════
-//  AUTH
-// ════════════════════════════════════════════════════
-$('login-btn').onclick = async () => {
-  const em = $('l-email').value.trim().toLowerCase();
-  const pw = $('l-pass').value;
-  const err = $('l-err');
-  err.className = 'err-msg'; err.textContent = '';
-  if (!validEmail(em)) { err.textContent = 'Некорректный email'; err.classList.add('show'); return; }
-  try { await signInWithEmailAndPassword(auth, em, pw); }
-  catch { err.textContent = '❌ Неверный email или пароль'; err.classList.add('show'); }
-};
-$('l-pass').onkeydown = e => { if (e.key === 'Enter') $('login-btn').click(); };
-
-$('reg-btn').onclick = async () => {
-  const em = $('r-email').value.trim().toLowerCase();
-  const un = $('r-uname').value.trim();
-  const pw = $('r-pass').value;
-  const fn = $('r-first').value.trim();
-  const ln = $('r-last').value.trim();
-  const err = $('r-err');
-  err.className = 'err-msg'; err.textContent = '';
-  if (!validEmail(em)) { err.textContent = '❌ Некорректный email'; err.classList.add('show'); return; }
-  if (!un.startsWith('@') || un.length < 3) { err.textContent = '❌ Юзернейм должен начинаться с @'; err.classList.add('show'); return; }
-  if (pw.length < 6) { err.textContent = '❌ Пароль минимум 6 символов'; err.classList.add('show'); return; }
-  if (!fn) { err.textContent = '❌ Введите имя'; err.classList.add('show'); return; }
-  try {
-    const snap = await getDocs(query(collection(db, 'users'), where('username', '==', un)));
-    if (!snap.empty) { err.textContent = '❌ Юзернейм занят'; err.classList.add('show'); return; }
-    const uc = await createUserWithEmailAndPassword(auth, em, pw);
-    await setDoc(doc(db, 'users', uc.user.uid), {
-      email: em, username: un, firstName: fn, lastName: ln,
-      name: fn + (ln ? ' ' + ln : ''), avatar: regAvatar, uid: uc.user.uid,
-      contacts: [], privacyWrite: 'all'
-    });
-    await sendEmailVerification(uc.user);
-    showVerifyScreen(em);
-  } catch (e) {
-    err.textContent = e.code === 'auth/email-already-in-use' ? '❌ Email уже зарегистрирован' : `❌ ${e.message}`;
-    err.classList.add('show');
-  }
-};
-
-$('google-btn').onclick = async () => {
-  try {
-    const res = await signInWithPopup(auth, new GoogleAuthProvider());
-    const u = res.user;
-    const ud = await getDoc(doc(db, 'users', u.uid));
-    if (!ud.exists()) {
-      const names = (u.displayName || '').split(' ');
-      await setDoc(doc(db, 'users', u.uid), {
-        email: u.email, username: `@user_${u.uid.slice(0, 6)}`,
-        firstName: names[0] || 'Пользователь', lastName: names.slice(1).join(' ') || '',
-        avatar: u.photoURL || '😊', name: u.displayName || 'Пользователь',
-        uid: u.uid, contacts: [], privacyWrite: 'all'
-      });
-    }
-  } catch (e) { showToast('Ошибка Google: ' + e.message); }
-};
-
-document.querySelectorAll('.auth-tab').forEach(t => t.onclick = () => {
-  document.querySelectorAll('.auth-tab').forEach(x => x.classList.remove('active'));
-  t.classList.add('active');
-  const isReg = t.dataset.tab === 'reg';
-  $('login-form').classList.toggle('hidden', isReg);
-  $('reg-form').classList.toggle('hidden', !isReg);
-});
-
-function showVerifyScreen(email) {
-  const emailEl = $('verify-email');
-  const forms = $('auth-forms');
-  const wrap = $('verify-wrap');
-  if (emailEl) emailEl.textContent = email;
-  if (forms) forms.classList.add('hidden');
-  if (wrap) wrap.classList.remove('hidden');
-  const step = document.getElementById('step-verify');
-  if (step) {
-    document.querySelectorAll('.auth-step').forEach(el => el.classList.remove('active'));
-    step.classList.add('active');
-    if (emailEl) emailEl.textContent = email;
-  }
-}
-$('resend-btn').onclick = async () => {
-  if (auth.currentUser) { await sendEmailVerification(auth.currentUser); showToast('Письмо отправлено!'); }
-};
-$('check-verify-btn').onclick = async () => {
-  if (!auth.currentUser) return;
-  await auth.currentUser.reload();
-  if (auth.currentUser.emailVerified) { showToast('✅ Email подтверждён! Войдите снова.'); await signOut(auth); }
-  else showToast('❌ Email ещё не подтверждён.');
-};
-$('verify-logout-btn').onclick = () => signOut(auth);
 
 // ════════════════════════════════════════════════════
 //  AUTH STATE
@@ -462,6 +371,24 @@ async function openChat(chat) {
   $('chat-hdr-name').textContent = chat.name;
   $('chat-hdr-status').textContent = '';
   $('chat-hdr-status').className = 'hdr-status';
+
+  // --- ПРОВЕРКА И ОТОБРАЖЕНИЕ БАННЕРА ---
+  const banner = $('unknown-contact-banner');
+  if (banner) {
+    const isSelf = chat.type === 'self';
+    const isGroup = chat.type === 'group' || chat.type === 'channel';
+    const isBot = chat.isBot || chat.id.endsWith('_bot') || (usersCache.get(chat.id)?.isBot === true);
+    
+    // Проверяем, есть ли пользователь в контактах текущего профиля
+    const inContacts = myProfile?.contacts?.includes(chat.id);
+
+    // Показываем предупреждение только для приватных диалогов с обычными пользователями не из контактов
+    if (chat.type === 'private' && !isSelf && !isGroup && !isBot && !inContacts) {
+      banner.classList.add('show');
+    } else {
+      banner.classList.remove('show');
+    }
+  }
 
   // Clear messages
   const wrap = $('messages-wrap');
@@ -706,7 +633,6 @@ async function sendMessage() {
   clearTyping();
 }
 
-$('send-btn').onclick = sendMessage;
 $('msg-input').addEventListener('keydown', e => {
   if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
 });
@@ -1013,8 +939,15 @@ function renderSettings() {
         <div class="si-icon">🚪</div><div class="si-text">Выйти</div>
       </div>
     </div>
+<div class="settings-section">
+  <div class="settings-label">Дополнительно</div>
+  <div class="settings-item" id="s-developer"><div class="si-icon">👨‍💻</div><div class="si-text">Для разработчиков</div><span class="si-arrow">›</span></div>
+</div>
     <div style="height:20px;"></div>
   `;
+  $('s-developer').onclick = () => {
+  openDevPortal();
+};
   $('settings-prof-section').onclick = openProfileModal;
   $('s-profile').onclick = openProfileModal;
   $('s-new-grp').onclick = () => { renderAvGrid('grp-av-grid', '👥', v => grpAvatar = v); openModal('modal-create-group'); };
@@ -4755,339 +4688,7 @@ if (originalSaveProfile) {
   // Переопределяем стандартный catch для упрощения
   console.log('✅ Обработчик ошибок Firebase активирован');
 })();
-// ════════════════════════════════════════════════════════════════
-//  ГОЛОСОВЫЕ СООБЩЕНИЯ — ФИНАЛЬНАЯ ВЕРСИЯ (ЗАМЕНЯЕТ ВСЕ ПРЕДЫДУЩИЕ)
-// ════════════════════════════════════════════════════════════════
-(function() {
-  // ---- Находим или создаём необходимые элементы ----
-  const inputWrap = document.querySelector('#input-bar .input-wrap');
-  if (!inputWrap) return;
 
-  // Удаляем старые кнопки голоса, если есть
-  const oldVoiceBtn = document.getElementById('voice-btn');
-  if (oldVoiceBtn) oldVoiceBtn.remove();
-
-  // Создаём новую кнопку
-  const voiceBtn = document.createElement('button');
-  voiceBtn.id = 'voice-btn';
-  voiceBtn.className = 'ib-btn';
-  voiceBtn.textContent = '🎙️';
-  voiceBtn.title = 'Голосовое сообщение (зажмите для записи)';
-
-  // Вставляем перед кнопкой emoji (или в конец input-wrap)
-  const emojiBtn = document.getElementById('emoji-btn');
-  if (emojiBtn) {
-    inputWrap.insertBefore(voiceBtn, emojiBtn);
-  } else {
-    inputWrap.appendChild(voiceBtn);
-  }
-
-  // ---- Создаём индикатор записи (если отсутствует) ----
-  let indicator = document.getElementById('voice-indicator');
-  if (!indicator) {
-    indicator = document.createElement('div');
-    indicator.id = 'voice-indicator';
-    indicator.innerHTML = `
-      <span class="mic-icon">🎙️</span>
-      <span class="timer">00:00</span>
-      <span style="font-size:13px;">Запись...</span>
-    `;
-    document.body.appendChild(indicator);
-  }
-  const timerEl = indicator.querySelector('.timer');
-
-  // ---- Создаём панель предпрослушивания (если отсутствует) ----
-  let preview = document.getElementById('voice-preview');
-  if (!preview) {
-    preview = document.createElement('div');
-    preview.id = 'voice-preview';
-    preview.innerHTML = `
-      <div class="vp-player">
-        <audio id="vp-audio"></audio>
-        <div class="vp-controls">
-          <span class="vp-play-btn" id="vp-play">▶️</span>
-          <div class="vp-progress" id="vp-progress">
-            <div class="vp-progress-fill" id="vp-progress-fill"></div>
-          </div>
-          <span class="vp-time" id="vp-time">0:00</span>
-        </div>
-      </div>
-      <div class="vp-actions">
-        <button class="vp-send-btn" id="vp-send">Отправить</button>
-        <button class="vp-del-btn" id="vp-del">✕</button>
-      </div>
-    `;
-    const inputBar = document.getElementById('input-bar');
-    if (inputBar) inputBar.parentNode.insertBefore(preview, inputBar);
-  }
-
-  // Получаем элементы панели
-  const vpAudio = document.getElementById('vp-audio');
-  const vpPlay = document.getElementById('vp-play');
-  const vpProgress = document.getElementById('vp-progress');
-  const vpProgressFill = document.getElementById('vp-progress-fill');
-  const vpTime = document.getElementById('vp-time');
-  const vpSend = document.getElementById('vp-send');
-  const vpDel = document.getElementById('vp-del');
-
-  // ---- Состояние ----
-  let mediaRecorder = null;
-  let audioChunks = [];
-  let recordingStart = 0;
-  let voiceBlobURL = null;
-  let recordingTimer = null;
-  let isRecording = false;
-  let isPressed = false;
-
-  // ---- Вспомогательные функции ----
-  function cleanupRecording() {
-    if (mediaRecorder) {
-      if (mediaRecorder.state === 'recording') mediaRecorder.stop();
-      mediaRecorder = null;
-    }
-    if (voiceBlobURL) {
-      URL.revokeObjectURL(voiceBlobURL);
-      voiceBlobURL = null;
-    }
-    audioChunks = [];
-    clearInterval(recordingTimer);
-    voiceBtn.classList.remove('recording');
-    indicator.classList.remove('show');
-    isRecording = false;
-    isPressed = false;
-  }
-
-  function showToastMsg(msg) {
-    if (typeof showToast === 'function') showToast(msg);
-    else alert(msg);
-  }
-
-  // ---- Основная логика записи ----
-  async function startRecording() {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaRecorder = new MediaRecorder(stream);
-      audioChunks = [];
-
-      mediaRecorder.ondataavailable = (e) => {
-        if (e.data.size > 0) audioChunks.push(e.data);
-      };
-
-      mediaRecorder.onstop = () => {
-        const blob = new Blob(audioChunks, { type: 'audio/webm' });
-        const duration = (Date.now() - recordingStart) / 1000;
-
-        if (blob.size > 0 && duration >= 1) {
-          voiceBlobURL = URL.createObjectURL(blob);
-          // Загружаем в плеер
-          vpAudio.src = voiceBlobURL;
-          vpAudio.load();
-          preview.classList.add('show');
-          vpPlay.textContent = '▶️';
-          vpProgressFill.style.width = '0%';
-          vpTime.textContent = '0:00';
-          // При загрузке обновим время
-          vpAudio.addEventListener('loadedmetadata', () => {
-            const total = vpAudio.duration || 0;
-            const m = Math.floor(total / 60);
-            const s = Math.floor(total % 60);
-            vpTime.textContent = `${m}:${String(s).padStart(2, '0')}`;
-          }, { once: true });
-        } else if (duration < 1) {
-          showToastMsg('Запись слишком короткая (минимум 1 секунда)');
-        } else {
-          showToastMsg('Ошибка записи');
-        }
-
-        stream.getTracks().forEach(t => t.stop());
-        voiceBtn.classList.remove('recording');
-        indicator.classList.remove('show');
-        clearInterval(recordingTimer);
-        isRecording = false;
-        isPressed = false;
-      };
-
-      mediaRecorder.start();
-      recordingStart = Date.now();
-      isRecording = true;
-      voiceBtn.classList.add('recording');
-      indicator.classList.add('show');
-      timerEl.textContent = '00:00';
-
-      recordingTimer = setInterval(() => {
-        const elapsed = Math.floor((Date.now() - recordingStart) / 1000);
-        if (elapsed >= 60) {
-          // Ограничение 60 секунд
-          if (mediaRecorder && mediaRecorder.state === 'recording') {
-            mediaRecorder.stop();
-          }
-          return;
-        }
-        const mins = String(Math.floor(elapsed / 60)).padStart(2, '0');
-        const secs = String(elapsed % 60).padStart(2, '0');
-        timerEl.textContent = `${mins}:${secs}`;
-      }, 100);
-
-    } catch (err) {
-      showToastMsg('❌ Нет доступа к микрофону');
-      console.error('Ошибка микрофона:', err);
-      cleanupRecording();
-    }
-  }
-
-  function stopRecording() {
-    if (mediaRecorder && mediaRecorder.state === 'recording') {
-      mediaRecorder.stop();
-    } else {
-      cleanupRecording();
-    }
-    isPressed = false;
-  }
-
-  // ---- Обработчики для мыши (ПК) ----
-  voiceBtn.addEventListener('mousedown', (e) => {
-    e.preventDefault();
-    if (isRecording) return;
-    isPressed = true;
-    startRecording();
-  });
-
-  voiceBtn.addEventListener('mouseup', (e) => {
-    e.preventDefault();
-    if (!isPressed) return;
-    if (isRecording) stopRecording();
-  });
-
-  voiceBtn.addEventListener('mouseleave', () => {
-    if (isPressed && isRecording) {
-      stopRecording();
-    }
-  });
-
-  // ---- Обработчики для тача (телефоны) ----
-  voiceBtn.addEventListener('touchstart', (e) => {
-    e.preventDefault();
-    if (isRecording) return;
-    isPressed = true;
-    startRecording();
-  }, { passive: false });
-
-  voiceBtn.addEventListener('touchend', (e) => {
-    e.preventDefault();
-    if (!isPressed) return;
-    if (isRecording) stopRecording();
-  }, { passive: false });
-
-  voiceBtn.addEventListener('touchcancel', (e) => {
-    e.preventDefault();
-    if (isPressed && isRecording) {
-      stopRecording();
-    }
-  }, { passive: false });
-
-  // ---- Плеер предпрослушивания ----
-  let isPlaying = false;
-  vpPlay.addEventListener('click', () => {
-    if (vpAudio.paused) {
-      vpAudio.play();
-      vpPlay.textContent = '⏸️';
-      isPlaying = true;
-    } else {
-      vpAudio.pause();
-      vpPlay.textContent = '▶️';
-      isPlaying = false;
-    }
-  });
-
-  vpAudio.addEventListener('timeupdate', () => {
-    const pct = (vpAudio.currentTime / vpAudio.duration) * 100;
-    vpProgressFill.style.width = `${isNaN(pct) ? 0 : pct}%`;
-    const m = Math.floor(vpAudio.currentTime / 60);
-    const s = Math.floor(vpAudio.currentTime % 60);
-    vpTime.textContent = `${m}:${String(s).padStart(2, '0')}`;
-  });
-
-  vpAudio.addEventListener('ended', () => {
-    vpPlay.textContent = '▶️';
-    isPlaying = false;
-    vpProgressFill.style.width = '0%';
-    vpTime.textContent = '0:00';
-  });
-
-  vpProgress.addEventListener('click', (e) => {
-    const rect = vpProgress.getBoundingClientRect();
-    const pct = (e.clientX - rect.left) / rect.width;
-    if (vpAudio.duration) {
-      vpAudio.currentTime = pct * vpAudio.duration;
-    }
-  });
-
-  // ---- Отправка голосового ----
-  vpSend.addEventListener('click', async () => {
-    if (!voiceBlobURL) {
-      showToastMsg('Нет аудио для отправки');
-      return;
-    }
-    if (!activeChat || !me) {
-      showToastMsg('Нет активного чата');
-      return;
-    }
-    const chatId = await getActiveChatId();
-    if (!chatId) return;
-
-    try {
-      const resp = await fetch(voiceBlobURL);
-      const blob = await resp.blob();
-      const reader = new FileReader();
-      reader.readAsDataURL(blob);
-      reader.onloadend = async () => {
-        await addDoc(collection(db, 'messages'), {
-          chatId,
-          text: `[voice]${reader.result}`,
-          timestamp: serverTimestamp(),
-          senderUid: me.uid,
-          isVoice: true,
-          isSticker: false
-        });
-        showToastMsg('🎙️ Голосовое отправлено');
-        preview.classList.remove('show');
-        if (voiceBlobURL) URL.revokeObjectURL(voiceBlobURL);
-        voiceBlobURL = null;
-        vpAudio.src = '';
-        cleanupRecording();
-      };
-    } catch (err) {
-      showToastMsg('❌ Ошибка отправки: ' + err.message);
-    }
-  });
-
-  // ---- Удаление голосового ----
-  vpDel.addEventListener('click', () => {
-    preview.classList.remove('show');
-    if (voiceBlobURL) URL.revokeObjectURL(voiceBlobURL);
-    voiceBlobURL = null;
-    vpAudio.src = '';
-    showToastMsg('Запись удалена');
-  });
-
-  // ---- Сброс при смене чата (чтобы панель закрылась) ----
-  const origOpenChat = window.openChat;
-  if (origOpenChat) {
-    window.openChat = async function(chat) {
-      // Закрываем панель, если она открыта
-      preview.classList.remove('show');
-      if (voiceBlobURL) {
-        URL.revokeObjectURL(voiceBlobURL);
-        voiceBlobURL = null;
-      }
-      vpAudio.src = '';
-      cleanupRecording();
-      await origOpenChat(chat);
-    };
-  }
-
-  console.log('✅ Голосовые сообщения (зажать/отпустить) полностью переработаны и работают');
-})();
 // ════════════════════════════════════════════════════════════════
 //  РАСШИРЕННОЕ КОНТЕКСТНОЕ МЕНЮ ДЛЯ ЧАТОВ В СПИСКЕ
 //  (ПКМ / долгое нажатие → изменить имя, заблокировать, удалить)
@@ -5587,203 +5188,7 @@ if (originalSaveProfile) {
 
   console.log('✅ Авто-появление чатов и предупреждение «Не в контактах» активированы');
 })();
-// ════════════════════════════════════════════════════════════════
-//  1. РАМКИ ДЛЯ ВСЕХ КНОПОК (кроме навигационных и служебных)
-// ════════════════════════════════════════════════════════════════
-(function() {
-  const style = document.createElement('style');
-  style.textContent = `
-    /* Добавляем рамку всем интерактивным элементам, кроме навигации и основных кнопок с градиентом */
-    button:not(.nav-btn):not(.auth-btn):not(.send-btn):not(.modal-close):not(.hdr-back):not(.hdr-btn):not(.upv-btn):not(.ci-btn):not(.folder-tab):not(.dropdown-item):not(.app-btn):not(.sticker-tab):not(.vp-send-btn):not(.vp-del-btn):not(.emoji-btn):not(.ib-btn):not(.reply-bar-close):not(.ctx-item):not(.modal-btn) {
-      border: 1.5px solid var(--border-medium) !important;
-      border-radius: var(--radius-sm) !important;
-      background: var(--bg-surface) !important;
-      padding: 6px 12px;
-      transition: border-color 0.2s, background 0.2s;
-    }
-    button:not(.nav-btn):not(.auth-btn):not(.send-btn):not(.modal-close):not(.hdr-back):not(.hdr-btn):not(.upv-btn):not(.ci-btn):not(.folder-tab):not(.dropdown-item):not(.app-btn):not(.sticker-tab):not(.vp-send-btn):not(.vp-del-btn):not(.emoji-btn):not(.ib-btn):not(.reply-bar-close):not(.ctx-item):not(.modal-btn):hover {
-      border-color: var(--primary) !important;
-      background: var(--bg-elevated) !important;
-    }
-    /* Кнопки с опасным действием (красные) */
-    button.danger, button.red {
-      border-color: #E74C3C !important;
-    }
-    button.danger:hover, button.red:hover {
-      border-color: #c0392b !important;
-      background: #fef2f2 !important;
-    }
-    /* Основные кнопки (без рамки, сохраняем их стиль) */
-    .auth-btn, .send-btn, .upv-btn, .modal-btn, .vp-send-btn, .app-btn {
-      border: none !important;
-    }
-    /* Кнопки в навигации */
-    .nav-btn {
-      border: none !important;
-    }
-    /* Кнопки в шапке */
-    .hdr-btn, .hdr-back, .modal-close, .reply-bar-close, .ib-btn {
-      border: none !important;
-    }
-    /* Контекстное меню */
-    .ctx-item {
-      border: none !important;
-    }
-    /* Вкладки папок */
-    .folder-tab {
-      border: 1.5px solid var(--border-medium) !important;
-      border-radius: 20px !important;
-    }
-    .folder-tab.active {
-      border-color: var(--primary) !important;
-    }
-    /* Стикеры и т.п. */
-    .sticker-tab {
-      border: 1.5px solid var(--border-medium) !important;
-      border-radius: 20px !important;
-    }
-    .sticker-tab.active {
-      border-color: var(--primary) !important;
-    }
-    /* Кнопки действий в контактах */
-    .ci-btn {
-      border: 1.5px solid var(--border-medium) !important;
-      border-radius: var(--radius-sm) !important;
-      padding: 4px 10px !important;
-    }
-    .ci-btn.red {
-      border-color: #E74C3C !important;
-    }
-    /* Пункты выпадающего меню чата */
-    .dropdown-item {
-      border: none !important;
-    }
-    /* Кнопки в модалках */
-    .modal-btn {
-      border: none !important;
-    }
-    /* Убираем рамку у изображений-кнопок */
-    .voice-play-btn, .vp-play-btn, .app-icon {
-      border: none !important;
-    }
-  `;
-  document.head.appendChild(style);
-  console.log('✅ Рамки для кнопок добавлены');
-})();
 
-// ════════════════════════════════════════════════════════════════
-//  2. АВТО-ДОБАВЛЕНИЕ ЧАТА ПРИ ПЕРВОМ СООБЩЕНИИ И ПРЕДУПРЕЖДЕНИЕ
-// ════════════════════════════════════════════════════════════════
-(function() {
-  // ---- Автоматическое добавление чата при получении сообщения ----
-  // Уже есть функция listenForNewChats, но добавим дополнительную проверку
-  // и улучшим её, чтобы при первом сообщении от незнакомца чат появлялся
-  // с пометкой "Осторожно: его нет в ваших контактах"
-
-  // Переопределяем функцию, которая обрабатывает новые сообщения
-  const origListenForNewChats = window.listenForNewChats;
-  if (typeof origListenForNewChats === 'function') {
-    // Дополняем существующую функцию
-    window.listenForNewChats = function() {
-      origListenForNewChats();
-      // Добавляем дополнительный слушатель для новых сообщений
-      if (me) {
-        onSnapshot(collection(db, 'messages'), async (snapshot) => {
-          snapshot.docChanges().forEach(async (change) => {
-            if (change.type === 'added') {
-              const data = change.doc.data();
-              const chatId = data.chatId;
-              // Проверяем, что это приватный чат
-              if (!chatId || !chatId.startsWith('chat_')) return;
-              const parts = chatId.split('_');
-              const otherUid = parts.find(p => p !== me.uid && p !== 'chat');
-              if (!otherUid || otherUid === me.uid) return;
-              // Проверяем, есть ли уже этот чат в списке
-              const exists = chatList.some(c => c.id === otherUid && c.type === 'private');
-              if (!exists) {
-                // Добавляем чат
-                const user = usersCache.get(otherUid);
-                if (user) {
-                  const newChat = {
-                    id: otherUid,
-                    name: getDisplayName(otherUid),
-                    avatar: user.avatar,
-                    type: 'private',
-                    lastMsg: data.text?.slice(0, 50) || '',
-                    lastMsgTime: data.timestamp?.toDate()?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) || '',
-                    unreadCount: 1,
-                    isNew: true // пометка, что чат новый
-                  };
-                  chatList.push(newChat);
-                  // Сортировка
-                  chatList.sort((a, b) => {
-                    const ta = a.lastMsgTime || '00:00';
-                    const tb = b.lastMsgTime || '00:00';
-                    return tb.localeCompare(ta);
-                  });
-                  renderChatList();
-                  showToast(`Новое сообщение от ${newChat.name}`);
-                }
-              }
-            }
-          });
-        });
-      }
-    };
-    // Запускаем обновлённую функцию
-    if (me) window.listenForNewChats();
-  }
-
-  // ---- Предупреждение в шапке чата, если собеседник не в контактах ----
-  // Дополняем updateChatHeaderWithProfile
-  const origUpdateHeader = updateChatHeaderWithProfile;
-  updateChatHeaderWithProfile = function() {
-    origUpdateHeader();
-    // Проверяем, приватный ли чат
-    if (!activeChat || activeChat.type !== 'private') return;
-    const uid = activeChat.id;
-    const contacts = myProfile?.contacts || [];
-    const inContacts = contacts.includes(uid);
-    const statusEl = document.getElementById('chat-hdr-status');
-    if (!statusEl) return;
-    if (!inContacts) {
-      // Добавляем предупреждение перед статусом
-      const warning = document.createElement('span');
-      warning.style.cssText = 'color: #E74C3C; font-weight: 600; font-size: 12px; display: block; margin-top: 2px;';
-      warning.textContent = '⚠️ Осторожно: его нет в ваших контактах';
-      // Если уже есть такой элемент, не дублируем
-      const existing = statusEl.parentNode.querySelector('.contact-warning');
-      if (!existing) {
-        const wrap = document.createElement('div');
-        wrap.className = 'contact-warning';
-        wrap.appendChild(warning);
-        // Вставляем после statusEl
-        statusEl.parentNode.insertBefore(wrap, statusEl.nextSibling);
-      }
-    } else {
-      // Удаляем предупреждение, если оно есть
-      const existing = statusEl.parentNode.querySelector('.contact-warning');
-      if (existing) existing.remove();
-    }
-  };
-
-  // Также при открытии чата обновляем
-  const origOpenChat = openChat;
-  openChat = async function(chat) {
-    await origOpenChat(chat);
-    // Если чат приватный и собеседник не в контактах, обновим статус
-    if (chat.type === 'private') {
-      const uid = chat.id;
-      const contacts = myProfile?.contacts || [];
-      if (!contacts.includes(uid)) {
-        // Добавим предупреждение в шапку (вызовем updateChatHeaderWithProfile)
-        updateChatHeaderWithProfile();
-      }
-    }
-  };
-
-  console.log('✅ Авто-добавление чатов и предупреждение о не-контакте активированы');
-})();
 // ════════════════════════════════════════════════════
 //  FOLDERS SYSTEM (с иконками Font Awesome)
 // ════════════════════════════════════════════════════
@@ -7286,588 +6691,6 @@ if (auth.currentUser) {
 
 // Добавьте этот код в script.js (в конец или в модуль)
 // ════════════════════════════════════════════════════════════════
-//  ДОБАВЛЕНИЕ РАЗДЕЛА «МИНИ-ПРИЛОЖЕНИЯ» И КНОПКИ С ТРЕМЯ ТОЧКАМИ
-// ════════════════════════════════════════════════════════════════
-(function() {
-  'use strict';
-
-  // ─── 1. ДОБАВЛЯЕМ КНОПКУ «ПРИЛОЖЕНИЯ» В НИЖНЮЮ НАВИГАЦИЮ ───
-  function addAppsNavButton() {
-    // Ищем существующую навигацию
-    const bottomNav = document.getElementById('bottom-nav');
-    if (!bottomNav) return;
-
-    // Проверяем, не добавлена ли уже кнопка
-    if (bottomNav.querySelector('[data-tab="apps"]')) return;
-
-    const appsBtn = document.createElement('button');
-    appsBtn.className = 'nav-btn';
-    appsBtn.dataset.tab = 'apps';
-    appsBtn.innerHTML = `
-      <span class="nav-icon"><i class="fas fa-th-large"></i></span>
-      <span class="nav-label">Приложения</span>
-    `;
-    // Вставляем перед кнопкой настроек (последней) или в конец
-    const settingsBtn = bottomNav.querySelector('[data-tab="settings"]');
-    if (settingsBtn) {
-      bottomNav.insertBefore(appsBtn, settingsBtn);
-    } else {
-      bottomNav.appendChild(appsBtn);
-    }
-
-    // Добавляем обработчик клика
-    appsBtn.addEventListener('click', () => {
-      // Переключаемся на страницу приложений
-      if (typeof navigateTo === 'function') {
-        navigateTo('apps');
-      } else {
-        console.warn('navigateTo не определена');
-      }
-    });
-
-    // Также добавляем кнопку в дублирующую навигацию (bottom-nav-2), если она есть
-    const bottomNav2 = document.getElementById('bottom-nav-2');
-    if (bottomNav2) {
-      // Копируем кнопку
-      const clone = appsBtn.cloneNode(true);
-      clone.addEventListener('click', () => {
-        if (typeof navigateTo === 'function') navigateTo('apps');
-      });
-      // Вставляем перед настройками
-      const settingsBtn2 = bottomNav2.querySelector('[data-tab="settings"]');
-      if (settingsBtn2) {
-        bottomNav2.insertBefore(clone, settingsBtn2);
-      } else {
-        bottomNav2.appendChild(clone);
-      }
-    }
-  }
-
-  // ─── 2. СОЗДАЁМ СТРАНИЦУ МИНИ-ПРИЛОЖЕНИЙ ───
-  function createAppsPage() {
-    if (document.getElementById('page-apps')) return; // уже есть
-
-    const app = document.getElementById('app');
-    if (!app) return;
-
-    const page = document.createElement('div');
-    page.id = 'page-apps';
-    page.className = 'page'; // добавим класс page для общих стилей
-    // Начальное положение: скрыта справа (как другие страницы)
-    page.style.transform = 'translateX(100%)';
-    page.style.transition = 'transform 0.28s cubic-bezier(0.4, 0, 0.2, 1)';
-    page.style.willChange = 'transform';
-    page.style.background = 'var(--bg)';
-    page.style.display = 'flex';
-    page.style.flexDirection = 'column';
-
-    // Шапка
-    const header = document.createElement('div');
-    header.className = 'hdr';
-    header.innerHTML = `
-      <button class="hdr-back" id="back-from-apps"><i class="fas fa-arrow-left"></i></button>
-      <div class="hdr-title">Приложения</div>
-    `;
-    page.appendChild(header);
-
-    // Контейнер для карточек
-    const content = document.createElement('div');
-    content.style.cssText = 'flex:1; overflow-y:auto; padding:20px 16px;';
-    content.id = 'apps-content';
-    page.appendChild(content);
-
-    // Добавляем страницу в #app (после page-settings или в конец)
-    const settingsPage = document.getElementById('page-settings');
-    if (settingsPage) {
-      app.insertBefore(page, settingsPage.nextSibling);
-    } else {
-      app.appendChild(page);
-    }
-
-    // Обработчик кнопки назад
-    const backBtn = document.getElementById('back-from-apps');
-    if (backBtn) {
-      backBtn.addEventListener('click', () => {
-        if (typeof navigateTo === 'function') navigateTo('chats');
-        else history.back();
-      });
-    }
-
-    // Заполняем карточки приложений
-    renderAppsGrid();
-  }
-
-  // ─── 3. РЕНДЕР СЕТКИ МИНИ-ПРИЛОЖЕНИЙ ───
-  function renderAppsGrid() {
-    const container = document.getElementById('apps-content');
-    if (!container) return;
-
-    // Список приложений
-    const apps = [
-      { id: 'weather', name: 'Погода', icon: 'fa-cloud-sun', color: '#4A90E2' },
-      { id: 'calculator', name: 'Калькулятор', icon: 'fa-calculator', color: '#2ECC71' },
-      { id: 'notes', name: 'Заметки', icon: 'fa-pen-to-square', color: '#F39C12' },
-      { id: 'calendar', name: 'Календарь', icon: 'fa-calendar', color: '#E74C3C' },
-      { id: 'music', name: 'Музыка', icon: 'fa-music', color: '#9B59B6' }
-    ];
-
-    // Создаём сетку
-    const grid = document.createElement('div');
-    grid.style.cssText = `
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-      gap: 16px;
-      max-width: 600px;
-      margin: 0 auto;
-      width: 100%;
-    `;
-
-    apps.forEach(app => {
-      const card = document.createElement('div');
-      card.className = 'app-card';
-      card.style.cssText = `
-        background: var(--bg-surface);
-        border-radius: var(--radius-lg);
-        padding: 24px 12px;
-        text-align: center;
-        cursor: pointer;
-        box-shadow: var(--shadow-sm);
-        transition: transform 0.2s, box-shadow 0.2s;
-        border: 1px solid var(--border-light);
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 8px;
-      `;
-      // Ховер эффект (на мобильных сработает при тапе)
-      card.addEventListener('mouseenter', () => {
-        card.style.transform = 'translateY(-4px)';
-        card.style.boxShadow = 'var(--shadow-md)';
-      });
-      card.addEventListener('mouseleave', () => {
-        card.style.transform = 'translateY(0)';
-        card.style.boxShadow = 'var(--shadow-sm)';
-      });
-
-      // Иконка
-      const iconWrapper = document.createElement('div');
-      iconWrapper.style.cssText = `
-        width: 64px;
-        height: 64px;
-        border-radius: 50%;
-        background: ${app.color}20;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 32px;
-        color: ${app.color};
-      `;
-      iconWrapper.innerHTML = `<i class="fas ${app.icon}"></i>`;
-      card.appendChild(iconWrapper);
-
-      // Название
-      const nameEl = document.createElement('div');
-      nameEl.textContent = app.name;
-      nameEl.style.cssText = 'font-weight:600; font-size:16px; color:var(--text-primary);';
-      card.appendChild(nameEl);
-
-      // Клик – заглушка
-      card.addEventListener('click', () => {
-        alert(`Приложение «${app.name}» в разработке`);
-      });
-
-      grid.appendChild(card);
-    });
-
-    // Очищаем контейнер и добавляем сетку
-    container.innerHTML = '';
-    container.appendChild(grid);
-  }
-
-  // ─── 4. ОБНОВЛЯЕМ ФУНКЦИЮ navigateTo ДЛЯ ПОДДЕРЖКИ «apps» ───
-  // Сохраняем оригинальную функцию, если она уже определена
-  const originalNavigateTo = window.navigateTo || function() {};
-
-  window.navigateTo = function(pageName) {
-    // Вызываем оригинальную, если она есть (для обработки других страниц)
-    if (typeof originalNavigateTo === 'function') {
-      originalNavigateTo(pageName);
-    }
-
-    // Если мы уже на странице приложений, ничего не делаем
-    const appsPage = document.getElementById('page-apps');
-    if (!appsPage) return;
-
-    // Скрываем все страницы
-    const pages = ['page-chat', 'page-contacts', 'page-settings', 'page-apps'];
-    pages.forEach(id => {
-      const el = document.getElementById(id);
-      if (el) {
-        if (id === 'page-apps') {
-          // Для страницы приложений управляем через класс active
-          el.classList.remove('active');
-        } else {
-          // Для остальных — удаляем класс active (если он есть)
-          el.classList.remove('active');
-        }
-      }
-    });
-
-    // Показываем нужную страницу
-    if (pageName === 'apps') {
-      appsPage.classList.add('active');
-      appsPage.style.transform = 'translateX(0)';
-    } else {
-      appsPage.style.transform = 'translateX(100%)';
-      // Если переключились на другую страницу, активируем её через оригинальную логику
-      // Но оригинальная функция уже обрабатывает активацию, поэтому мы просто убираем active у apps
-    }
-
-    // Обновляем состояние нижней навигации
-    document.querySelectorAll('.nav-btn').forEach(btn => {
-      btn.classList.toggle('active', btn.dataset.tab === pageName);
-    });
-  };
-
-  // ─── 5. ДОБАВЛЯЕМ КНОПКУ С ТРЕМЯ ТОЧКАМИ В ШАПКУ ───
-  function addMenuButton() {
-    const header = document.querySelector('#page-chats .hdr');
-    if (!header) return;
-
-    // Проверяем, не добавлена ли уже кнопка
-    if (document.getElementById('menu-btn')) return;
-
-    const composeBtn = document.getElementById('compose-btn');
-    if (!composeBtn) return;
-
-    // Создаём кнопку меню
-    const menuBtn = document.createElement('button');
-    menuBtn.id = 'menu-btn';
-    menuBtn.className = 'hdr-btn';
-    menuBtn.innerHTML = '<i class="fas fa-ellipsis-v"></i>';
-    menuBtn.title = 'Меню';
-    menuBtn.style.marginLeft = '4px';
-
-    // Вставляем после compose-btn
-    header.insertBefore(menuBtn, composeBtn.nextSibling);
-
-    // Обработчик клика — открыть выпадающее меню
-    menuBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      toggleDropdownMenu(menuBtn);
-    });
-  }
-
-  // ─── 6. СОЗДАЁМ ВЫПАДАЮЩЕЕ МЕНЮ ───
-  let dropdownVisible = false;
-  let dropdownElement = null;
-
-  function createDropdownMenu() {
-    if (dropdownElement) return dropdownElement;
-
-    const menu = document.createElement('div');
-    menu.id = 'dropdown-menu';
-    menu.style.cssText = `
-      position: fixed;
-      z-index: 999;
-      background: var(--bg-surface);
-      border-radius: var(--radius-md);
-      box-shadow: var(--shadow-lg);
-      min-width: 200px;
-      padding: 8px 0;
-      opacity: 0;
-      transform: scale(0.95) translateY(-8px);
-      transition: opacity 0.2s ease, transform 0.2s ease;
-      pointer-events: none;
-      border: 1px solid var(--border-light);
-      overflow: hidden;
-    `;
-
-    const items = [
-      { icon: 'fa-user', label: 'Профиль', action: 'profile' },
-      { icon: 'fa-gear', label: 'Настройки', action: 'settings' },
-      { icon: 'fa-users', label: 'Создать группу', action: 'createGroup' },
-      { icon: 'fa-bullhorn', label: 'Создать канал', action: 'createChannel' },
-      { icon: 'fa-headset', label: 'Техподдержка', action: 'support' },
-      { type: 'divider' },
-      { icon: 'fa-sign-out-alt', label: 'Выйти', action: 'logout', danger: true }
-    ];
-
-    items.forEach(item => {
-      if (item.type === 'divider') {
-        const divider = document.createElement('hr');
-        divider.style.cssText = 'margin: 6px 0; border: none; border-top: 1px solid var(--border-light);';
-        menu.appendChild(divider);
-        return;
-      }
-
-      const el = document.createElement('div');
-      el.className = 'dropdown-item';
-      el.style.cssText = `
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 10px 18px;
-        cursor: pointer;
-        transition: background 0.15s;
-        color: ${item.danger ? '#E74C3C' : 'var(--text-primary)'};
-        font-size: 14px;
-        font-weight: 500;
-      `;
-      el.innerHTML = `<i class="fas ${item.icon}" style="width:20px;text-align:center;"></i> ${item.label}`;
-
-      el.addEventListener('mouseenter', () => {
-        el.style.background = 'var(--bg-elevated)';
-      });
-      el.addEventListener('mouseleave', () => {
-        el.style.background = 'transparent';
-      });
-
-      el.addEventListener('click', (e) => {
-        e.stopPropagation();
-        closeDropdown();
-        handleMenuItem(item.action);
-      });
-
-      menu.appendChild(el);
-    });
-
-    document.body.appendChild(menu);
-    dropdownElement = menu;
-    return menu;
-  }
-
-  function toggleDropdownMenu(anchorBtn) {
-    if (dropdownVisible) {
-      closeDropdown();
-      return;
-    }
-
-    const menu = createDropdownMenu();
-    // Позиционируем под кнопкой
-    const rect = anchorBtn.getBoundingClientRect();
-    const top = rect.bottom + 6;
-    const left = rect.left + rect.width / 2 - 100; // центрируем примерно
-
-    menu.style.left = Math.max(8, left) + 'px';
-    menu.style.top = top + 'px';
-
-    // Показываем с анимацией
-    menu.style.opacity = '1';
-    menu.style.transform = 'scale(1) translateY(0)';
-    menu.style.pointerEvents = 'auto';
-    dropdownVisible = true;
-
-    // Закрываем при клике вне меню
-    setTimeout(() => {
-      document.addEventListener('click', closeDropdownOutside, { once: true });
-    }, 0);
-  }
-
-  function closeDropdown() {
-    if (!dropdownElement) return;
-    dropdownElement.style.opacity = '0';
-    dropdownElement.style.transform = 'scale(0.95) translateY(-8px)';
-    dropdownElement.style.pointerEvents = 'none';
-    dropdownVisible = false;
-    document.removeEventListener('click', closeDropdownOutside);
-  }
-
-  function closeDropdownOutside(e) {
-    const menu = dropdownElement;
-    const btn = document.getElementById('menu-btn');
-    if (menu && !menu.contains(e.target) && btn && !btn.contains(e.target)) {
-      closeDropdown();
-    }
-  }
-
-  // ─── 7. ОБРАБОТЧИК ПУНКТОВ МЕНЮ ───
-  function handleMenuItem(action) {
-    switch (action) {
-      case 'profile':
-        if (typeof openProfileModal === 'function') {
-          openProfileModal();
-        } else {
-          console.warn('openProfileModal не определена');
-        }
-        break;
-      case 'settings':
-        if (typeof navigateTo === 'function') {
-          navigateTo('settings');
-        } else {
-          console.warn('navigateTo не определена');
-        }
-        break;
-      case 'createGroup':
-        // Открываем модалку создания группы
-        if (typeof renderAvGrid === 'function' && typeof openModal === 'function') {
-          // Устанавливаем аватар по умолчанию
-          if (typeof grpAvatar !== 'undefined') {
-            // Если переменная grpAvatar определена, используем её
-          } else {
-            window.grpAvatar = '👥';
-          }
-          renderAvGrid('grp-av-grid', window.grpAvatar || '👥', v => window.grpAvatar = v);
-          openModal('modal-create-group');
-        } else {
-          console.warn('Функции для создания группы не найдены');
-        }
-        break;
-      case 'createChannel':
-        if (typeof renderAvGrid === 'function' && typeof openModal === 'function') {
-          if (typeof window.chAvatar === 'undefined') window.chAvatar = '📢';
-          renderAvGrid('ch-av-grid', window.chAvatar || '📢', v => window.chAvatar = v);
-          openModal('modal-create-channel');
-        } else {
-          console.warn('Функции для создания канала не найдены');
-        }
-        break;
-      case 'support':
-        if (typeof openModal === 'function') {
-          openModal('modal-support');
-        } else {
-          console.warn('openModal не определена');
-        }
-        break;
-      case 'logout':
-        if (confirm('Выйти из аккаунта?')) {
-          if (typeof window.logoutNexLink === 'function') window.logoutNexLink();
-          else if (typeof signOut === 'function' && typeof auth !== 'undefined') signOut(auth);
-        }
-        break;
-      default:
-        console.warn('Неизвестное действие:', action);
-    }
-  }
-
-  // ─── 8. ИНИЦИАЛИЗАЦИЯ ПРИ ЗАГРУЗКЕ ───
-  function init() {
-    // Добавляем кнопку «Приложения» в навигацию
-    addAppsNavButton();
-
-    // Создаём страницу приложений
-    createAppsPage();
-
-    // Добавляем кнопку меню в шапку
-    addMenuButton();
-
-    // Переопределяем рендер настроек, чтобы добавить пункт "Приложения" в настройки? Не требуется.
-
-    // Обрабатываем уже существующую навигацию: если пользователь кликнет на кнопку приложений,
-    // она уже обработана через addAppsNavButton.
-
-    // Также нужно, чтобы при переходе на другие страницы кнопка приложений получала класс active,
-    // но это уже делает navigateTo.
-    // Инициализируем состояние: если активная страница — чаты, то кнопка приложений не активна.
-
-    // Добавляем стили для dropdown и страницы приложений (если ещё нет)
-    addStyles();
-  }
-
-  function addStyles() {
-    if (document.getElementById('apps-styles')) return;
-
-    const style = document.createElement('style');
-    style.id = 'apps-styles';
-    style.textContent = `
-      /* Стили для страницы приложений */
-      #page-apps {
-        position: absolute;
-        inset: 0;
-        display: flex;
-        flex-direction: column;
-        transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
-        will-change: transform;
-        background: var(--bg);
-        z-index: 2;
-        transform: translateX(100%);
-      }
-      #page-apps.active {
-        transform: translateX(0);
-      }
-      /* Стили для карточек приложений (уже заданы инлайн, но добавим общие) */
-      .app-card {
-        background: var(--bg-surface);
-        border-radius: var(--radius-lg);
-        padding: 24px 12px;
-        text-align: center;
-        cursor: pointer;
-        box-shadow: var(--shadow-sm);
-        transition: transform 0.2s, box-shadow 0.2s;
-        border: 1px solid var(--border-light);
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 8px;
-      }
-      .app-card:active {
-        transform: scale(0.96);
-      }
-      /* Адаптивность для маленьких экранов */
-      @media (max-width: 480px) {
-        .app-card {
-          padding: 16px 8px;
-          gap: 4px;
-        }
-        .app-card .app-icon {
-          width: 48px;
-          height: 48px;
-          font-size: 24px;
-        }
-        .app-card .app-name {
-          font-size: 14px;
-        }
-      }
-      /* Выпадающее меню */
-      #dropdown-menu {
-        position: fixed;
-        z-index: 999;
-        background: var(--bg-surface);
-        border-radius: var(--radius-md);
-        box-shadow: var(--shadow-lg);
-        min-width: 200px;
-        padding: 8px 0;
-        border: 1px solid var(--border-light);
-        overflow: hidden;
-      }
-      .dropdown-item {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 10px 18px;
-        cursor: pointer;
-        transition: background 0.15s;
-        color: var(--text-primary);
-        font-size: 14px;
-        font-weight: 500;
-      }
-      .dropdown-item:hover {
-        background: var(--bg-elevated);
-      }
-      .dropdown-item.danger {
-        color: #E74C3C;
-      }
-      .dropdown-item i {
-        width: 20px;
-        text-align: center;
-      }
-      /* Кнопка с тремя точками */
-      #menu-btn {
-        margin-left: 4px;
-      }
-    `;
-    document.head.appendChild(style);
-  }
-
-  // Запускаем инициализацию, когда DOM готов
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
-  } else {
-    init();
-  }
-
-})();
-// ════════════════════════════════════════════════════════════════
 //  КНОПКА «ТРИ ТОЧКИ» В ШАПКЕ ЧАТА С ПОЛНЫМ МЕНЮ
 // ════════════════════════════════════════════════════════════════
 (function() {
@@ -9467,3 +8290,743 @@ if (auth.currentUser) {
   });
 
 })();
+// ════════════════════════════════════════════════════
+//  DEVELOPER PORTAL (OAuth & Bots)
+// ════════════════════════════════════════════════════
+
+// Вспомогательная функция генерации токенов/ключей
+function generateDevToken(prefix = 'nk_') {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let result = prefix;
+  for (let i = 0; i < 32; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+}
+
+// Открытие Dev-портала и загрузка данных
+async function openDevPortal() {
+  openModal('modal-dev-portal');
+  await renderOAuthList();
+  await renderBotList();
+}
+
+// ── OAuth Applications ─────────────────────────────
+async function renderOAuthList() {
+  const container = $('dev-oauth-list');
+  if (!container || !me) return;
+  container.innerHTML = '<div style="font-size:13px;color:var(--text-hint);">Загрузка...</div>';
+
+  const q = query(collection(db, 'oauth_apps'), where('ownerUid', '==', me.uid));
+  const snap = await getDocs(q);
+
+  if (snap.empty) {
+    container.innerHTML = '<div style="font-size:13px;color:var(--text-hint);">У вас нет созданных OAuth приложений</div>';
+    return;
+  }
+
+  container.innerHTML = '';
+  snap.forEach(docSnap => {
+    const app = docSnap.data();
+    const id = docSnap.id;
+    const card = document.createElement('div');
+    card.className = 'dev-card';
+    card.innerHTML = `
+      <div class="dev-card-title">
+        <span>🔑 ${esc(app.name)}</span>
+        <button class="dev-del-btn" data-id="${id}" data-type="oauth">🗑️</button>
+      </div>
+      <div class="dev-card-field">Client ID: <code>${esc(app.clientId)}</code></div>
+      <div class="dev-card-field">Client Secret: <code>${esc(app.clientSecret)}</code></div>
+      <div class="dev-card-field">Redirect URI: <code>${esc(app.redirectUri)}</code></div>
+    `;
+    card.querySelector('.dev-del-btn').onclick = () => deleteDevItem(id, 'oauth_apps', renderOAuthList);
+    container.appendChild(card);
+  });
+}
+
+// Открытие модалки создания OAuth
+$('dev-create-oauth-btn').onclick = () => {
+  $('oauth-name').value = '';
+  $('oauth-redirect').value = '';
+  openModal('modal-create-oauth');
+};
+
+// Сохранение OAuth
+$('save-oauth-btn').onclick = async () => {
+  const name = $('oauth-name').value.trim();
+  const redirectUri = $('oauth-redirect').value.trim();
+
+  if (!name || !redirectUri) { showToast('Заполните все поля'); return; }
+
+  const clientId = 'client_' + generateDevToken('');
+  const clientSecret = 'secret_' + generateDevToken('');
+
+  await addDoc(collection(db, 'oauth_apps'), {
+    name,
+    redirectUri,
+    clientId,
+    clientSecret,
+    ownerUid: me.uid,
+    createdAt: serverTimestamp()
+  });
+
+  closeModal('modal-create-oauth');
+  showToast('✅ OAuth Приложение создано');
+  await renderOAuthList();
+};
+
+// ── Bot Creation ───────────────────────────────────
+async function renderBotList() {
+  const container = $('dev-bot-list');
+  if (!container || !me) return;
+  container.innerHTML = '<div style="font-size:13px;color:var(--text-hint);">Загрузка...</div>';
+
+  const q = query(collection(db, 'bots'), where('ownerUid', '==', me.uid));
+  const snap = await getDocs(q);
+
+  if (snap.empty) {
+    container.innerHTML = '<div style="font-size:13px;color:var(--text-hint);">У вас нет созданных ботов</div>';
+    return;
+  }
+
+  container.innerHTML = '';
+  snap.forEach(docSnap => {
+    const bot = docSnap.data();
+    const id = docSnap.id;
+    const card = document.createElement('div');
+    card.className = 'dev-card';
+    card.innerHTML = `
+      <div class="dev-card-title">
+        <span>🤖 ${esc(bot.name)} (${esc(bot.username)})</span>
+        <button class="dev-del-btn" data-id="${id}" data-botuid="${bot.botUid}" data-type="bot">🗑️</button>
+      </div>
+      <div class="dev-card-field">API Token: <code>${esc(bot.token)}</code></div>
+    `;
+    card.querySelector('.dev-del-btn').onclick = () => deleteBotItem(id, bot.botUid);
+    container.appendChild(card);
+  });
+}
+
+// Открытие модалки создания Бота
+$('dev-create-bot-btn').onclick = () => {
+  $('bot-name').value = '';
+  $('bot-uname').value = '';
+  openModal('modal-create-bot');
+};
+
+// Сохранение Бота
+$('save-bot-btn').onclick = async () => {
+  const name = $('bot-name').value.trim();
+  let username = $('bot-uname').value.trim();
+
+  if (!name || !username) { showToast('Заполните все поля'); return; }
+  if (!username.startsWith('@')) username = '@' + username;
+  if (!username.toLowerCase().endsWith('_bot')) {
+    showToast('Юзернейм бота должен оканчиваться на _bot');
+    return;
+  }
+
+  // Проверка уникальности юзернейма в коллекции пользователей
+  const checkUser = await getDocs(query(collection(db, 'users'), where('username', '==', username)));
+  if (!checkUser.empty) { showToast('Юзернейм уже занят'); return; }
+
+  const token = 'bot_' + generateDevToken('');
+  const botUid = 'bot_uid_' + generateDevToken('');
+
+  // 1. Регистрируем бота как специального пользователя в системе
+  await setDoc(doc(db, 'users', botUid), {
+    name: name,
+    username: username,
+    avatar: '🤖',
+    isBot: true,
+    ownerUid: me.uid,
+    createdAt: serverTimestamp()
+  });
+
+  // 2. Сохраняем запись о боте в реестр ботов
+  await addDoc(collection(db, 'bots'), {
+    name,
+    username,
+    token,
+    botUid,
+    ownerUid: me.uid,
+    createdAt: serverTimestamp()
+  });
+
+  closeModal('modal-create-bot');
+  showToast('✅ Бот успешно создан!');
+  await renderBotList();
+  await refreshUsersCache();
+};
+
+// Удаление OAuth
+async function deleteDevItem(id, collectionName, callback) {
+  if (!confirm('Удалить эту запись?')) return;
+  await deleteDoc(doc(db, collectionName, id));
+  showToast('Удалено');
+  callback();
+}
+
+// Удаление Бота
+async function deleteBotItem(botDocId, botUid) {
+  if (!confirm('Удалить бота и его данные?')) return;
+  await deleteDoc(doc(db, 'bots', botDocId));
+  if (botUid) {
+    await deleteDoc(doc(db, 'users', botUid));
+  }
+  showToast('Бот удален');
+  await renderBotList();
+  await refreshUsersCache();
+}
+// ════════════════════════════════════════════════════
+//  ГОЛОСОВЫЕ СООБЩЕНИЯ С ПРЕДПРОСЛУШИВАНИЕМ И SKIPPED MIC
+// ════════════════════════════════════════════════════
+
+document.addEventListener('DOMContentLoaded', () => {
+  const msgInput = document.getElementById('msg-input');
+  const voiceBtn = document.getElementById('voice-btn');
+  const sendBtn = document.getElementById('send-btn'); // Если есть отдельная кнопка отправки
+  const emojiBtn = document.getElementById('emoji-btn');
+  const stickerBtn = document.getElementById('sticker-btn');
+  const attachBtn = document.getElementById('attach-btn');
+  const inputBar = document.getElementById('input-bar');
+
+  if (!msgInput || !voiceBtn) return;
+
+  // ── 1. Создание двухрежимной панели (Запись / Предпрослушивание) ──
+  const voicePanel = document.createElement('div');
+  voicePanel.id = 'voice-rec-panel';
+  voicePanel.className = 'voice-rec-panel is-hidden';
+  voicePanel.innerHTML = `
+    <!-- Режим 1: Запись -->
+    <div id="voice-recording-state" style="display: flex; align-items: center; gap: 10px; width: 100%;">
+      <span class="voice-rec-mic">🎙️</span>
+      <span class="voice-rec-timer" id="voice-rec-timer">00:00</span>
+      <div class="voice-rec-waveform">
+        ${Array(18).fill('<div class="wave-bar"></div>').join('')}
+      </div>
+      <button class="voice-btn-icon" id="voice-stop-btn" title="Остановить и прослушать">⏹️</button>
+      <button class="voice-btn-icon voice-cancel-btn" id="voice-cancel-btn" title="Удалить">🗑️</button>
+    </div>
+
+    <!-- Режим 2: Предпрослушивание -->
+    <div id="voice-preview-state" class="is-hidden" style="display: flex; align-items: center; gap: 10px; width: 100%;">
+      <button class="voice-btn-icon" id="voice-play-btn" title="Воспроизвести">▶️</button>
+      <span class="voice-rec-timer" id="voice-preview-timer">00:00</span>
+      <div style="flex: 1; height: 4px; background: rgba(0,0,0,0.15); border-radius: 2px; position: relative;">
+        <div id="voice-progress-bar" style="width: 0%; height: 100%; background: #0088cc; border-radius: 2px; transition: width 0.1s linear;"></div>
+      </div>
+      <button class="voice-btn-icon voice-cancel-btn" id="voice-preview-cancel-btn" title="Удалить">🗑️</button>
+      <button class="voice-btn-icon voice-send-btn" id="voice-preview-send-btn" title="Отправить">✈️</button>
+    </div>
+  `;
+
+  const inputWrap = inputBar.querySelector('.input-wrap') || inputBar;
+  inputWrap.appendChild(voicePanel);
+
+  // Элементы управления внутри панели
+  const recState = voicePanel.querySelector('#voice-recording-state');
+  const previewState = voicePanel.querySelector('#voice-preview-state');
+  const timerEl = voicePanel.querySelector('#voice-rec-timer');
+  const previewTimerEl = voicePanel.querySelector('#voice-preview-timer');
+  const progressBar = voicePanel.querySelector('#voice-progress-bar');
+  const stopBtn = voicePanel.querySelector('#voice-stop-btn');
+  const cancelBtn = voicePanel.querySelector('#voice-cancel-btn');
+  const playBtn = voicePanel.querySelector('#voice-play-btn');
+  const prevCancelBtn = voicePanel.querySelector('#voice-preview-cancel-btn');
+  const prevSendBtn = voicePanel.querySelector('#voice-preview-send-btn');
+
+  let mediaRecorder = null;
+  let audioChunks = [];
+  let recInterval = null;
+  let startTime = 0;
+  let audioBlob = null;
+  let audioUrl = null;
+  let previewAudio = null;
+
+  // ── 2. Скрытие кнопки микрофона при вводе текста ──
+  window.updateButtonsVisibility = function() {
+    const hasText = msgInput.value.trim().length > 0;
+    if (hasText) {
+      voiceBtn.classList.add('is-hidden');
+      if (sendBtn) sendBtn.classList.remove('is-hidden');
+    } else {
+      voiceBtn.classList.remove('is-hidden');
+      if (sendBtn) sendBtn.classList.add('is-hidden');
+    }
+  };
+
+  msgInput.addEventListener('input', () => {
+    updateButtonsVisibility();
+    if (typeof autoResize === 'function') autoResize();
+  });
+
+  // ── 3. Переключение интерфейса ──
+  function toggleUI(recordingOrPreview) {
+    if (recordingOrPreview) {
+      // Скрываем текстовое поле и иконки
+      msgInput.classList.add('is-hidden');
+      voiceBtn.classList.add('is-hidden');
+      if (sendBtn) sendBtn.classList.add('is-hidden');
+      if (emojiBtn) emojiBtn.classList.add('is-hidden');
+      if (stickerBtn) stickerBtn.classList.add('is-hidden');
+      if (attachBtn) attachBtn.classList.add('is-hidden');
+
+      voicePanel.classList.remove('is-hidden');
+    } else {
+      // Возвращаем исходный вид
+      msgInput.classList.remove('is-hidden');
+      if (emojiBtn) emojiBtn.classList.remove('is-hidden');
+      if (stickerBtn) stickerBtn.classList.remove('is-hidden');
+      if (attachBtn) attachBtn.classList.remove('is-hidden');
+
+      voicePanel.classList.add('is-hidden');
+      recState.classList.remove('is-hidden');
+      previewState.classList.add('is-hidden');
+
+      updateButtonsVisibility();
+    }
+  }
+
+  // ── 4. Старт записи ──
+  async function startRecording() {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorder = new MediaRecorder(stream);
+      audioChunks = [];
+
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) audioChunks.push(e.data);
+      };
+
+      mediaRecorder.start();
+      startTime = Date.now();
+      toggleUI(true);
+
+      recInterval = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - startTime) / 1000);
+        const m = String(Math.floor(elapsed / 60)).padStart(2, '0');
+        const s = String(elapsed % 60).padStart(2, '0');
+        timerEl.textContent = `${m}:${s}`;
+      }, 200);
+
+    } catch (err) {
+      showToast('❌ Нет доступа к микрофону');
+    }
+  }
+
+  // ── 5. Остановка записи и переход к Предпрослушиванию ──
+  function stopAndPreview() {
+    if (!mediaRecorder || mediaRecorder.state !== 'recording') return;
+
+    clearInterval(recInterval);
+    mediaRecorder.onstop = () => {
+      mediaRecorder.stream.getTracks().forEach(track => track.stop());
+      audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+
+      if (audioBlob.size < 1000) {
+        showToast('Запись слишком короткая');
+        resetAll();
+        return;
+      }
+
+      // Подготовка проигрывателя
+      audioUrl = URL.createObjectURL(audioBlob);
+      previewAudio = new Audio(audioUrl);
+
+      // Переключаем панели с записи на предпрослушивание
+      recState.classList.add('is-hidden');
+      previewState.classList.remove('is-hidden');
+
+      previewAudio.onloadedmetadata = () => {
+        const d = Math.floor(previewAudio.duration || 0);
+        const m = String(Math.floor(d / 60)).padStart(2, '0');
+        const s = String(d % 60).padStart(2, '0');
+        previewTimerEl.textContent = `${m}:${s}`;
+      };
+
+      previewAudio.ontimeupdate = () => {
+        if (previewAudio.duration) {
+          const pct = (previewAudio.currentTime / previewAudio.duration) * 100;
+          progressBar.style.width = `${pct}%`;
+          const c = Math.floor(previewAudio.currentTime);
+          const m = String(Math.floor(c / 60)).padStart(2, '0');
+          const s = String(c % 60).padStart(2, '0');
+          previewTimerEl.textContent = `${m}:${s}`;
+        }
+      };
+
+      previewAudio.onended = () => {
+        playBtn.textContent = '▶️';
+        progressBar.style.width = '0%';
+      };
+    };
+
+    mediaRecorder.stop();
+  }
+
+  // ── 6. Воспроизведение / Пауза ──
+  function togglePlay() {
+    if (!previewAudio) return;
+    if (previewAudio.paused) {
+      previewAudio.play();
+      playBtn.textContent = '⏸️';
+    } else {
+      previewAudio.pause();
+      playBtn.textContent = '▶️';
+    }
+  }
+
+  // ── 7. Отправка в Firebase ──
+  async function sendVoice() {
+    if (!audioBlob) return;
+    const reader = new FileReader();
+    reader.readAsDataURL(audioBlob);
+    reader.onloadend = async () => {
+      const chatId = await getActiveChatId();
+      if (!chatId || !me) return;
+      await addDoc(collection(db, 'messages'), {
+        chatId,
+        text: `[voice]${reader.result}`,
+        timestamp: serverTimestamp(),
+        senderUid: me.uid,
+        isVoice: true,
+        isSticker: false
+      });
+      showToast('🎙️ Голосовое отправлено');
+      resetAll();
+    };
+  }
+
+  // ── 8. Сброс и очистка ──
+  function resetAll() {
+    clearInterval(recInterval);
+    if (mediaRecorder && mediaRecorder.state === 'recording') {
+      mediaRecorder.stream.getTracks().forEach(track => track.stop());
+      mediaRecorder.stop();
+    }
+    if (previewAudio) {
+      previewAudio.pause();
+      previewAudio = null;
+    }
+    if (audioUrl) {
+      URL.revokeObjectURL(audioUrl);
+      audioUrl = null;
+    }
+    audioBlob = null;
+    playBtn.textContent = '▶️';
+    progressBar.style.width = '0%';
+    toggleUI(false);
+  }
+
+  // Слушатели событий
+  voiceBtn.addEventListener('click', startRecording);
+  stopBtn.addEventListener('click', stopAndPreview);
+  cancelBtn.addEventListener('click', resetAll);
+  playBtn.addEventListener('click', togglePlay);
+  prevCancelBtn.addEventListener('click', resetAll);
+  prevSendBtn.addEventListener('click', sendVoice);
+});
+document.addEventListener('DOMContentLoaded', () => {
+    // ... ваш существующий код инициализации ...
+
+    // --- Обработчики кнопок предупреждения ---
+    const btnDelete = $('uc-btn-delete');
+    const btnBlock = $('uc-btn-block');
+
+    if (btnDelete) {
+        btnDelete.onclick = async () => {
+            if (!activeChat) return;
+
+            if (confirm('Удалить этот чат?')) {
+                try {
+                    const chatId = await getActiveChatId();
+                    if (chatId) {
+                        const snap = await getDocs(query(collection(db, 'messages'), where('chatId', '==', chatId)));
+                        const batch = writeBatch(db);
+                        snap.forEach(d => batch.delete(d.ref));
+                        await batch.commit();
+                    }
+                    showToast('Чат удален');
+                    $('unknown-contact-banner').classList.remove('show');
+                    navigateTo('chats');
+                    await buildChatList();
+                } catch (e) {
+                    console.error(e);
+                    showToast('Ошибка при удалении');
+                }
+            }
+        };
+    }
+
+    if (btnBlock) {
+        btnBlock.onclick = async () => {
+            if (!activeChat || !me) return;
+
+            if (confirm(`Заблокировать пользователя ${activeChat.name}?`)) {
+                try {
+                    await updateDoc(doc(db, 'users', me.uid), {
+                        blockedUsers: arrayUnion(activeChat.id)
+                    });
+                    showToast('Пользователь заблокирован');
+                    $('unknown-contact-banner').classList.remove('show');
+                    navigateTo('chats');
+                    await buildChatList();
+                } catch (e) {
+                    console.error(e);
+                    showToast('Ошибка при блокировке');
+                }
+            }
+        };
+    }
+});
+// ==========================================
+// NEXLINK OAUTH 2.0 CONFIGURATION
+// ==========================================
+const NEXLINK_OAUTH_CONFIG = {
+  clientId: 'client_VHOZ4Dn9pHsys1e5icleILRarfx5neAJ',
+  clientSecret: 'secret_qMRb5CaK2V3lH3sAdi5IqEsCeRLBbLwf',
+  redirectUri: 'http://localhost:8000/',
+  authUrl: 'http://nexchat.zapto.org/oauth/authorize',
+  tokenUrl: 'http://nexchat.zapto.org/oauth/token',
+  userInfoUrl: 'http://nexchat.zapto.org/api/v1/users/me'
+};
+
+// 1. Старт авторизации при клике на кнопку
+document.getElementById('nexlink-oauth-btn')?.addEventListener('click', () => {
+  const authEndpoint = `${NEXLINK_OAUTH_CONFIG.authUrl}?client_id=${NEXLINK_OAUTH_CONFIG.clientId}&redirect_uri=${encodeURIComponent(NEXLINK_OAUTH_CONFIG.redirectUri)}&response_type=code`;
+  window.location.href = authEndpoint;
+});
+
+// 2. Проверка ответа после редиректа
+async function handleNexLinkOAuthCallback() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const authCode = urlParams.get('code');
+
+  if (!authCode) return;
+
+  // Очищаем URL от параметра ?code=, чтобы страница выглядела чисто
+  window.history.replaceState({}, document.title, window.location.pathname);
+
+  try {
+    showToast && showToast('Авторизация через NexLink...');
+
+    // 3. Обмен кода на access_token
+    const tokenResponse = await fetch(NEXLINK_OAUTH_CONFIG.tokenUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: new URLSearchParams({
+        grant_type: 'authorization_code',
+        client_id: NEXLINK_OAUTH_CONFIG.clientId,
+        client_secret: NEXLINK_OAUTH_CONFIG.clientSecret,
+        redirect_uri: NEXLINK_OAUTH_CONFIG.redirectUri,
+        code: authCode
+      })
+    });
+
+    if (!tokenResponse.ok) {
+      throw new Error('Ошибка получения токена NexLink OAuth');
+    }
+
+    const tokenData = await tokenResponse.json();
+    const accessToken = tokenData.access_token;
+
+    // 4. Запрос данных пользователя
+    const userResponse = await fetch(NEXLINK_OAUTH_CONFIG.userInfoUrl, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`
+      }
+    });
+
+    if (!userResponse.ok) {
+      throw new Error('Не удалось загрузить профиль пользователя');
+    }
+
+    const userData = await userResponse.json();
+    
+    // 5. Успешный вход — обработка пользователя
+    onNexLinkOAuthSuccess(userData, accessToken);
+
+  } catch (err) {
+    console.error('OAuth Error:', err);
+    if (typeof showToast === 'function') {
+      showToast('❌ Ошибка входа через NexLink');
+    }
+  }
+}
+
+// 6. Действия после успешной авторизации
+function onNexLinkOAuthSuccess(user, token) {
+  // Сохраняем токен/пользователя в localStorage
+  localStorage.setItem('nexlink_token', token);
+  localStorage.setItem('nexlink_user', JSON.stringify(user));
+
+  // Скрываем экран авторизации и показываем приложение
+  document.getElementById('auth-screen')?.classList.add('gone');
+  document.getElementById('app')?.classList.remove('hidden');
+
+  if (typeof showToast === 'function') {
+    showToast(`Добро пожаловать, ${user.name || user.username}!`);
+  }
+}
+
+// Запуск проверки при загрузке страницы
+document.addEventListener('DOMContentLoaded', handleNexLinkOAuthCallback);
+// ════════════════════════════════════════════════════
+// OAUTH AUTHORIZATION FLOW
+// ════════════════════════════════════════════════════
+let currentOAuthParams = null;
+
+// 1. Проверка наличия параметров OAuth в URL
+function checkOAuthParams() {
+  const params = new URLSearchParams(window.location.search);
+  const clientId = params.get('client_id');
+  const redirectUri = params.get('redirect_uri');
+  const responseType = params.get('response_type') || 'code';
+  const scope = params.get('scope') || 'profile';
+  const state = params.get('state') || '';
+
+  if (clientId && redirectUri) {
+    currentOAuthParams = { clientId, redirectUri, responseType, scope, state };
+    return true;
+  }
+  return false;
+}
+
+// 2. Отображение модального окна OAuth
+async function showOAuthModal() {
+  if (!currentOAuthParams || !me) return;
+
+  // Загружаем данные приложения из коллекции 'oauth_apps' в Firestore
+  let appData = { name: 'Внешнее приложение', icon: '🤖' };
+  try {
+    const clientDoc = await getDoc(doc(db, 'oauth_apps', currentOAuthParams.clientId));
+    if (clientDoc.exists()) {
+      appData = clientDoc.data();
+    }
+  } catch (e) {
+    console.warn("Не удалось загрузить данные OAuth приложения:", e);
+  }
+
+  // Заполняем данные на форме
+  $('oauth-app-name').textContent = appData.name || 'Приложение';
+  $('oauth-app-icon').innerHTML = avatarHtml(appData.icon || '🤖', '100%');
+  $('oauth-user-av').innerHTML = avatarHtml(myProfile?.avatar || '😊');
+  $('oauth-user-name').textContent = getDisplayName(me.uid);
+  $('oauth-user-email').textContent = me.email || 'Без e-mail';
+
+  // Показываем окно
+  const modal = $('oauth-screen');
+  modal.classList.add('open');
+
+  // Навешиваем клики
+  $('oauth-allow-btn').onclick = () => handleOAuthAuthorize();
+  $('oauth-deny-btn').onclick = () => handleOAuthDeny();
+}
+
+// 3. Подтверждение авторизации
+async function handleOAuthAuthorize() {
+  const btn = $('oauth-allow-btn');
+  btn.classList.add('loading');
+
+  try {
+    // Генерируем временный OAuth Code
+    const authCode = 'code_' + Math.random().toString(36).substring(2) + Date.now().toString(36);
+
+    // Сохраняем код в базе Firestore (действителен 10 минут)
+    await setDoc(doc(db, 'oauth_codes', authCode), {
+      code: authCode,
+      clientId: currentOAuthParams.clientId,
+      uid: me.uid,
+      scope: currentOAuthParams.scope,
+      redirectUri: currentOAuthParams.redirectUri,
+      createdAt: serverTimestamp(),
+      expiresAt: Date.now() + 10 * 60 * 1000
+    });
+
+    // Формируем Redirect URL для возврата пользователя обратно
+    const redirectUrl = new URL(currentOAuthParams.redirectUri);
+    redirectUrl.searchParams.set('code', authCode);
+    if (currentOAuthParams.state) {
+      redirectUrl.searchParams.set('state', currentOAuthParams.state);
+    }
+
+    // Редиректим обратно во внешний мессенджер/приложение
+    window.location.href = redirectUrl.toString();
+  } catch (err) {
+    console.error("OAuth Error:", err);
+    showToast("Ошибка генерации кода OAuth");
+    btn.classList.remove('loading');
+  }
+}
+
+// 4. Отмена авторизации
+function handleOAuthDeny() {
+  if (!currentOAuthParams?.redirectUri) {
+    $('oauth-screen').classList.remove('open');
+    return;
+  }
+  const redirectUrl = new URL(currentOAuthParams.redirectUri);
+  redirectUrl.searchParams.set('error', 'access_denied');
+  if (currentOAuthParams.state) {
+    redirectUrl.searchParams.set('state', currentOAuthParams.state);
+  }
+  window.location.href = redirectUrl.toString();
+}
+// ════════════════════════════════════════════════════
+//  АНИМАЦИЯ АВАТАРА И АНИМИРОВАННОГО ЛИЦА В ШАПКЕ
+// ════════════════════════════════════════════════════
+
+// Переопределяем функцию avatarHtml для поддержки анимированных лиц (эмодзи)
+const originalAvatarHtml = avatarHtml;
+window.avatarHtml = function(av, sz = '100%') {
+  if (!av) return `<span class="animated-face">😊</span>`;
+  if (av.startsWith('data:') || av.startsWith('http')) {
+    return `<img src="${esc(av)}" style="width:${sz};height:${sz};object-fit:cover;border-radius:50%;">`;
+  }
+  // Если это эмодзи — оборачиваем в анимированный контейнер
+  return `<span class="animated-face">${esc(av)}</span>`;
+};
+
+// Эффект случайного моргания для эмодзи-лиц
+setInterval(() => {
+  const faces = document.querySelectorAll('.animated-face');
+  faces.forEach(face => {
+    if (Math.random() > 0.6) {
+      face.classList.add('blink');
+      setTimeout(() => face.classList.remove('blink'), 250);
+    }
+  });
+}, 3500);
+
+// Клик по кнопке "3 точки"
+const menuBtn = $('chat-hdr-menu-btn');
+if (menuBtn) {
+  menuBtn.onclick = (e) => {
+    e.stopPropagation();
+    if (activeChat) {
+      if (activeChat.type === 'private') {
+        openUserView(activeChat.id);
+      } else {
+        showToast('⚙️ Здесь не доступно меню');
+      }
+    }
+  };
+}
+
+// Переход в профиль собеседника по клику на левую часть шапки
+const hdrLeft = $('chat-hdr-left');
+if (hdrLeft) {
+  hdrLeft.onclick = (e) => {
+    // Игнорируем клик, если нажата кнопка "Назад"
+    if (e.target.closest('#back-from-chat')) return;
+    if (activeChat && activeChat.type === 'private') {
+      openUserView(activeChat.id);
+    }
+  };
+}
+
