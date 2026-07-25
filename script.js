@@ -1,6 +1,5 @@
 
 
-
 // ════════════════════════════════════════════════════
 //  Firebase (compat CDN) подключается ниже через ES modules
 // ════════════════════════════════════════════════════
@@ -270,9 +269,12 @@ function renderChatList(filter = '') {
       html += `<div class="chat-divider">Избранное</div>`;
       hadFavHeader = true;
     }
+    
+    // Проверяем, является ли текущий чат активным
     const isActive = activeChat?.id === chat.id && activeChat?.type === chat.type;
+    
     html += `
-      <div class="chat-row${isActive ? '' : ''}" data-id="${esc(chat.id)}" data-type="${esc(chat.type)}">
+      <div class="chat-row${isActive ? ' active' : ''}" data-id="${esc(chat.id)}" data-type="${esc(chat.type)}">
         <div class="cr-av">${avatarHtml(chat.avatar)}</div>
         <div class="cr-body">
           <div class="cr-top">
@@ -331,6 +333,8 @@ document.querySelectorAll('.nav-btn').forEach(b => b.onclick = () => {
 
 $('back-from-chat').onclick = () => {
   stopAllSubs();
+  activeChat = null; // Сбрасываем выбранный чат
+  renderChatList();  // Обновляем список, чтобы снять подсветку
   history.back();
 };
 $('back-from-contacts').onclick = () => history.back();
@@ -3641,295 +3645,7 @@ console.log('✅ Статусы "в сети", "был(а) недавно", "б�
     }, 100);
   }
 })();
-// ════════════════════════════════════════════════════
-//  10 СОВРЕМЕННЫХ ТЕМ ОФОРМЛЕНИЯ
-// ════════════════════════════════════════════════════
-(function() {
-  // Предустановленные темы
-  const themes = {
-    default: {
-      name: 'Стандартная',
-      accent: '#2AABEE',
-      bg: '#FFFFFF',
-      bgSecondary: '#F0F2F5',
-      textPrimary: '#1A1A2E',
-      textSecondary: '#4A4A5A',
-      msgOutBg: '#2AABEE',
-      msgOutText: '#FFFFFF',
-      msgInBg: '#FFFFFF',
-      msgInText: '#1A1A2E',
-      border: '#E8EBF0',
-      gradient: 'linear-gradient(135deg, #2AABEE, #1a8bc5)'
-    },
-    dark: {
-      name: 'Тёмная',
-      accent: '#6C63FF',
-      bg: '#1E1E2E',
-      bgSecondary: '#2A2A3C',
-      textPrimary: '#EAEAEA',
-      textSecondary: '#B0B0C0',
-      msgOutBg: '#6C63FF',
-      msgOutText: '#FFFFFF',
-      msgInBg: '#2A2A3C',
-      msgInText: '#EAEAEA',
-      border: '#3A3A4E',
-      gradient: 'linear-gradient(135deg, #6C63FF, #4A42E0)'
-    },
-    midnight: {
-      name: 'Полночь',
-      accent: '#FF6B6B',
-      bg: '#0B0C10',
-      bgSecondary: '#1F2833',
-      textPrimary: '#FFFFFF',
-      textSecondary: '#C5C6C7',
-      msgOutBg: '#FF6B6B',
-      msgOutText: '#FFFFFF',
-      msgInBg: '#1F2833',
-      msgInText: '#FFFFFF',
-      border: '#2C353D',
-      gradient: 'linear-gradient(135deg, #FF6B6B, #E74C3C)'
-    },
-    mint: {
-      name: 'Мятная',
-      accent: '#2ECC71',
-      bg: '#F0FFF4',
-      bgSecondary: '#E8F8E8',
-      textPrimary: '#1E3B2F',
-      textSecondary: '#4A6A5E',
-      msgOutBg: '#2ECC71',
-      msgOutText: '#FFFFFF',
-      msgInBg: '#FFFFFF',
-      msgInText: '#1E3B2F',
-      border: '#C8E6C9',
-      gradient: 'linear-gradient(135deg, #2ECC71, #27AE60)'
-    },
-    sunset: {
-      name: 'Закат',
-      accent: '#FF7E67',
-      bg: '#FFF5F0',
-      bgSecondary: '#FFE8E0',
-      textPrimary: '#4A2C2C',
-      textSecondary: '#7A5C5C',
-      msgOutBg: '#FF7E67',
-      msgOutText: '#FFFFFF',
-      msgInBg: '#FFFFFF',
-      msgInText: '#4A2C2C',
-      border: '#F0C4B0',
-      gradient: 'linear-gradient(135deg, #FF7E67, #FF5E3A)'
-    },
-    ocean: {
-      name: 'Океан',
-      accent: '#0077B6',
-      bg: '#F0F8FF',
-      bgSecondary: '#E0F0FF',
-      textPrimary: '#002233',
-      textSecondary: '#335566',
-      msgOutBg: '#0077B6',
-      msgOutText: '#FFFFFF',
-      msgInBg: '#FFFFFF',
-      msgInText: '#002233',
-      border: '#B0D4F0',
-      gradient: 'linear-gradient(135deg, #0077B6, #005B8E)'
-    },
-    lavender: {
-      name: 'Лаванда',
-      accent: '#9B59B6',
-      bg: '#F8F4FF',
-      bgSecondary: '#ECE0FF',
-      textPrimary: '#2D1B3E',
-      textSecondary: '#5C4A6E',
-      msgOutBg: '#9B59B6',
-      msgOutText: '#FFFFFF',
-      msgInBg: '#FFFFFF',
-      msgInText: '#2D1B3E',
-      border: '#D4C0F0',
-      gradient: 'linear-gradient(135deg, #9B59B6, #8E44AD)'
-    },
-    forest: {
-      name: 'Лесная',
-      accent: '#4CAF50',
-      bg: '#F2F9F2',
-      bgSecondary: '#E0F0E0',
-      textPrimary: '#1B3B1B',
-      textSecondary: '#4A6A4A',
-      msgOutBg: '#4CAF50',
-      msgOutText: '#FFFFFF',
-      msgInBg: '#FFFFFF',
-      msgInText: '#1B3B1B',
-      border: '#B0D0B0',
-      gradient: 'linear-gradient(135deg, #4CAF50, #388E3C)'
-    },
-    rose: {
-      name: 'Розовая',
-      accent: '#E91E63',
-      bg: '#FFF0F5',
-      bgSecondary: '#FFE0EC',
-      textPrimary: '#3E1B2E',
-      textSecondary: '#6E4A5E',
-      msgOutBg: '#E91E63',
-      msgOutText: '#FFFFFF',
-      msgInBg: '#FFFFFF',
-      msgInText: '#3E1B2E',
-      border: '#F0B0C8',
-      gradient: 'linear-gradient(135deg, #E91E63, #C2185B)'
-    },
-    cyan: {
-      name: 'Циан',
-      accent: '#00BCD4',
-      bg: '#F0FFFF',
-      bgSecondary: '#E0FFFF',
-      textPrimary: '#003333',
-      textSecondary: '#336666',
-      msgOutBg: '#00BCD4',
-      msgOutText: '#FFFFFF',
-      msgInBg: '#FFFFFF',
-      msgInText: '#003333',
-      border: '#B0E0E0',
-      gradient: 'linear-gradient(135deg, #00BCD4, #0097A7)'
-    }
-  };
 
-  // Применить тему
-  function applyTheme(themeKey) {
-    const theme = themes[themeKey];
-    if (!theme) return;
-    const root = document.documentElement;
-    Object.entries(theme).forEach(([key, value]) => {
-      if (key === 'name') return;
-      root.style.setProperty(`--${key.replace(/([A-Z])/g, '-$1').toLowerCase()}`, value);
-    });
-    // Дополнительно установим переменную градиента для кнопок
-    root.style.setProperty('--accent-gradient', theme.gradient);
-    localStorage.setItem('selected-theme', themeKey);
-  }
-
-  // Загрузка сохраненной темы или дефолт
-  const savedTheme = localStorage.getItem('selected-theme') || 'default';
-  applyTheme(savedTheme);
-
-  // Добавление пункта выбора темы в настройки
-  function addThemeSetting() {
-    const settingsBody = document.getElementById('settings-body');
-    if (!settingsBody || document.getElementById('s-theme-selector')) return;
-
-    // Ищем раздел "Дополнительно"
-    let targetSection = null;
-    settingsBody.querySelectorAll('.settings-section').forEach(sec => {
-      if (sec.querySelector('.settings-label')?.textContent.trim() === 'Дополнительно') {
-        targetSection = sec;
-      }
-    });
-    if (!targetSection) return;
-
-    const item = document.createElement('div');
-    item.className = 'settings-item';
-    item.id = 's-theme-selector';
-    item.innerHTML = `
-      <div class="si-icon">🎨</div>
-      <div class="si-text">Тема оформления</div>
-      <span class="si-value" id="current-theme-name">${themes[savedTheme]?.name || ''}</span>
-      <span class="si-arrow">›</span>
-    `;
-    item.addEventListener('click', showThemeModal);
-    targetSection.appendChild(item);
-  }
-
-  // Модальное окно выбора темы
-  function showThemeModal() {
-    // Удаляем старое, если есть
-    const oldModal = document.getElementById('modal-theme-picker');
-    if (oldModal) oldModal.remove();
-
-    const modal = document.createElement('div');
-    modal.id = 'modal-theme-picker';
-    modal.className = 'modal-ov';
-    modal.innerHTML = `
-      <div class="modal-sheet">
-        <div class="modal-pill"></div>
-        <div class="modal-hdr">
-          <h3>Выберите тему</h3>
-          <button class="modal-close">✕</button>
-        </div>
-        <div class="modal-body">
-          <div class="theme-grid" id="theme-grid"></div>
-        </div>
-      </div>
-    `;
-    document.body.appendChild(modal);
-
-    const grid = modal.querySelector('#theme-grid');
-    grid.innerHTML = Object.entries(themes).map(([key, theme]) => `
-      <div class="theme-card ${key === savedTheme ? 'active' : ''}" data-theme="${key}">
-        <div class="theme-preview" style="background:${theme.bg}; border:2px solid ${theme.border};">
-          <div style="background:${theme.accent}; width:100%; height:8px; border-radius: 0 0 12px 12px;"></div>
-          <div style="display:flex; flex:1; padding:4px;">
-            <div style="background:${theme.msgInBg}; flex:1; margin:2px; border-radius:4px; border-left:3px solid ${theme.accent};"></div>
-            <div style="background:${theme.msgOutBg}; flex:1; margin:2px; border-radius:4px; border-right:3px solid ${theme.accent};"></div>
-          </div>
-        </div>
-        <span>${theme.name}</span>
-        ${key === savedTheme ? '<span class="check">✓</span>' : ''}
-      </div>
-    `).join('');
-
-    // Обработчики
-    grid.querySelectorAll('.theme-card').forEach(card => {
-      card.addEventListener('click', () => {
-        const themeKey = card.dataset.theme;
-        applyTheme(themeKey);
-        // Обновить интерфейс
-        document.querySelectorAll('.theme-card').forEach(c => c.classList.remove('active'));
-        card.classList.add('active');
-        // Обновить отображаемое имя темы в настройках
-        const nameEl = document.getElementById('current-theme-name');
-        if (nameEl) nameEl.textContent = themes[themeKey].name;
-        // Закрыть модалку через небольшой таймаут
-        setTimeout(() => modal.remove(), 200);
-      });
-    });
-
-    modal.querySelector('.modal-close').addEventListener('click', () => modal.remove());
-    modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
-    modal.classList.add('open');
-
-    // Добавим стили для сетки тем (если ещё нет)
-    if (!document.getElementById('theme-picker-styles')) {
-      const st = document.createElement('style');
-      st.id = 'theme-picker-styles';
-      st.textContent = `
-        .theme-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 12px; }
-        .theme-card {
-          text-align: center; cursor: pointer; padding: 8px; border-radius: 12px;
-          transition: 0.2s; position: relative;
-        }
-        .theme-card.active { background: var(--accent-light); }
-        .theme-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        .theme-preview {
-          width: 100%; height: 60px; border-radius: 12px; overflow: hidden;
-          display: flex; flex-direction: column; margin-bottom: 6px;
-          box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-        }
-        .theme-card .check {
-          position: absolute; top: 4px; right: 8px;
-          background: var(--accent); color: white; border-radius: 50%;
-          width: 22px; height: 22px; display: flex; align-items: center; justify-content: center;
-          font-size: 12px; font-weight: bold;
-        }
-      `;
-      document.head.appendChild(st);
-    }
-  }
-
-  // Внедряем в настройки при их рендере
-  const origRenderSettings = renderSettings;
-  renderSettings = function() {
-    origRenderSettings.apply(this, arguments);
-    setTimeout(addThemeSetting, 100);
-  };
-
-  // На случай, если настройки уже отрендерены
-  if (document.getElementById('settings-body')) addThemeSetting();
-})();
 // ════════════════════════════════════════════════════
 //  НАСТРОЙКИ: УДАЛИТЬ АККАУНТ, СМЕНИТЬ ПАРОЛЬ, ЯЗЫК
 // ════════════════════════════════════════════════════
@@ -9029,5 +8745,845 @@ if (hdrLeft) {
     }
   };
 }
+// ════════════════════════════════════════════════════
+//  УНИВЕРСАЛЬНАЯ ПЛАВНАЯ СМЕНА СТРАНИЦ И РАЗДЕЛОВ
+// ════════════════════════════════════════════════════
 
+function showPage(pageId) {
+  const pages = document.querySelectorAll('.page');
+  const targetPage = document.getElementById(pageId);
+  
+  if (!targetPage) return;
 
+  pages.forEach(page => {
+    // Если уходим из чата назад к списку
+    if (page.id === 'page-chat' && pageId !== 'page-chat' && !page.classList.contains('hidden')) {
+      page.classList.add('slide-out-right');
+      setTimeout(() => {
+        page.classList.add('hidden');
+        page.classList.remove('slide-out-right', 'slide-in-right');
+      }, 240);
+    } else if (page.id !== pageId) {
+      page.classList.add('hidden');
+      page.classList.remove('fade-in', 'slide-in-right', 'slide-out-right');
+    }
+  });
+
+  // Показываем целевую страницу с нужным эффектом
+  targetPage.classList.remove('hidden');
+
+  if (pageId === 'page-chat') {
+    // Открытие чата со слайдом справа
+    targetPage.classList.remove('fade-in', 'slide-out-right');
+    targetPage.classList.add('slide-in-right');
+  } else {
+    // Переключение обычных разделов (Чаты / Контакты / Настройки)
+    targetPage.classList.remove('slide-in-right', 'slide-out-right');
+    targetPage.classList.add('fade-in');
+  }
+}
+// Слушатель для загрузки файла (вставляй без тегов <script>)
+document.getElementById('file-input').addEventListener('change', async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    try {
+        console.log(`Начинаем загрузку: ${file.name}`);
+        
+        const serverReq = await fetch('https://api.gofile.io/servers');
+        const serverData = await serverReq.json();
+        const server = serverData.data.servers[0].name;
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const uploadReq = await fetch(`https://${server}.gofile.io/contents/uploadfile`, {
+            method: 'POST',
+            body: formData
+        });
+        const uploadData = await uploadReq.json();
+
+        if (uploadData.status === 'ok') {
+            const downloadLink = uploadData.data.downloadPage;
+            
+            sendMessageToFirestore({
+                type: 'document',
+                fileName: file.name,
+                fileSize: (file.size / 1024 / 1024).toFixed(2) + ' MB',
+                url: downloadLink
+            });
+            
+            console.log('Файл успешно отправлен!');
+        }
+    } catch (error) {
+        console.error('Ошибка загрузки файла:', error);
+    }
+});
+// Привязываем функцию отправки к кнопке отправки в интерфейсе
+document.getElementById('send-btn').addEventListener('click', () => {
+  sendMessage();
+});
+// ============================================================
+//  МИНИ-ПРИЛОЖЕНИЯ (игры, стикер-паки, музыка, цитаты)
+// ============================================================
+
+(function() {
+  'use strict';
+
+  // ─── 1. КНОПКА «ПРИЛОЖЕНИЯ» В ШАПКЕ ──────────────────────
+  function addAppsButton() {
+    const hdr = document.querySelector('#page-chats .hdr');
+    if (!hdr || document.getElementById('apps-btn')) return;
+
+    const btn = document.createElement('button');
+    btn.id = 'apps-btn';
+    btn.className = 'hdr-btn';
+    btn.innerHTML = '🧩';
+    btn.title = 'Приложения';
+    btn.style.fontSize = '22px';
+    btn.addEventListener('click', () => openAppsModal());
+
+    const composeBtn = document.getElementById('compose-btn');
+    if (composeBtn) {
+      hdr.insertBefore(btn, composeBtn);
+    } else {
+      hdr.appendChild(btn);
+    }
+  }
+
+  // ─── 2. ОТКРЫТИЕ МОДАЛКИ ПРИЛОЖЕНИЙ ─────────────────────
+  function openAppsModal() {
+    const modal = document.getElementById('modal-app-menu');
+    if (!modal) {
+      createAppsModal();
+      return;
+    }
+    fillAppsGrid();
+    modal.classList.add('open');
+  }
+
+  function createAppsModal() {
+    const ov = document.createElement('div');
+    ov.id = 'modal-app-menu';
+    ov.className = 'modal-ov';
+    ov.innerHTML = `
+      <div class="modal-sheet">
+        <div class="modal-pill"></div>
+        <div class="apps-header">
+          <h3><i class="fas fa-th-large"></i> Мини-приложения</h3>
+        </div>
+        <div class="apps-grid" id="apps-grid-container"></div>
+        <button class="modal-close" style="margin: 8px auto 16px; display: block; background: none; border: none; font-size: 18px; color: var(--text-secondary);">Закрыть</button>
+      </div>
+    `;
+    document.body.appendChild(ov);
+
+    ov.querySelector('.modal-close').addEventListener('click', () => ov.classList.remove('open'));
+    ov.addEventListener('click', (e) => { if (e.target === ov) ov.classList.remove('open'); });
+
+    fillAppsGrid();
+  }
+
+  // ─── 3. КАРТОЧКИ ПРИЛОЖЕНИЙ ──────────────────────────────
+  const APP_LIST = [
+    {
+      id: 'tictac',
+      name: 'Крестики-нолики',
+      icon: '❌',
+      desc: 'Играй с другом',
+      component: ticTacToeGame
+    },
+    {
+      id: 'quiz',
+      name: 'Викторина',
+      icon: '🧠',
+      desc: 'Проверь знания',
+      component: quizGame
+    },
+    {
+      id: 'pingpong',
+      name: 'Пинг-понг',
+      icon: '🏓',
+      desc: 'Дружеское соревнование',
+      component: pingPongGame
+    },
+    {
+      id: 'stickers',
+      name: 'Стикер-паки',
+      icon: '🎨',
+      desc: 'Создай свой набор',
+      component: stickerPacksApp
+    },
+    {
+      id: 'music',
+      name: 'Музыка',
+      icon: '🎵',
+      desc: 'Плеер и треки',
+      component: musicPlayerApp
+    },
+    {
+      id: 'quote',
+      name: 'Цитата дня',
+      icon: '💡',
+      desc: 'Мотивация и юмор',
+      component: quoteOfDayApp
+    }
+  ];
+
+  function fillAppsGrid() {
+    const container = document.getElementById('apps-grid-container');
+    if (!container) return;
+    container.innerHTML = '';
+    APP_LIST.forEach(app => {
+      const card = document.createElement('div');
+      card.className = 'app-card';
+      card.innerHTML = `
+        <div class="app-icon">${app.icon}</div>
+        <div class="app-name">${app.name}</div>
+        <div class="app-desc">${app.desc}</div>
+      `;
+      card.addEventListener('click', () => {
+        closeModal('modal-app-menu');
+        app.component();
+      });
+      container.appendChild(card);
+    });
+  }
+
+  // ─── 4. ВСПОМОГАТЕЛЬНАЯ ФУНКЦИЯ ДЛЯ ОТКРЫТИЯ IFRAME ──
+  function openMiniApp(htmlContent, title = 'Мини-приложение') {
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-ov';
+    overlay.style.alignItems = 'center';
+    overlay.style.justifyContent = 'center';
+    overlay.style.zIndex = '9999';
+
+    const sheet = document.createElement('div');
+    sheet.className = 'modal-sheet';
+    sheet.style.maxWidth = '600px';
+    sheet.style.width = '95%';
+    sheet.style.maxHeight = '85vh';
+    sheet.style.borderRadius = '20px';
+    sheet.style.overflow = 'hidden';
+
+    const header = document.createElement('div');
+    header.style.cssText = 'display:flex; justify-content:space-between; align-items:center; padding:12px 16px; background:var(--bg-surface); border-bottom:1px solid var(--border-light);';
+    header.innerHTML = `
+      <span style="font-weight:600; font-size:18px;">${title}</span>
+      <button style="background:none; border:none; font-size:24px; cursor:pointer; color:var(--text-secondary);">✕</button>
+    `;
+    const closeBtn = header.querySelector('button');
+    closeBtn.addEventListener('click', () => overlay.remove());
+
+    const iframe = document.createElement('iframe');
+    iframe.style.cssText = 'width:100%; height:70vh; border:none; background:white;';
+    iframe.srcdoc = htmlContent;
+
+    sheet.appendChild(header);
+    sheet.appendChild(iframe);
+    overlay.appendChild(sheet);
+    document.body.appendChild(overlay);
+
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) overlay.remove();
+    });
+
+    const onEsc = (e) => { if (e.key === 'Escape') overlay.remove(); };
+    document.addEventListener('keydown', onEsc);
+    overlay._removeEsc = () => document.removeEventListener('keydown', onEsc);
+    const origRemove = overlay.remove;
+    overlay.remove = function() {
+      if (overlay._removeEsc) overlay._removeEsc();
+      origRemove.call(this);
+    };
+  }
+
+  // ─── 5. ИГРЫ ──────────────────────────────────────────────
+
+  // 5.1 Крестики-нолики (два игрока на одном устройстве)
+  function ticTacToeGame() {
+    const html = `
+    <style>
+      body { font-family: system-ui, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; background: #f0f2f5; }
+      h2 { margin-bottom: 12px; }
+      .board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; width: 300px; height: 300px; }
+      .cell { background: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 48px; font-weight: bold; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.08); transition: transform 0.1s; user-select: none; }
+      .cell:active { transform: scale(0.94); }
+      .status { margin: 16px 0; font-size: 20px; font-weight: 600; }
+      .reset-btn { padding: 8px 24px; border: none; border-radius: 20px; background: #6C63FF; color: white; font-size: 16px; cursor: pointer; }
+      .reset-btn:active { opacity: 0.7; }
+    </style>
+    <h2>❌ Крестики-нолики ⭕</h2>
+    <div class="board" id="board"></div>
+    <div class="status" id="status">Ход: ❌</div>
+    <button class="reset-btn" id="reset">Начать заново</button>
+    <script>
+      let board = ['','','','','','','','',''];
+      let current = '❌';
+      let gameOver = false;
+      const statusEl = document.getElementById('status');
+      const boardEl = document.getElementById('board');
+      const cells = [];
+
+      function render() {
+        boardEl.innerHTML = '';
+        for (let i = 0; i < 9; i++) {
+          const cell = document.createElement('div');
+          cell.className = 'cell';
+          cell.textContent = board[i];
+          cell.dataset.index = i;
+          cell.addEventListener('click', () => makeMove(i));
+          boardEl.appendChild(cell);
+        }
+      }
+
+      function makeMove(index) {
+        if (gameOver || board[index]) return;
+        board[index] = current;
+        render();
+        const win = checkWin();
+        if (win) {
+          statusEl.textContent = '🏆 Победил: ' + win;
+          gameOver = true;
+          return;
+        }
+        if (board.every(c => c)) {
+          statusEl.textContent = '🤝 Ничья!';
+          gameOver = true;
+          return;
+        }
+        current = current === '❌' ? '⭕' : '❌';
+        statusEl.textContent = 'Ход: ' + current;
+      }
+
+      function checkWin() {
+        const lines = [
+          [0,1,2],[3,4,5],[6,7,8],
+          [0,3,6],[1,4,7],[2,5,8],
+          [0,4,8],[2,4,6]
+        ];
+        for (let line of lines) {
+          const [a,b,c] = line;
+          if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+            return board[a];
+          }
+        }
+        return null;
+      }
+
+      document.getElementById('reset').addEventListener('click', () => {
+        board = ['','','','','','','','',''];
+        current = '❌';
+        gameOver = false;
+        statusEl.textContent = 'Ход: ❌';
+        render();
+      });
+
+      render();
+    <\/script>
+    `;
+    openMiniApp(html, 'Крестики-нолики');
+  }
+
+  // 5.2 Викторина (10 вопросов)
+  function quizGame() {
+    const questions = [
+      { q: 'Столица Франции?', a: ['Париж', 'Лондон', 'Рим', 'Берлин'], correct: 0 },
+      { q: '2+2*2?', a: ['6', '8', '4', '2'], correct: 0 },
+      { q: 'Какой язык используется для веб-разработки?', a: ['Python', 'JavaScript', 'Java', 'C++'], correct: 1 },
+      { q: 'Кто написал "Войну и мир"?', a: ['Толстой', 'Достоевский', 'Чехов', 'Пушкин'], correct: 0 },
+      { q: 'Сколько планет в Солнечной системе?', a: ['8', '9', '7', '10'], correct: 0 },
+      { q: 'Какой химический элемент обозначается "O"?', a: ['Кислород', 'Углерод', 'Водород', 'Азот'], correct: 0 },
+      { q: 'Где находится статуя Свободы?', a: ['Нью-Йорк', 'Вашингтон', 'Лондон', 'Париж'], correct: 0 },
+      { q: 'Какой год считается началом Второй мировой войны?', a: ['1939', '1941', '1937', '1940'], correct: 0 },
+      { q: 'Какой фрукт является символом Нью-Йорка?', a: ['Яблоко', 'Апельсин', 'Банан', 'Груша'], correct: 0 },
+      { q: 'Какой океан самый большой?', a: ['Тихий', 'Атлантический', 'Индийский', 'Северный Ледовитый'], correct: 0 }
+    ];
+
+    let currentIndex = 0;
+    let score = 0;
+    let answered = false;
+
+    const html = `
+    <style>
+      body { font-family: system-ui, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; margin: 0; background: #f0f2f5; min-height: 100vh; }
+      .quiz-box { background: white; border-radius: 20px; padding: 24px; max-width: 500px; width: 100%; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+      .progress { font-size: 14px; color: #888; margin-bottom: 8px; }
+      .question { font-size: 20px; font-weight: 600; margin-bottom: 16px; }
+      .options { display: flex; flex-direction: column; gap: 10px; }
+      .option { padding: 12px 16px; border: 2px solid #ddd; border-radius: 12px; cursor: pointer; transition: 0.2s; font-size: 16px; background: white; }
+      .option:active { transform: scale(0.96); }
+      .option.correct { border-color: #2ECC71; background: #eafaf1; }
+      .option.wrong { border-color: #E74C3C; background: #fdedec; }
+      .option.disabled { pointer-events: none; }
+      .result { margin-top: 16px; font-size: 18px; font-weight: 600; }
+      .next-btn { margin-top: 16px; padding: 10px 20px; border: none; border-radius: 20px; background: #6C63FF; color: white; font-size: 16px; cursor: pointer; }
+    </style>
+    <div class="quiz-box" id="quiz">
+      <div class="progress" id="progress">Вопрос 1 / ${questions.length}</div>
+      <div class="question" id="question"></div>
+      <div class="options" id="options"></div>
+      <div class="result" id="result"></div>
+      <button class="next-btn" id="nextBtn" style="display:none;">Следующий вопрос</button>
+    </div>
+    <script>
+      let qIndex = 0, score = 0, answered = false;
+      const questions = ${JSON.stringify(questions)};
+
+      function renderQuestion() {
+        const q = questions[qIndex];
+        document.getElementById('progress').textContent = \`Вопрос \${qIndex+1} / \${questions.length}\`;
+        document.getElementById('question').textContent = q.q;
+        const opts = document.getElementById('options');
+        opts.innerHTML = '';
+        q.a.forEach((text, i) => {
+          const div = document.createElement('div');
+          div.className = 'option';
+          div.textContent = text;
+          div.dataset.index = i;
+          div.addEventListener('click', () => selectOption(i));
+          opts.appendChild(div);
+        });
+        document.getElementById('result').textContent = '';
+        document.getElementById('nextBtn').style.display = 'none';
+        answered = false;
+        document.querySelectorAll('.option').forEach(el => el.classList.remove('correct','wrong','disabled'));
+      }
+
+      function selectOption(index) {
+        if (answered) return;
+        answered = true;
+        const q = questions[qIndex];
+        const options = document.querySelectorAll('.option');
+        options.forEach((el, i) => {
+          el.classList.add('disabled');
+          if (i === q.correct) el.classList.add('correct');
+          else if (i === index && i !== q.correct) el.classList.add('wrong');
+        });
+        if (index === q.correct) score++;
+        const result = document.getElementById('result');
+        if (index === q.correct) {
+          result.textContent = '✅ Правильно!';
+          result.style.color = '#2ECC71';
+        } else {
+          result.textContent = '❌ Неправильно. Правильный ответ: ' + q.a[q.correct];
+          result.style.color = '#E74C3C';
+        }
+        document.getElementById('nextBtn').style.display = 'block';
+      }
+
+      document.getElementById('nextBtn').addEventListener('click', () => {
+        qIndex++;
+        if (qIndex < questions.length) {
+          renderQuestion();
+        } else {
+          document.getElementById('quiz').innerHTML = \`
+            <div style="text-align:center; padding:30px;">
+              <div style="font-size:48px;">🎉</div>
+              <h2>Викторина завершена!</h2>
+              <p style="font-size:20px;">Ваш результат: \${score} из \${questions.length}</p>
+              <button class="next-btn" onclick="location.reload()">Пройти снова</button>
+            </div>
+          \`;
+        }
+      });
+
+      renderQuestion();
+    <\/script>
+    `;
+    openMiniApp(html, 'Викторина');
+  }
+
+  // 5.3 Пинг-понг (упрощённый, два игрока на одной клавиатуре)
+  function pingPongGame() {
+    const html = `
+    <style>
+      body { margin: 0; overflow: hidden; background: #1a1a2e; display: flex; justify-content: center; align-items: center; height: 100vh; font-family: system-ui, sans-serif; }
+      canvas { background: #16213e; border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.5); }
+      .controls { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); color: white; background: rgba(0,0,0,0.6); padding: 8px 16px; border-radius: 20px; font-size: 14px; text-align: center; }
+    </style>
+    <canvas id="pongCanvas" width="600" height="400"></canvas>
+    <div class="controls">Игрок 1: W/S &nbsp;|&nbsp; Игрок 2: ↑/↓</div>
+    <script>
+      const canvas = document.getElementById('pongCanvas');
+      const ctx = canvas.getContext('2d');
+      const W = 600, H = 400;
+
+      const ball = { x: W/2, y: H/2, radius: 8, speedX: 4, speedY: 3 };
+      const paddleW = 10, paddleH = 70;
+      const p1 = { x: 20, y: H/2 - paddleH/2, dy: 0 };
+      const p2 = { x: W - 20 - paddleW, y: H/2 - paddleH/2, dy: 0 };
+      const keys = {};
+
+      document.addEventListener('keydown', e => { keys[e.key] = true; });
+      document.addEventListener('keyup', e => { keys[e.key] = false; });
+
+      function resetBall() {
+        ball.x = W/2;
+        ball.y = H/2;
+        ball.speedX = (Math.random() > 0.5 ? 1 : -1) * 4;
+        ball.speedY = (Math.random() - 0.5) * 6;
+      }
+
+      function gameLoop() {
+        // Move paddles
+        if (keys['w'] || keys['W']) p1.y -= 5;
+        if (keys['s'] || keys['S']) p1.y += 5;
+        if (keys['ArrowUp']) p2.y -= 5;
+        if (keys['ArrowDown']) p2.y += 5;
+
+        p1.y = Math.max(0, Math.min(H - paddleH, p1.y));
+        p2.y = Math.max(0, Math.min(H - paddleH, p2.y));
+
+        // Move ball
+        ball.x += ball.speedX;
+        ball.y += ball.speedY;
+
+        // Wall collision (top/bottom)
+        if (ball.y - ball.radius < 0 || ball.y + ball.radius > H) {
+          ball.speedY = -ball.speedY;
+        }
+
+        // Paddle collision
+        if (ball.x - ball.radius < p1.x + paddleW && ball.x + ball.radius > p1.x &&
+            ball.y > p1.y && ball.y < p1.y + paddleH) {
+          ball.speedX = Math.abs(ball.speedX) * 1.05;
+          ball.x = p1.x + paddleW + ball.radius;
+        }
+        if (ball.x + ball.radius > p2.x && ball.x - ball.radius < p2.x + paddleW &&
+            ball.y > p2.y && ball.y < p2.y + paddleH) {
+          ball.speedX = -Math.abs(ball.speedX) * 1.05;
+          ball.x = p2.x - ball.radius;
+        }
+
+        // Scoring
+        if (ball.x - ball.radius < 0 || ball.x + ball.radius > W) {
+          resetBall();
+        }
+
+        // Draw
+        ctx.clearRect(0, 0, W, H);
+        ctx.fillStyle = '#f0f0f0';
+        ctx.fillRect(p1.x, p1.y, paddleW, paddleH);
+        ctx.fillRect(p2.x, p2.y, paddleW, paddleH);
+        ctx.beginPath();
+        ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#6C63FF';
+        ctx.font = '16px sans-serif';
+        ctx.fillText('Игрок 1', 30, 30);
+        ctx.fillText('Игрок 2', W - 100, 30);
+
+        requestAnimationFrame(gameLoop);
+      }
+      resetBall();
+      gameLoop();
+    <\/script>
+    `;
+    openMiniApp(html, 'Пинг-понг');
+  }
+
+  // ─── 6. АНИМИРОВАННЫЕ СТИКЕР-ПАКИ (исправлено) ──────────
+  function stickerPacksApp() {
+    const packsKey = `nx_sticker_packs_${me?.uid || 'anon'}`;
+    let packs = JSON.parse(localStorage.getItem(packsKey) || '[]');
+
+    function savePacks() {
+      localStorage.setItem(packsKey, JSON.stringify(packs));
+    }
+
+    function renderPacks(container) {
+      if (!container) return;
+      container.innerHTML = '';
+      if (!packs.length) {
+        container.innerHTML = `<div style="text-align:center;padding:20px;color:var(--text-hint);">У вас нет наборов стикеров. Создайте первый!</div>`;
+        return;
+      }
+      packs.forEach((pack, idx) => {
+        const div = document.createElement('div');
+        div.style.cssText = 'margin-bottom:16px; border-bottom:1px solid var(--border-light); padding-bottom:12px;';
+        div.innerHTML = `
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-weight:600;">${pack.name} (${pack.stickers?.length || 0})</span>
+            <div>
+              <button class="add-sticker-btn" data-pack="${idx}" style="background:var(--bg-elevated); border:none; border-radius:12px; padding:4px 12px; cursor:pointer;">➕ Добавить</button>
+              <button class="delete-pack-btn" data-pack="${idx}" style="color:red; margin-left:8px; background:none; border:none; cursor:pointer;">🗑️</button>
+            </div>
+          </div>
+          <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;">
+            ${(pack.stickers || []).map((s, si) => `
+              <div style="position:relative; width:60px; height:60px; border-radius:8px; background:var(--bg-elevated); display:flex; align-items:center; justify-content:center; overflow:hidden;">
+                <img src="${s}" style="max-width:100%; max-height:100%; object-fit:contain;">
+                <button class="remove-sticker-btn" data-pack="${idx}" data-sticker="${si}" style="position:absolute; top:0; right:0; background:rgba(0,0,0,0.5); color:white; border:none; border-radius:50%; width:18px; height:18px; font-size:10px; cursor:pointer;">✕</button>
+              </div>
+            `).join('')}
+          </div>
+        `;
+        container.appendChild(div);
+      });
+
+      container.querySelectorAll('.add-sticker-btn').forEach(btn => {
+        btn.onclick = () => {
+          const idx = parseInt(btn.dataset.pack);
+          const input = document.createElement('input');
+          input.type = 'file';
+          input.accept = 'image/*';
+          input.onchange = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => {
+              packs[idx].stickers.push(reader.result);
+              savePacks();
+              renderPacks(container);
+              showToast('Стикер добавлен в набор');
+            };
+          };
+          input.click();
+        };
+      });
+
+      container.querySelectorAll('.delete-pack-btn').forEach(btn => {
+        btn.onclick = () => {
+          if (confirm('Удалить набор?')) {
+            packs.splice(parseInt(btn.dataset.pack), 1);
+            savePacks();
+            renderPacks(container);
+            showToast('Набор удалён');
+          }
+        };
+      });
+
+      container.querySelectorAll('.remove-sticker-btn').forEach(btn => {
+        btn.onclick = (e) => {
+          e.stopPropagation();
+          const packIdx = parseInt(btn.dataset.pack);
+          const stickerIdx = parseInt(btn.dataset.sticker);
+          packs[packIdx].stickers.splice(stickerIdx, 1);
+          savePacks();
+          renderPacks(container);
+          showToast('Стикер удалён');
+        };
+      });
+    }
+
+    // Создаём модальное окно
+    const modal = document.createElement('div');
+    modal.className = 'modal-ov';
+    modal.style.alignItems = 'center';
+    modal.style.justifyContent = 'center';
+    modal.style.zIndex = '9999';
+
+    const sheet = document.createElement('div');
+    sheet.className = 'modal-sheet';
+    sheet.style.maxWidth = '600px';
+    sheet.style.width = '95%';
+    sheet.style.maxHeight = '85vh';
+    sheet.style.borderRadius = '20px';
+    sheet.style.overflow = 'hidden';
+    sheet.style.background = 'var(--bg-surface)';
+
+    const header = document.createElement('div');
+    header.style.cssText = 'display:flex; justify-content:space-between; align-items:center; padding:12px 16px; background:var(--bg-surface); border-bottom:1px solid var(--border-light);';
+    header.innerHTML = `<span style="font-weight:600; font-size:18px;">Стикер-паки</span><button style="background:none; border:none; font-size:24px; cursor:pointer; color:var(--text-secondary);">✕</button>`;
+    header.querySelector('button').onclick = () => modal.remove();
+
+    const container = document.createElement('div');
+    container.id = 'sticker-app-container';
+    container.style.cssText = 'font-family: system-ui, sans-serif; padding: 16px; background: var(--bg);';
+    container.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <h3 style="margin:0;">🎨 Мои стикер-паки</h3>
+        <button class="create-pack-btn" id="create-pack" style="padding:8px 16px; border:none; border-radius:20px; background:#6C63FF; color:white; cursor:pointer;">+ Создать набор</button>
+      </div>
+      <div id="sticker-packs-container"></div>
+    `;
+
+    sheet.appendChild(header);
+    sheet.appendChild(container);
+    modal.appendChild(sheet);
+    document.body.appendChild(modal);
+
+    modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+
+    document.getElementById('create-pack').onclick = () => {
+      const name = prompt('Введите название нового набора:');
+      if (name && name.trim()) {
+        packs.push({ name: name.trim(), stickers: [] });
+        savePacks();
+        renderPacks(document.getElementById('sticker-packs-container'));
+        showToast('Набор создан');
+      }
+    };
+
+    renderPacks(document.getElementById('sticker-packs-container'));
+  }
+
+  // ─── 7. МУЗЫКАЛЬНЫЙ ПЛЕЕР (Spotify/SoundCloud) ──────────
+  function musicPlayerApp() {
+    const html = `
+    <style>
+      body { font-family: system-ui, sans-serif; padding: 16px; background: #f0f2f5; }
+      .search-box { display: flex; gap: 8px; margin-bottom: 12px; }
+      .search-box input { flex: 1; padding: 10px; border-radius: 12px; border: 1px solid #ddd; }
+      .search-box button { padding: 10px 18px; border: none; border-radius: 12px; background: #6C63FF; color: white; cursor: pointer; }
+      .result-item { display: flex; align-items: center; gap: 12px; background: white; border-radius: 12px; padding: 8px 12px; margin-bottom: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); cursor: pointer; }
+      .result-item img { width: 60px; height: 60px; border-radius: 8px; object-fit: cover; }
+      .result-item .info { flex: 1; }
+      .result-item .title { font-weight: 600; }
+      .result-item .artist { font-size: 14px; color: #888; }
+      .send-btn { background: #2ECC71; border: none; border-radius: 8px; padding: 4px 12px; color: white; cursor: pointer; }
+      .player { margin-top: 16px; }
+    </style>
+    <h3>🎵 Музыкальный плеер</h3>
+    <div class="search-box">
+      <input type="text" id="search-input" placeholder="Введите название трека или исполнителя...">
+      <button id="search-btn">🔍 Найти</button>
+    </div>
+    <div id="results"></div>
+    <div class="player" id="player-container"></div>
+    <p style="font-size:12px; color:#888; margin-top:12px;">Поиск осуществляется через YouTube (встроенный плеер). Отправьте ссылку в чат, чтобы поделиться треком.</p>
+    <script>
+      const searchInput = document.getElementById('search-input');
+      const searchBtn = document.getElementById('search-btn');
+      const results = document.getElementById('results');
+      const playerContainer = document.getElementById('player-container');
+
+      function searchMusic(query) {
+        if (!query) return;
+        fetch(\`https://invidious.fdn.fr/api/v1/search?q=\${encodeURIComponent(query)}&type=video&fields=videoId,title,author,thumbnailUrl\`)
+          .then(res => res.json())
+          .then(data => {
+            results.innerHTML = '';
+            if (!data.length) {
+              results.innerHTML = '<div style="padding:20px; text-align:center; color:#888;">Ничего не найдено</div>';
+              return;
+            }
+            data.slice(0, 10).forEach(item => {
+              const div = document.createElement('div');
+              div.className = 'result-item';
+              div.innerHTML = \`
+                <img src="\${item.thumbnailUrl}" alt="thumb">
+                <div class="info">
+                  <div class="title">\${item.title}</div>
+                  <div class="artist">\${item.author}</div>
+                </div>
+                <button class="send-btn" data-id="\${item.videoId}" data-title="\${item.title}">📤 Отправить</button>
+              \`;
+              div.querySelector('.send-btn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                const vid = e.target.dataset.id;
+                const link = \`https://www.youtube.com/watch?v=\${vid}\`;
+                if (window.sendMessageToChat) {
+                  window.sendMessageToChat(link);
+                  showToast('Трек отправлен в чат');
+                } else {
+                  const msgInput = document.getElementById('msg-input');
+                  if (msgInput) {
+                    msgInput.value = link;
+                    msgInput.dispatchEvent(new Event('input'));
+                  }
+                  showToast('Ссылка скопирована в поле ввода');
+                }
+              });
+              div.addEventListener('click', () => {
+                playerContainer.innerHTML = \`
+                  <iframe width="100%" height="200" src="https://www.youtube.com/embed/\${item.videoId}" frameborder="0" allowfullscreen></iframe>
+                \`;
+              });
+              results.appendChild(div);
+            });
+          })
+          .catch(() => {
+            results.innerHTML = '<div style="padding:20px; text-align:center; color:#888;">Ошибка поиска. Попробуйте позже.</div>';
+          });
+      }
+
+      searchBtn.addEventListener('click', () => searchMusic(searchInput.value));
+      searchInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') searchMusic(searchInput.value); });
+
+      if (typeof window.sendMessageToChat !== 'function') {
+        window.sendMessageToChat = function(text) {
+          const input = document.getElementById('msg-input');
+          if (input) {
+            input.value = text;
+            input.dispatchEvent(new Event('input'));
+            const sendBtn = document.getElementById('send-btn');
+            if (sendBtn) sendBtn.click();
+          }
+        };
+      }
+    <\/script>
+    `;
+    openMiniApp(html, 'Музыка');
+  }
+
+  // ─── 8. ЦИТАТА ДНЯ ──────────────────────────────────────────
+  function quoteOfDayApp() {
+    const quotes = [
+      { text: 'Жизнь — это то, что происходит, пока вы строите планы.', author: 'Джон Леннон' },
+      { text: 'Сложнее всего начать действовать, все остальное зависит только от упорства.', author: 'Амелия Эрхарт' },
+      { text: 'Успех — это способность идти от неудачи к неудаче, не теряя энтузиазма.', author: 'Уинстон Черчилль' },
+      { text: 'Будьте собой, все остальные роли уже заняты.', author: 'Оскар Уайльд' },
+      { text: 'Тот, кто не рискует, тот не пьет шампанское.', author: 'Петр I' },
+      { text: 'Я не терпел неудач. Я просто нашёл 10 000 способов, которые не работают.', author: 'Томас Эдисон' },
+      { text: 'Не бойтесь совершенства — вам его не достичь.', author: 'Сальвадор Дали' },
+      { text: 'Всегда выбирайте самый трудный путь — на нём вы не встретите конкурентов.', author: 'Шарль де Голль' },
+      { text: 'Неважно, как медленно вы идете, главное — не останавливаться.', author: 'Конфуций' }
+    ];
+
+    const html = `
+    <style>
+      body { font-family: system-ui, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background: linear-gradient(135deg, #f5f7fa, #c3cfe2); padding: 20px; text-align: center; }
+      .quote-box { background: white; border-radius: 24px; padding: 40px 30px; max-width: 500px; box-shadow: 0 10px 40px rgba(0,0,0,0.12); }
+      .quote-text { font-size: 24px; font-weight: 500; line-height: 1.4; margin-bottom: 16px; }
+      .quote-author { font-size: 18px; color: #888; }
+      .refresh-btn { margin-top: 24px; padding: 10px 24px; border: none; border-radius: 30px; background: #6C63FF; color: white; font-size: 16px; cursor: pointer; }
+      .refresh-btn:active { opacity: 0.7; }
+      .api-info { margin-top: 12px; font-size: 12px; color: #aaa; }
+    </style>
+    <div class="quote-box">
+      <div class="quote-text" id="quote-text">${quotes[0].text}</div>
+      <div class="quote-author" id="quote-author">— ${quotes[0].author}</div>
+      <button class="refresh-btn" id="refresh">🔄 Другая цитата</button>
+      <div class="api-info">Из локальной базы</div>
+    </div>
+    <script>
+      const quotes = ${JSON.stringify(quotes)};
+      let currentQuote = 0;
+
+      function showQuote(index) {
+        const q = quotes[index % quotes.length];
+        document.getElementById('quote-text').textContent = q.text;
+        document.getElementById('quote-author').textContent = '— ' + q.author;
+      }
+
+      document.getElementById('refresh').addEventListener('click', () => {
+        currentQuote = (currentQuote + 1) % quotes.length;
+        showQuote(currentQuote);
+      });
+
+      fetch('https://api.quotable.io/random')
+        .then(res => res.json())
+        .then(data => {
+          if (data && data.content) {
+            document.getElementById('quote-text').textContent = data.content;
+            document.getElementById('quote-author').textContent = '— ' + (data.author || 'Неизвестный');
+            document.querySelector('.api-info').textContent = '📡 Из открытого API';
+          }
+        })
+        .catch(() => {});
+    <\/script>
+    `;
+    openMiniApp(html, 'Цитата дня');
+  }
+
+  // ─── 9. ИНИЦИАЛИЗАЦИЯ ──────────────────────────────────────
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', addAppsButton);
+  } else {
+    addAppsButton();
+  }
+
+})();
