@@ -3459,3 +3459,85 @@ body.light-theme #messages-wrap {
     radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.5), transparent 75%),
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Cg fill='none' stroke='%231e293b' stroke-opacity='0.08' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cg transform='translate(20, 20) scale(0.9)'%3E%3Cpath d='M22 2L11 13' /%3E%3Cpath d='M22 2L15 22L11 13L2 9L22 2Z' /%3E%3C/g%3E%3Cg transform='translate(120, 25)'%3E%3Cpath d='M4 18V4L16 18V4' stroke-width='2.2' /%3E%3C/g%3E%3Cg transform='translate(160, 80) scale(0.85)'%3E%3Cpath d='M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z' /%3E%3C/g%3E%3Cg transform='translate(25, 110) scale(0.8)'%3E%3Cpolygon points='12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2' /%3E%3C/g%3E%3Cg transform='translate(80, 140) scale(0.8)'%3E%3Cpath d='M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.78-8.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z' /%3E%3C/g%3E%3Cg transform='translate(75, 55) scale(0.75)'%3E%3Cpath d='M4 18V4L16 18V4' stroke-width='2.2' /%3E%3C/g%3E%3Cg transform='translate(125, 145) scale(0.8)'%3E%3Cpath d='M18 10h-1.26A8 8 0 1 0 3 16.3a5 5 0 0 0 5 3.7h10a5 5 0 0 0 0-10z' /%3E%3C/g%3E%3Cg transform='translate(70, 10) scale(0.75)'%3E%3Cpath d='M12 2v20M2 12h20M5 5l14 14M5 19L19 5' /%3E%3C/g%3E%3Cg transform='translate(165, 20) scale(0.75)'%3E%3Crect x='3' y='11' width='18' height='11' rx='2' ry='2' /%3E%3Cpath d='M7 11V7a5 5 0 0 1 10 0v4' /%3E%3C/g%3E%3Cg transform='translate(10, 165) scale(0.75)'%3E%3Cpath d='M9 18V5l12-2v13' /%3E%3Ccircle cx='6' cy='18' r='3' /%3E%3Ccircle cx='18' cy='16' r='3' /%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
 }
+/* ════════════════════════════════════════════════════
+   АНИМАЦИИ ПЕРЕХОДА МЕЖДУ РАЗДЕЛАМИ И СТРАНИЦАМИ
+   ════════════════════════════════════════════════════ */
+
+/* Базовые настройки для страниц */
+.page {
+  transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1), 
+              transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform, opacity;
+}
+
+/* 1. Анимация плавного появления при переключении нижних вкладок (Чаты / Контакты / Настройки) */
+.page.fade-in {
+  animation: pageFadeIn 0.22s ease-out forwards;
+}
+
+@keyframes pageFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.98) translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* 2. Анимация открытия окна чата (слайд справа) */
+.page.slide-in-right {
+  animation: slideInRight 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0.5;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* 3. Анимация закрытия окна чата (уход вправо при нажатии "Назад") */
+.page.slide-out-right {
+  animation: slideOutRight 0.25s cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
+@keyframes slideOutRight {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+}
+
+/* Анимация иконки активного пункта в нижнем меню */
+.nav-btn {
+  transition: transform 0.15s ease, color 0.15s ease;
+}
+
+.nav-btn:active {
+  transform: scale(0.92);
+}
+
+.nav-btn.active .nav-icon {
+  animation: navPop 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes navPop {
+  0% { transform: scale(0.8); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+/* Подсветка активного/выбранного чата */
+.chat-row.active {
+  background-color: rgba(30, 144, 255, 0.15) !important; /* Легкая синяя подсветка */
+  border-left: 4px solid #007aff;                        /* Синёе выделение слева */
+}
