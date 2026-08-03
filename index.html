@@ -1,204 +1,328 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Технический перерыв</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet" />
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>NexLink</title>
+<link rel="stylesheet" href="style.css">
+<!-- Для iOS Safari / PWA -->
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 
-        body {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
-            padding: 20px;
-            margin: 0;
-        }
-
-        .card {
-            max-width: 500px;
-            width: 100%;
-            background: rgba(255, 255, 255, 0.07);
-            backdrop-filter: blur(16px) saturate(180%);
-            -webkit-backdrop-filter: blur(16px) saturate(180%);
-            border-radius: 48px;
-            padding: 48px 40px 40px;
-            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.05);
-            text-align: center;
-            color: #ffffff;
-            border: 1px solid rgba(255, 255, 255, 0.08);
-        }
-
-        .icon-wrapper {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 96px;
-            height: 96px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.06);
-            margin-bottom: 24px;
-            border: 1px solid rgba(255, 255, 255, 0.08);
-        }
-
-        .icon-wrapper svg {
-            width: 52px;
-            height: 52px;
-            fill: none;
-            stroke: #a78bfa;
-            stroke-width: 2;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-            animation: spin 8s linear infinite;
-        }
-
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-
-        .title {
-            font-size: 2.2rem;
-            font-weight: 700;
-            letter-spacing: -0.02em;
-            margin-bottom: 12px;
-            background: linear-gradient(to right, #e0d7ff, #a78bfa);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-        }
-
-        .subtitle {
-            font-size: 1rem;
-            line-height: 1.6;
-            color: rgba(255, 255, 255, 0.7);
-            margin-bottom: 28px;
-            font-weight: 400;
-        }
-
-        .subtitle strong {
-            color: #c4b5fd;
-            font-weight: 500;
-        }
-
-        .status-row {
-            display: flex;
-            justify-content: center;
-            gap: 24px;
-            font-size: 0.85rem;
-            color: rgba(255, 255, 255, 0.5);
-            margin-bottom: 32px;
-            flex-wrap: wrap;
-        }
-
-        .status-row span {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .dot {
-            display: inline-block;
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            background: #a78bfa;
-            animation: pulse-dot 1.6s ease-in-out infinite;
-        }
-
-        @keyframes pulse-dot {
-            0% { opacity: 0.3; transform: scale(0.9); }
-            50% { opacity: 1; transform: scale(1.2); }
-            100% { opacity: 0.3; transform: scale(0.9); }
-        }
-
-        .btn {
-            display: inline-block;
-            padding: 14px 36px;
-            border-radius: 60px;
-            background: linear-gradient(to right, #7c3aed, #6d28d9);
-            color: #ffffff;
-            font-weight: 600;
-            font-size: 0.95rem;
-            border: none;
-            cursor: pointer;
-            transition: transform 0.15s ease, box-shadow 0.2s ease;
-            box-shadow: 0 8px 24px rgba(124, 58, 237, 0.3);
-            text-decoration: none;
-            letter-spacing: 0.01em;
-        }
-
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 12px 32px rgba(124, 58, 237, 0.5);
-        }
-
-        .btn:active {
-            transform: translateY(0px);
-            box-shadow: 0 4px 16px rgba(124, 58, 237, 0.3);
-        }
-
-        @media (max-width: 480px) {
-            .card {
-                padding: 32px 20px 28px;
-                border-radius: 32px;
-            }
-            .title {
-                font-size: 1.7rem;
-            }
-            .icon-wrapper {
-                width: 72px;
-                height: 72px;
-            }
-            .icon-wrapper svg {
-                width: 40px;
-                height: 40px;
-            }
-            .status-row {
-                gap: 12px;
-                font-size: 0.75rem;
-                flex-direction: column;
-                align-items: center;
-            }
-        }
-    </style>
+<!-- Для Android Chrome и современных браузеров -->
+<meta name="theme-color" content="#ffffff">
 </head>
 <body>
-    <div class="card">
-        <!-- Иконка -->
-        <div class="icon-wrapper">
-            <svg viewBox="0 0 24 24" stroke="currentColor">
-                <path d="M12 15a3 3 0 100-6 3 3 0 000 6z" />
-                <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z" />
-            </svg>
-        </div>
 
-        <!-- Заголовок -->
-        <h1 class="title">Технический перерыв</h1>
 
-        <!-- Текст -->
-        <p class="subtitle">
-            Мы обновляем сервис, чтобы он стал ещё быстрее и удобнее.<br />
-            Приносим извинения за временные неудобства.
-        </p>
+<!-- SPLASH -->
+<div id="splash">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💬</text></svg>">
+  <div class="splash-title">NexLink</div>
+  <div class="splash-sub">Мессенджер нового поколения</div>
+  <div class="splash-bar"><div class="splash-bar-fill"></div></div>
+</div>
 
-        <!-- Статус -->
-        <div class="status-row">
-            <span><span class="dot"></span> Работы ведутся в штатном режиме</span>
-        </div>
+<!-- NET BANNER -->
+<div id="net-banner">⚠️ Нет соединения</div>
 
-        <!-- Кнопка обновления -->
-        <button class="btn" onclick="location.reload()">Обновить страницу</button>
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- ══════════════ AUTH ══════════════ -->
+<div id="auth-screen">
+  <div class="auth-box">
+    <div class="auth-logo">
+      <div class="logo-icon">💬</div>
+      <h1>NexLink</h1>
+      <p>Общайся свободно и безопасно</p>
     </div>
+
+    <!-- Verify -->
+    <div id="verify-wrap" class="verify-wrap hidden">
+      <div class="v-icon">📧</div>
+      <h3>Подтвердите Email</h3>
+      <p>Письмо отправлено на <strong id="verify-email"></strong>. Перейдите по ссылке для активации.</p>
+      <button class="auth-btn" id="resend-btn" style="margin-bottom:8px;">Отправить повторно</button>
+      <button class="auth-btn" id="check-verify-btn" style="background:#27AE60;margin-bottom:8px;">✅ Проверить</button>
+      <button class="auth-btn" id="verify-logout-btn" style="background:var(--bg-secondary);color:var(--text-primary);box-shadow:none;">Выйти</button>
+    </div>
+
+    <!-- Forms -->
+    <div id="auth-forms">
+      <div class="auth-tabs">
+        <button class="auth-tab active" data-tab="login">Войти</button>
+        <button class="auth-tab" data-tab="reg">Регистрация</button>
+      </div>
+      <div id="login-form">
+        <div class="field"><label>Email</label><input type="email" id="l-email" placeholder="you@example.com" autocomplete="email" inputmode="email"></div>
+        <div class="field"><label>Пароль</label><input type="password" id="l-pass" placeholder="••••••••" autocomplete="current-password"></div>
+        <div class="err-msg" id="l-err"></div>
+        <button class="auth-btn" id="login-btn">Войти</button>
+      </div>
+      <div id="reg-form" class="hidden">
+        <div class="field"><label>Email</label><input type="email" id="r-email" placeholder="you@example.com" inputmode="email"></div>
+        <div class="field"><label>@Юзернейм</label><input type="text" id="r-uname" placeholder="@username" autocorrect="off" autocapitalize="none"></div>
+        <div class="field"><label>Пароль (мин. 6 символов)</label><input type="password" id="r-pass" placeholder="••••••••"></div>
+        <div class="field"><label>Имя</label><input type="text" id="r-first" placeholder="Алексей"></div>
+        <div class="field"><label>Фамилия</label><input type="text" id="r-last" placeholder="Иванов"></div>
+        <div class="field">
+          <label>Аватар</label>
+          <div class="av-grid" id="reg-av-grid"></div>
+        </div>
+        <div class="err-msg" id="r-err"></div>
+        <button class="auth-btn" id="reg-btn">Создать аккаунт</button>
+      </div>
+      <div class="auth-divider">или</div>
+      <button class="google-btn" id="google-btn">🟢 Войти через Google</button>
+	  <div class="auth-divider">или</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ APP ══════════════ -->
+<div id="app" class="hidden">
+
+  <!-- ── PAGE: CHATS ── -->
+  <div class="page" id="page-chats">
+    <div class="hdr">
+      <div class="hdr-title">NexLink</div>
+      <button class="hdr-btn" id="compose-btn" title="Новый чат">✏️</button>
+    </div>
+    <div class="search-bar">
+      <div class="search-inner">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="chat-search" placeholder="Поиск..." autocorrect="off">
+        <button id="clear-search" class="hidden" style="color:var(--text-hint);font-size:13px;">✕</button>
+      </div>
+    </div>
+    <div class="chat-list" id="chat-list"></div>
+    <div id="bottom-nav">
+      <button class="nav-btn active" data-tab="chats"><span class="nav-icon">💬</span><span class="nav-label">Чаты</span></button>
+      <button class="nav-btn" data-tab="contacts"><span class="nav-icon">👥</span><span class="nav-label">Контакты</span></button>
+      <button class="nav-btn" data-tab="settings"><span class="nav-icon">⚙️</span><span class="nav-label">Настройки</span></button>
+    </div>
+  </div>
+  
+  <!-- ── PAGE: OPEN CHAT ── -->
+  <div class="page" id="page-chat">
+
+    <!-- 👇 СТАРАЯ ШАПКА ЗАМЕНЕНА НА ЭТУ 👇 -->
+    <div class="chat-hdr">
+      <div class="chat-hdr-left" id="chat-hdr-left">
+        <button class="hdr-back" id="back-from-chat" title="Назад">←</button>
+        
+        <div class="hdr-av-wrap">
+          <div id="chat-hdr-av">😊</div>
+          <div class="online-dot" id="hdr-online-dot"></div>
+        </div>
+        
+        <div class="chat-hdr-info" id="chat-hdr-info">
+          <div class="hdr-name" id="chat-hdr-name">Чат</div>
+          <div class="hdr-status" id="chat-hdr-status"></div>
+        </div>
+      </div>
+
+      <button class="hdr-menu-btn" id="chat-hdr-menu-btn" title="Меню">
+        <div class="three-dots">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      </button>
+    </div>
+    <!-- 👆 КОНЕЦ НОВОЙ ШАПКИ 👆 -->
+    
+    <div id="messages-wrap">
+      <div class="center-loader" id="msg-loader"><div class="loader"></div></div>
+    </div>
+
+    <div id="reply-bar">
+      <div class="reply-bar-accent"></div>
+      <div class="reply-bar-body">
+        <div class="reply-bar-name" id="reply-bar-name">Ответ</div>
+        <div class="reply-bar-text" id="reply-bar-text"></div>
+      </div>
+      <button class="reply-bar-close" id="cancel-reply">✕</button>
+    </div>
+
+    <div id="input-bar">
+      <div class="input-wrap">
+        <button class="ib-btn" id="attach-btn">📎</button>
+        <input type="file" id="file-input" accept="image/*" style="display:none">
+        <textarea id="msg-input" rows="1" placeholder="Напишите сообщение…"></textarea>
+        <button class="ib-btn" id="emoji-btn">😊</button>
+      </div>
+      <button class="send-btn" id="send-btn">➤</button>
+    </div>
+
+    <div id="emoji-dim"></div>
+    <div id="emoji-picker"></div>
+  </div>
+
+  
+  
+  <!-- ── PAGE: CONTACTS ── -->
+<div class="page" id="page-contacts">
+  <div class="hdr">
+    <button class="hdr-back" id="back-from-contacts">←</button>
+    <div class="hdr-title">Контакты</div>
+  </div>
+  <div class="search-bar">
+    <div class="search-inner">
+      <span class="search-icon">🔍</span>
+      <!-- Обновленный placeholder -->
+      <input type="text" id="contacts-search" placeholder="Поиск людей и сообществ..." autocorrect="off" autocapitalize="none">
+    </div>
+  </div>
+  <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;">
+    <div id="contacts-search-res"></div>
+    <div class="settings-label">Мои контакты</div>
+    <div id="contacts-mine"></div>
+  </div>
+  <div id="bottom-nav-2">
+    <!-- clone nav -->
+  </div>
+</div>
+  <!-- ── PAGE: SETTINGS ── -->
+  <div class="page" id="page-settings">
+    <div class="hdr">
+      <button class="hdr-back" id="back-from-settings">←</button>
+      <div class="hdr-title">Настройки</div>
+    </div>
+    <div class="settings-body" id="settings-body"></div>
+  </div>
+
+</div><!-- /#app -->
+
+<!-- ══════════════ CONTEXT MENU ══════════════ -->
+<div id="ctx-overlay">
+  <div id="ctx-menu-sheet">
+    <div class="ctx-pill"></div>
+    <div id="ctx-items"></div>
+  </div>
+</div>
+
+<!-- ══════════════ MODALS ══════════════ -->
+<!-- Profile edit -->
+<div class="modal-ov" id="modal-profile">
+  <div class="modal-sheet">
+    <div class="modal-pill"></div>
+    <div class="modal-hdr"><h3>Мой профиль</h3><button class="modal-close">✕</button></div>
+    <div class="modal-body">
+      <div class="user-profile-view">
+        <div class="upv-av" id="edit-prof-av">😊</div>
+        <div id="edit-prof-name" class="upv-name">Имя</div>
+        <div id="edit-prof-uname" class="upv-uname">@username</div>
+      </div>
+      <div class="av-grid" id="prof-av-grid" style="margin-bottom:14px;"></div>
+      <div class="modal-field"><label>Имя</label><input type="text" id="prof-first" autocorrect="off"></div>
+      <div class="modal-field"><label>Фамилия</label><input type="text" id="prof-last" autocorrect="off"></div>
+      <div id="prof-email-info" style="background:var(--bg-secondary);padding:10px 14px;border-radius:10px;font-size:13px;color:var(--text-secondary);margin-bottom:12px;"></div>
+      <button class="modal-btn" id="save-profile-btn">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<!-- User view -->
+<div class="modal-ov" id="modal-user-view">
+  <div class="modal-sheet">
+    <div class="modal-pill"></div>
+    <div class="modal-body">
+      <div class="user-profile-view">
+        <div class="upv-av" id="uv-av">😊</div>
+        <div class="upv-name" id="uv-name">Имя</div>
+        <div class="upv-uname" id="uv-uname">@username</div>
+        <div class="upv-actions">
+          <button class="upv-btn" id="uv-msg-btn">💬 Написать</button>
+          <button class="upv-btn green" id="uv-add-btn">+ Контакт</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Create group -->
+<div class="modal-ov" id="modal-create-group">
+  <div class="modal-sheet">
+    <div class="modal-pill"></div>
+    <div class="modal-hdr"><h3>Новая группа</h3><button class="modal-close">✕</button></div>
+    <div class="modal-body">
+      <div class="modal-field"><label>Название</label><input type="text" id="grp-name" placeholder="Моя группа"></div>
+      <div class="modal-field"><label>@Юзернейм</label><input type="text" id="grp-uname" placeholder="@mygroup" autocapitalize="none" autocorrect="off"></div>
+      <div class="modal-field"><label>Аватар</label><div class="av-grid" id="grp-av-grid"></div></div>
+      <button class="modal-btn" id="create-grp-btn">Создать</button>
+    </div>
+  </div>
+</div>
+
+<!-- Create channel -->
+<div class="modal-ov" id="modal-create-channel">
+  <div class="modal-sheet">
+    <div class="modal-pill"></div>
+    <div class="modal-hdr"><h3>Новый канал</h3><button class="modal-close">✕</button></div>
+    <div class="modal-body">
+      <div class="modal-field"><label>Название</label><input type="text" id="ch-name" placeholder="Мой канал"></div>
+      <div class="modal-field"><label>@Юзернейм</label><input type="text" id="ch-uname" placeholder="@mychannel" autocapitalize="none" autocorrect="off"></div>
+      <div class="modal-field"><label>Аватар</label><div class="av-grid" id="ch-av-grid"></div></div>
+      <button class="modal-btn" id="create-ch-btn">Создать</button>
+    </div>
+  </div>
+</div>
+
+<!-- About -->
+<div class="modal-ov" id="modal-about">
+  <div class="modal-sheet">
+    <div class="modal-pill"></div>
+    <div class="modal-hdr"><h3>О приложении</h3><button class="modal-close">✕</button></div>
+    <div class="modal-body" style="text-align:center;padding-top:8px;">
+      <div style="font-size:56px;margin-bottom:12px;">💬</div>
+      <div style="font-size:22px;font-weight:700;margin-bottom:4px;">NexLink</div>
+      <div style="color:var(--text-secondary);font-size:14px;margin-bottom:16px;">Версия 1.2.0 </div>
+      <div style="background:var(--bg-secondary);border-radius:14px;padding:14px;text-align:left;font-size:14px;color:var(--text-secondary);line-height:1.8;">
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Support -->
+<div class="modal-ov" id="modal-support">
+  <div class="modal-sheet">
+    <div class="modal-pill"></div>
+    <div class="modal-hdr"><h3>Техподдержка</h3><button class="modal-close">✕</button></div>
+    <div class="modal-body">
+      <div class="modal-field"><label>Тема</label><input type="text" id="sup-subj" placeholder="Тема обращения"></div>
+      <div class="modal-field"><label>Сообщение</label><textarea id="sup-msg" rows="4" placeholder="Опишите проблему…"></textarea></div>
+      <button class="modal-btn" id="sup-send-btn">Отправить</button>
+    </div>
+  </div>
+</div>
+
+<!-- Forward -->
+<div class="modal-ov" id="modal-forward">
+  <div class="modal-sheet">
+    <div class="modal-pill"></div>
+    <div class="modal-hdr"><h3>📤 Переслать</h3><button class="modal-close">✕</button></div>
+    <div class="modal-body">
+      <div id="forward-list" style="max-height:50vh;overflow-y:auto;"></div>
+    </div>
+  </div>
+</div>
+<!-- Панель закреплённого сообщения с узорами -->
+<div id="pinned-bar" class="pinned-bar">
+  <div class="pinned-content" id="pinned-content">
+    <div class="pinned-icon">📌</div>
+    <div class="pinned-info">
+      <div class="pinned-title">
+        <span>Закреплённое сообщение</span>
+        <span class="pinned-count" id="pinned-count" style="display:none;">1/1</span>
+      </div>
+      <div class="pinned-text" id="pinned-text">Загрузка...</div>
+    </div>
+  </div>
+  <button class="pinned-close" id="pinned-close-btn" title="Открепить">✕</button>
+</div>
+
+<script src="https://xamchat.ru/oauth/xam-auth.js"></script>
+<script type="module" src="script.js"></script>
 </body>
 </html>
